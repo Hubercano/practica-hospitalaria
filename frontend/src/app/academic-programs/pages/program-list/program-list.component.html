@@ -1,0 +1,17 @@
+<div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Programas Académicos</h2>
+          <p class="mt-1 text-sm text-slate-500">Gestione los programas educativos de la institución.</p>
+        </div>
+        <app-button variant="primary" routerLink="/academic-programs/new">
+          + Nuevo Programa
+        </app-button>
+      </div>
+
+      <app-table
+        [data]="programs()"
+        [columns]="columns"
+        (edit)="onEdit($event)">
+      </app-table>
+    </div>

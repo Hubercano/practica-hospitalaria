@@ -1,0 +1,64 @@
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900">
+        Nuevo Estudiante
+      </h2>
+      <p class="mt-1 text-sm text-slate-600">Completa el formulario para registrar un nuevo estudiante.</p>
+    </div>
+    <app-button variant="secondary" routerLink="/students" size="sm">
+      Volver al Listado
+    </app-button>
+  </div>
+
+  <app-card>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <app-form-field label="Nombres" [required]="true" [error]="controlErrors.firstName">
+          <app-input formControlName="firstName" placeholder="Ej. Ana María"></app-input>
+        </app-form-field>
+        
+        <app-form-field label="Apellidos" [required]="true" [error]="controlErrors.lastName">
+          <app-input formControlName="lastName" placeholder="Ej. Rodríguez Silva"></app-input>
+        </app-form-field>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <app-form-field label="Tipo de Documento" [required]="true">
+          <app-select formControlName="documentType" [options]="documentTypeOptions"></app-select>
+        </app-form-field>
+        
+        <app-form-field label="Número de Documento" [required]="true" [error]="controlErrors.document">
+          <app-input formControlName="document" placeholder="Ej. 1020304050"></app-input>
+        </app-form-field>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <app-form-field label="Correo Electrónico" [required]="true" [error]="controlErrors.email">
+          <app-input type="email" formControlName="email" placeholder="estudiante@ejemplo.com"></app-input>
+        </app-form-field>
+
+        <app-form-field label="Teléfono / Celular">
+          <app-input formControlName="phone" placeholder="Ej. 3001234567"></app-input>
+        </app-form-field>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <app-form-field label="Tipo de Estudiante" [required]="true">
+          <app-select formControlName="typeId" [options]="typeOptions"></app-select>
+        </app-form-field>
+      </div>
+
+      <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+        <app-button type="button" variant="secondary" routerLink="/students">
+          Cancelar
+        </app-button>
+        <app-button variant="primary" type="submit" [disabled]="form.invalid || isSubmitting">
+          {{ isSubmitting ? 'Guardando...' : 'Guardar Estudiante' }}
+        </app-button>
+      </div>
+
+    </form>
+  </app-card>
+</div>

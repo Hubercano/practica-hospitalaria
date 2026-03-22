@@ -1,0 +1,65 @@
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">
+            {{ isEditing ? 'Editar Servicio' : 'Nuevo Servicio Clínico' }}
+          </h2>
+          <p class="mt-1 text-sm text-slate-600">
+            {{ isEditing ? 'Modifica los datos del servicio seleccionado.' : 'Completa el formulario para registrar un nuevo servicio.' }}
+          </p>
+        </div>
+        <app-button variant="secondary" routerLink="/clinical-services" size="sm">
+          Volver al Listado
+        </app-button>
+      </div>
+
+      <div class="max-w-2xl">
+        <app-card>
+          <form [formGroup]="serviceForm" (ngSubmit)="onSubmit()" class="space-y-6">
+            
+            <app-form-field label="Código o distintivo del servicio" [required]="true" [error]="controlErrors.code">
+              <app-input formControlName="code" placeholder="Ej: DHSS" [error]="!!controlErrors.code"></app-input>
+            </app-form-field>
+
+            <app-form-field label="Nombre del Servicio" [required]="true" [error]="controlErrors.name">
+              <app-input formControlName="name" placeholder="Ej: Urgencias Generales" [error]="!!controlErrors.name"></app-input>
+            </app-form-field>
+
+            <app-form-field label="Nombre de la Sede Prestadora">
+              <app-input formControlName="venueName" placeholder="Sede Principal"></app-input>
+            </app-form-field>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <app-form-field label="Consecutivo de la Sede">
+                <app-input type="number" formControlName="venueSequence" placeholder="1"></app-input>
+              </app-form-field>
+
+              <app-form-field label="Código de la Sede">
+                <app-input formControlName="venueCode" placeholder="SEDE-01"></app-input>
+              </app-form-field>
+            </div>
+
+            <!-- Description (Uses standard textarea matching the input component styles) -->
+            <app-form-field label="Descripción (Opcional)">
+              <textarea formControlName="description" rows="3"
+                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition duration-150 ease-in-out disabled:bg-slate-50 disabled:text-slate-500"></textarea>
+            </app-form-field>
+
+            <div class="flex items-center">
+              <input type="checkbox" formControlName="isActive" id="isActive"
+                     class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600">
+              <label for="isActive" class="ml-2 block text-sm text-slate-900">Servicio Activo</label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <app-button type="button" variant="secondary" routerLink="/clinical-services">
+                Cancelar
+              </app-button>
+              <app-button variant="primary" type="submit" [disabled]="serviceForm.invalid || isSubmitting">
+                {{ isSubmitting ? 'Guardando...' : 'Guardar Servicio' }}
+              </app-button>
+            </div>
+          </form>
+        </app-card>
+      </div>
+    </div>

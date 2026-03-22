@@ -1,0 +1,182 @@
+@if (program()) {
+      <div class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 class="text-3xl font-bold text-slate-900">{{ program()?.name }}</h1>
+            <div class="mt-2 flex items-center gap-4 text-sm text-slate-500">
+              <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                {{ program()?.level }}
+              </span>
+              <span>ID: {{ program()?.id }}</span>
+              @if (program()?.institution) {
+                <span class="text-slate-600 font-semibold">{{ program()?.institution.name }}</span>
+              }
+            </div>
+            @if (program()?.technicalAnnex) {
+              <div class="mt-2">
+                <a [href]="program()?.technicalAnnex" target="_blank" class="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                  📄 Ver Anexo Técnico
+                </a>
+              </div>
+            }
+          </div>
+          <app-button variant="secondary" routerLink="/academic-programs" size="sm">
+            ← Volver a la lista
+          </app-button>
+        </div>
+
+        <!-- Rotation Areas Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+          <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900">Áreas de práctica asignadas a este programa</h3>
+            </div>
+            <button (click)="openAddAreaModal()" 
+                    class="text-sm bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors">
+              + Crear Área
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre del Área</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Duración (Semanas)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cupos (Max Estudiantes)</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-slate-200">
+                @if (!program()?.rotationAreas || program()?.rotationAreas?.length === 0) {
+                  <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                      No hay áreas de rotación asignadas.
+                    </td>
+                  </tr>
+                }
+
+                @for (area of program()?.rotationAreas; track area.id) {
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                      {{ area.name }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {{ area.durationWeeks || '-' }} semanas
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {{ area.maxStudents || '-' }} estudiantes
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <!-- Future: Edit button -->
+                      <button (click)="deleteArea(area.id)" class="text-red-600 hover:text-red-900 ml-4">
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <!-- Modal to Add Area -->
+    @if (showAddAreaModal) {
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full shadow-xl">
+          <h3 class="text-lg font-bold mb-4">Crear Nueva Área de Rotación</h3>
+          
+          <form [formGroup]="newAreaForm" (ngSubmit)="saveNewArea()">
+            <div class="space-y-4">
+              <!-- Name -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre del Área</label>
+                <input formControlName="name" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm" placeholder="Ej: Rotación Medicina Interna">
+                @if(newAreaForm.get('name')?.invalid && newAreaForm.get('name')?.touched) {
+                  <span class="text-red-500 text-xs">Requerido</span>
+                }
+              </div>
+
+              <!-- Duration -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Duración (Semanas)</label>
+                <input type="number" formControlName="durationWeeks" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm" placeholder="Ej: 4">
+                @if(newAreaForm.get('durationWeeks')?.invalid && newAreaForm.get('durationWeeks')?.touched) {
+                  <span class="text-red-500 text-xs">Requerido (> 0)</span>
+                }
+              </div>
+
+              <!-- Max Students -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Máximo de Estudiantes (Cupos)</label>
+                <input type="number" formControlName="maxStudents" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm" placeholder="Ej: 5">
+                @if(newAreaForm.get('maxStudents')?.invalid && newAreaForm.get('maxStudents')?.touched) {
+                  <span class="text-red-500 text-xs">Requerido (> 0)</span>
+                }
+              </div>
+
+              <!-- Services Selector -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Servicios Habilitados</label>
+                <ng-select
+                  [items]="services()"
+                  bindLabel="name"
+                  bindValue="id"
+                  [multiple]="true"
+                  formControlName="serviceIds"
+                  placeholder="Escriba para buscar servicios..."
+                  notFoundText="No se encontraron servicios"
+                  class="block w-full border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                >
+                  <ng-template ng-option-tmp let-item="item" let-index="index">
+                    <div class="flex flex-col">
+                      <span class="font-medium text-sm text-slate-900">{{item.name}}</span>
+                      <span class="text-xs text-slate-500">{{item.code}}</span>
+                      <span class="text-xs text-slate-500">{{item.venueName}}</span>
+                    </div>
+                  </ng-template>
+                </ng-select>
+              </div>
+
+              @if (selectedServicesList().length > 0) {
+                <div class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <h4 class="text-sm font-semibold text-slate-700 mb-3">Servicios Seleccionados ({{ selectedServicesList().length }}):</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @for(service of selectedServicesList(); track service.id) {
+                      <div class="flex justify-between items-center p-3 bg-white rounded-md border border-slate-200 shadow-sm">
+                        <div>
+                          <div class="font-medium text-sm text-slate-900">{{ service.name }}</div>
+                          <div class="text-xs text-slate-500">Codigo: {{ service.code }}</div>
+                          <div class="text-xs text-slate-500">Sede: {{ service.venueName }}</div>
+                        </div>
+                        <button type="button" (click)="removeService(service.id)" class="text-rose-600 hover:text-rose-800 p-1">
+                          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @else {
+                 <p class="text-slate-500 text-sm mt-3 italic">No hay servicios seleccionados aún.</p>
+              }
+
+              <div class="mt-6 flex justify-end gap-3">
+                <button type="button" (click)="showAddAreaModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                  Cancelar
+                </button>
+                <button type="submit" [disabled]="newAreaForm.invalid || isSubmitting" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                  {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    }

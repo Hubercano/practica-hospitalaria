@@ -1,0 +1,68 @@
+<div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Capacidad Instalada</h2>
+          <p class="mt-1 text-sm text-slate-600">Gestión de la capacidad instalada por servicio.</p>
+        </div>
+        <div class="flex gap-4">
+          <app-button variant="secondary" (click)="openUploadModal()" customClass="!rounded-xl border-slate-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Carga Masiva
+          </app-button>
+          <app-button variant="primary" routerLink="/service-capacity/new">
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva Capacidad
+          </app-button>
+        </div>
+      </div>
+
+      <app-table 
+        [data]="capacities()" 
+        [columns]="columns"
+        (edit)="onEdit($event)"
+        (delete)="delete($event.id)">
+      </app-table>
+    
+      @if (showUploadModal) {
+        <app-modal [isOpen]="true" title="Carga masiva de capacidad instalada" (closeEvent)="closeUploadModal()">
+          <div class="space-y-4">
+            <p class="text-sm text-gray-600">
+              Selecciona un archivo Excel que contenga las columnas: `nombre_prestador`, `sede_nombre`, `grupo_capacidad`, `coca_nombre`, `cantidad`. Otras columnas serán ignoradas.
+            </p>
+
+            <div class="mt-4">
+              <app-file-upload
+                label="Archivo de Capacidad (Excel)"
+                (fileChanged)="onFileSelected($event[0])">
+              </app-file-upload>
+            </div>
+
+            @if (uploadResult) {
+                <div class="mt-4 p-4 rounded-lg bg-emerald-50 text-emerald-700 text-sm">
+                    Carga procesada.<br>
+                    Total registros: {{ uploadResult.total }} <br>
+                    Éxitos: {{ uploadResult.success }} <br>
+                    Fallos: {{ uploadResult.failed }}
+                </div>
+                @if (uploadResult.errors && uploadResult.errors.length > 0) {
+                  <div class="mt-2 text-xs text-red-600 max-h-32 overflow-y-auto">
+                    <ul>
+                      @for (err of uploadResult.errors; track err) {
+                        <li>Fila {{err.row}}: {{err.message}}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+            }
+          </div>
+          <div footer class="flex justify-end gap-3 w-full">
+            <app-button variant="secondary" (click)="closeUploadModal()">Cancelar</app-button>
+            <app-button variant="primary" (click)="uploadFile()" [disabled]="!selectedFile || isUploading">
+                {{ isUploading ? 'Subiendo...' : 'Cargar Archivo' }}
+            </app-button>
+          </div>
+        </app-modal>
+      }
+      </div>

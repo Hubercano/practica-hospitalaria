@@ -1,0 +1,59 @@
+<div class="mx-auto px-4 py-8">
+  <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-900">Tipos de Estudiantes</h1>
+      <p class="text-slate-500 mt-1">Configura los requisitos documentales de práctica para cada tipo de estudiante</p>
+    </div>
+    <a routerLink="/student-types/new" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded inline-block text-center cursor-pointer">
+      + Crear Nuevo Tipo
+    </a>
+  </div>
+  
+  <div *ngIf="errorMessage" class="mb-6 p-4 rounded-md bg-rose-50 border border-rose-200 text-rose-700">
+    {{ errorMessage }}
+  </div>
+
+  <div class="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden">
+    <div *ngIf="types$ | async as types; else loading">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+            <tr>
+              <th class="px-6 py-4">Nombre</th>
+              <th class="px-6 py-4">Descripción</th>
+              <th class="px-6 py-4">Requisitos Configurados</th>
+              <th class="px-6 py-4 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            <tr *ngFor="let type of types" class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-4 font-medium text-slate-900">{{ type.name }}</td>
+              <td class="px-6 py-4 max-w-md truncate">{{ type.description }}</td>
+              <td class="px-6 py-4">{{ type.requirements.length || 0 }} de documentos</td>
+              <td class="px-6 py-4 text-right flex justify-end gap-3">
+                <a [routerLink]="['/student-types', type.id]" 
+                   class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline">
+                  ⚙ Configurar
+                </a>
+                <button (click)="deleteType(type.id)" 
+                        class="font-medium text-rose-600 hover:text-rose-800">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="types.length === 0">
+              <td colspan="4" class="px-6 py-12 text-center text-slate-400">
+                No hay tipos de estudiantes creados aún.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <ng-template #loading>
+      <div class="p-12 text-center text-slate-500">
+        <div class="animate-pulse">Cargando tipos de estudiantes...</div>
+      </div>
+    </ng-template>
+  </div>
+</div>

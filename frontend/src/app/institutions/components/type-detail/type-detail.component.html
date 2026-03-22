@@ -1,0 +1,164 @@
+
+<div class="max-w-4xl mx-auto px-4 py-8 space-y-8">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <h1 class="text-3xl font-bold text-slate-900">
+      {{ typeId === 'new' ? 'Crear Nuevo Tipo' : 'Configurar Tipo de Institución' }}
+    </h1>
+    <app-button variant="secondary" routerLink="/institutions/types" size="sm">
+      ← Volver
+    </app-button>
+  </div>
+
+  <!-- Type Configuration Form -->
+  <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
+    <div class="mb-6 pb-4 border-b border-slate-100">
+      <h3 class="text-lg font-semibold text-slate-900">Detalles del Tipo</h3>
+      <p class="text-sm text-slate-500">Información básica del tipo de institución.</p>
+    </div>
+    
+    <form [formGroup]="form" (ngSubmit)="saveType()" class="space-y-6">
+      <div>
+        <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">
+          Nombre del Tipo <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" formControlName="name" 
+               class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">Descripción</label>
+        <textarea formControlName="description" rows="3" 
+                  class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"></textarea>
+      </div>
+
+      @if (typeId === 'new') {
+        <div class="flex justify-end pt-4">
+          <app-button variant="primary" type="submit" [disabled]="form.invalid">
+            Guardar y Configurar Requisitos
+          </app-button>
+        </div>
+      }
+    </form>
+  </div>
+
+  <!-- Requirements Section -->
+  @if (typeId !== 'new') {
+    <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Requisitos Documentales</h3>
+          <p class="text-sm text-slate-500">Define qué documentos se solicitarán a las instituciones.</p>
+        </div>
+      </div>
+      
+      <!-- List -->
+      @if (institutionType?.requirements?.length) {
+        <div class="overflow-hidden rounded-lg border border-slate-200 mb-8">
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Requisito</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tipo</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Obligatorio</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Expira</th>
+                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Acciones</span></th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+              @for (req of institutionType?.requirements; track req.id) {
+                <tr class="hover:bg-slate-50">
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-slate-900">{{ req.name }}</div>
+                    <div class="text-xs text-slate-500 mt-1">{{ req.description }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                      {{ req.type }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-center whitespace-nowrap">
+                    @if (req.isRequired) {
+                      <span class="text-emerald-600 text-lg">✓</span>
+                    } @else {
+                      <span class="text-slate-300 text-lg">-</span>
+                    }
+                  </td>
+                  <td class="px-6 py-4 text-center whitespace-nowrap">
+                    @if (req.requiresExpiryDate) {
+                      <span class="text-amber-600 text-lg" title="Requiere vigencia">🕒</span>
+                    } @else {
+                      <span class="text-slate-300 text-lg">-</span>
+                    }
+                  </td>
+                  <td class="px-6 py-4 text-right whitespace-nowrap">
+                    <button (click)="deleteRequirement(req.id)" class="text-rose-600 hover:text-rose-900 transition-colors">
+                      <span class="sr-only">Eliminar</span>
+                      🗑
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="text-center py-12 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 mb-8">
+          <p class="text-slate-500">No hay requisitos configurados para este tipo.</p>
+        </div>
+      }
+  
+      <!-- Add Form -->
+      <div class="bg-slate-50 rounded-lg p-6 border border-slate-200">
+        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">Agregar Nuevo Requisito</h4>
+        <form [formGroup]="reqForm" (ngSubmit)="addRequirement()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div>
+              <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">
+                Nombre del Requisito <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" formControlName="name" 
+                     class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+            </div>
+            <div>
+              <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">
+                Tipo de Dato <span class="text-rose-500">*</span>
+              </label>
+              <select formControlName="type" 
+                      class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                <option value="FILE">Archivo (PDF/Img)</option>
+                <option value="TEXT">Texto Simple</option>
+                <option value="DATE">Fecha</option>
+              </select>
+            </div>
+          </div>
+  
+          <div class="mb-4">
+            <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">Descripción <span class="text-slate-400 font-normal">(Opcional)</span></label>
+            <input type="text" formControlName="description" placeholder="Ej: Certificado emitido por..." 
+                   class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+          </div>
+  
+          <div class="flex flex-wrap gap-6 mb-6">
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" formControlName="isRequired" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+              <span class="ml-2 text-sm text-slate-900">Es Obligatorio</span>
+            </label>
+            
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" formControlName="requiresExpiryDate" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+              <span class="ml-2 text-sm text-slate-900">Requiere Fecha de Vencimiento</span>
+            </label>
+          </div>
+  
+          <div class="flex justify-end">
+            <app-button variant="secondary" type="submit" [disabled]="reqForm.invalid">
+              + Agregar Requisito
+            </app-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

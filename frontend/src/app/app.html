@@ -1,0 +1,109 @@
+﻿<div class="h-screen flex bg-gray-50">
+  <!-- Sidebar -->
+  <aside class="w-sidebar bg-sidebar-bg flex flex-col h-full shadow-lg z-20 print:hidden relative">
+    <!-- Logo area -->
+    <div class="h-header flex items-center px-6">
+      <div class="flex items-center gap-3 w-full border-b border-gray-800/50 pb-4 mt-4">
+        <div class="w-8 h-8 rounded-lg bg-brand-button flex items-center justify-center text-white shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+        </div>
+        <span class="text-white font-semibold text-lg tracking-tight">Práctica Hosp.</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto py-6 px-4">
+      <div class="space-y-6">
+        <div>
+          <h3 class="px-3 text-xs font-semibold text-sidebar-text uppercase tracking-wider mb-2">Módulos</h3>
+          <ul class="space-y-1">
+            <li>
+              <a routerLink="/institutions/list" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" [routerLinkActiveOptions]="{exact: false}" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                Instituciones
+              </a>
+            </li>
+            <li>
+              <a routerLink="/clinical-services" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" [routerLinkActiveOptions]="{exact: false}" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                Servicios Clínicos
+              </a>
+            </li>
+            <li>
+              <a routerLink="/service-capacity" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" [routerLinkActiveOptions]="{exact: false}" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Capacidad Instalada
+              </a>
+            </li>
+            <li>
+              <a routerLink="/academic-programs" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" [routerLinkActiveOptions]="{exact: false}" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                Programas
+              </a>
+            </li>
+            <li>
+              <a routerLink="/rotation-schedules" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" [routerLinkActiveOptions]="{exact: false}" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z"></path></svg>
+                Programación de Rotaciones
+              </a>
+            </li>
+            <li>
+              <a routerLink="/students" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" [routerLinkActiveOptions]="{exact: false}" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                Estudiantes
+              </a>
+            </li>
+            <li>
+              <a routerLink="/teachers" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" [routerLinkActiveOptions]="{exact: false}" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                Docentes
+              </a>
+            </li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="px-3 text-xs font-semibold text-sidebar-text uppercase tracking-wider mb-2">Configuración</h3>
+          <ul class="space-y-1">
+            <li>
+              <a routerLink="/institutions/types" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Tipos de Inst.
+              </a>
+            </li>
+            <li>
+              <a routerLink="/student-types" routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium" class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group">
+                <svg class="mr-3 p-1 shrink-0 h-5 w-5 rounded-md" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Tipos de Est.
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col min-w-0 bg-white">
+    <!-- Header -->
+    <header class="h-header bg-white border-b border-gray-100 flex items-center justify-end px-6 shadow-header z-10 print:hidden shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="flex flex-col items-end">
+          <span class="text-sm font-semibold text-gray-900">Administrador</span>
+          <span class="text-xs text-gray-500">Súper Admin</span>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-brand-button flex items-center justify-center text-white font-medium text-sm">
+          AD
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 overflow-y-auto w-full bg-gray-50/30">
+      <div class="mx-auto w-full pb-12 h-full">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+  <app-toast></app-toast>
+</div>

@@ -1,0 +1,64 @@
+
+<div class="mx-auto px-4 py-8">
+  <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-900">Tipos de Institución</h1>
+      <p class="text-slate-500 mt-1">Configura los requisitos para cada tipo de entidad</p>
+    </div>
+    <app-button variant="primary" routerLink="/institutions/types/new">
+      + Crear Nuevo Tipo
+    </app-button>
+  </div>
+  
+  @if (errorMessage) {
+    <div class="mb-6 p-4 rounded-md bg-rose-50 border border-rose-200 text-rose-700">
+      {{ errorMessage }}
+    </div>
+  }
+
+  <div class="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden">
+    @if (types$ | async; as types) {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+            <tr>
+              <th class="px-6 py-4">Nombre</th>
+              <th class="px-6 py-4">Descripción</th>
+              <th class="px-6 py-4 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            @for (type of types; track type.id) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4 font-medium text-slate-900">{{ type.name }}</td>
+                <td class="px-6 py-4 max-w-md truncate">{{ type.description }}</td>
+                <td class="px-6 py-4 text-right flex justify-end gap-2">
+                  <a [routerLink]="['/institutions/types', type.id]" 
+                     class="font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                    ⚙ Configurar
+                  </a>
+                  <button (click)="deleteType(type.id)" 
+                          class="font-medium text-rose-600 hover:text-rose-800 ml-4">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="px-6 py-12 text-center text-slate-400">
+                  No hay tipos de institución creados aún.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="p-12 text-center text-slate-500">
+        <div class="animate-pulse">Cargando tipos de institución...</div>
+      </div>
+    }
+  </div>
+</div>
+
+

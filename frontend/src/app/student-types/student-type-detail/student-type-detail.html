@@ -1,0 +1,144 @@
+<div class="max-w-4xl mx-auto px-4 py-8 space-y-8">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4"> 
+    <h1 class="text-3xl font-bold text-slate-900">
+      {{ typeId === 'new' ? 'Crear Nuevo Tipo Estudiante' : 'Configurar Tipo de Estudiante' }}
+    </h1>
+    <a routerLink="/student-types" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-3 rounded border border-slate-300 text-sm">
+      ← Volver
+    </a>
+  </div>
+
+  <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">       
+    <div class="mb-6 pb-4 border-b border-slate-100">
+      <h3 class="text-lg font-semibold text-slate-900">Detalles del Tipo de Estudiante</h3>
+      <p class="text-sm text-slate-500">Información básica y nombre del grupo de estudiantes (ej. Pregrado, Residente).</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="saveType()" class="space-y-6">
+      <div>
+        <label class="block text-sm font-medium leading-6 text-slate-900 mb-2"> 
+          Nombre del Tipo <span class="text-rose-500">*</span>
+        </label>
+        <input type="text" formControlName="name"
+               class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">Descripción</label>
+        <textarea formControlName="description" rows="3"
+                  class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"></textarea>    
+      </div>
+
+      <div *ngIf="typeId === 'new'" class="flex justify-end pt-4">
+        <button type="submit" [disabled]="form.invalid" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
+          Guardar y Continuar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="typeId !== 'new'" class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">     
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+      <div>
+        <h3 class="text-lg font-semibold text-slate-900">Requisitos para Práctica</h3>
+        <p class="text-sm text-slate-500">Define los documentos obligatorios que el estudiante debe presentar (Pólizas, Vacunas, etc).</p>
+      </div>
+    </div>
+
+    <div *ngIf="studentType?.requirements?.length; else emptyRequirements" class="overflow-hidden rounded-lg border border-slate-200 mb-8">   
+      <table class="min-w-full divide-y divide-slate-200">
+        <thead class="bg-slate-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Requisito</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tipo</th>
+            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Obligatorio</th>
+            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Expira</th>
+            <th scope="col" class="relative px-6 py-3"><span class="sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-slate-200">
+          <tr *ngFor="let req of studentType?.requirements" class="hover:bg-slate-50">
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-slate-900">{{ req.name }}</div>
+              <div class="text-xs text-slate-500 mt-1">{{ req.description }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                {{ req.type }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center whitespace-nowrap">
+              <span *ngIf="req.isRequired" class="text-emerald-600 text-lg">✓</span>
+              <span *ngIf="!req.isRequired" class="text-slate-300 text-lg">-</span>
+            </td>
+            <td class="px-6 py-4 text-center whitespace-nowrap">
+              <span *ngIf="req.requiresExpiryDate" class="text-amber-600 text-lg" title="Requiere vigencia">🕒</span>
+              <span *ngIf="!req.requiresExpiryDate" class="text-slate-300 text-lg">-</span>
+            </td>
+            <td class="px-6 py-4 text-right whitespace-nowrap">
+              <button (click)="deleteRequirement(req.id!)" class="text-rose-600 hover:text-rose-900 transition-colors">
+                🗑️ Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyRequirements>
+      <div class="text-center py-12 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 mb-8">
+        <p class="text-slate-500">No hay requisitos configurados para este tipo de estudiantes.</p>
+      </div>
+    </ng-template>
+
+    <div class="bg-slate-50 rounded-lg p-6 border border-slate-200">
+      <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-4">Agregar Nuevo Requisito</h4>
+      <form [formGroup]="reqForm" (ngSubmit)="addRequirement()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+          <div>
+            <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">
+              Nombre del Documento/Requisito <span class="text-rose-500">*</span>       
+            </label>
+            <input type="text" formControlName="name" placeholder="Ej: Póliza de Responsabilidad..."
+                   class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+          </div>
+          <div>
+            <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">
+              Tipo de Dato <span class="text-rose-500">*</span>
+            </label>
+            <select formControlName="type"
+                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+              <option value="FILE">Archivo (PDF/Img preferido)</option>
+              <option value="TEXT">Texto Simple</option>
+              <option value="DATE">Fecha</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium leading-6 text-slate-900 mb-2">Descripción Adicional <span class="text-slate-400 font-normal">(Opcional)</span></label>
+          <input type="text" formControlName="description" placeholder="Instrucciones para el estudiante..."
+                 class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        </div>
+
+        <div class="flex flex-wrap gap-6 mb-6">
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" formControlName="isRequired" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600">
+            <span class="ml-2 text-sm text-slate-900">¿Es un documento Obligatorio?</span>   
+          </label>
+
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" formControlName="requiresExpiryDate" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600">
+            <span class="ml-2 text-sm text-slate-900">¿Requerir fecha de Vencimiento/Expedición?</span>
+          </label>
+        </div>
+
+        <div class="flex justify-end">
+          <button type="submit" [disabled]="reqForm.invalid" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
+            + Agregar a la lista
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

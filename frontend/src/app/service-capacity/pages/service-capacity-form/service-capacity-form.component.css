@@ -1,0 +1,23 @@
+/* Override ng-select styles to match our design system */
+    :host ::ng-deep .ng-select.block .ng-select-container {
+      border: none !important;
+      background: transparent !important;
+      min-height: auto;
+      padding: 0;
+    }
+    :host ::ng-deep .ng-select.block .ng-value-container {
+      padding: 0;
+    }
+    :host ::ng-deep .ng-select.block .ng-value {
+      background-color: #EEF2FF !important;
+      color: #3730A3 !important;
+      border: 1px solid rgba(55, 48, 163, 0.1) !important;
+      border-radius: 0.375rem !important;
+      padding: 2px 8px !important;
+      margin-right: 8px !important;
+      margin-bottom: 4px !important;
+      margin-top: 4px !important;
+    }
+    :host ::ng-deep .ng-select.block .ng-value-icon.left {
+      border-right: 1px solid rgba(55, 48, 163, 0.1) !important;
+    }

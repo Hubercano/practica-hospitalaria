@@ -1,0 +1,53 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">
+            {{ isEditMode ? 'Editar' : 'Nuevo' }} Programa Académico
+          </h2>
+          <p class="mt-1 text-sm text-slate-600">Completa el formulario para {{ isEditMode ? 'actualizar el' : 'registrar un nuevo' }} programa.</p>
+        </div>
+        <app-button variant="secondary" routerLink="/academic-programs" size="sm">
+          Volver al Listado
+        </app-button>
+      </div>
+
+      <div class="max-w-2xl">
+        <app-card>
+          <form [formGroup]="programForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+            <app-form-field label="Nombre del Programa" [required]="true" [error]="controlErrors.name">
+              <app-input formControlName="name" placeholder="Ej: Medicina, Enfermería" [error]="!!controlErrors.name"></app-input>
+            </app-form-field>
+
+            <app-form-field label="Nivel de Formacion" [required]="true" [error]="controlErrors.level">
+              <app-select formControlName="level" [options]="levelOptions" [error]="!!controlErrors.level" placeholder="Seleccione un nivel..."></app-select>
+            </app-form-field>
+
+            <app-form-field label="Institucion Educativa" [required]="true" [error]="controlErrors.institutionId">
+              <app-select formControlName="institutionId" [options]="institutionOptions()" [error]="!!controlErrors.institutionId" placeholder="Seleccione una institucion..."></app-select>
+            </app-form-field>
+
+            <app-form-field label="Anexo Técnico" hint="Documento PDF de anexo técnico correspondiente.">
+              <app-file-upload 
+                accept=".pdf" 
+                helperText="Archivo PDF hasta 10MB"
+                (fileChanged)="onFileSelected($event[0])">
+              </app-file-upload>
+              @if (programForm.get('technicalAnnex')?.value) {
+                <p class="mt-2 text-sm text-indigo-600 font-medium">Archivo actual: {{ programForm.get('technicalAnnex')?.value }}</p>
+              }
+            </app-form-field>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+              <app-button type="button" variant="secondary" routerLink="/academic-programs">
+                Cancelar
+              </app-button>
+              <app-button variant="primary" type="submit" [disabled]="programForm.invalid || isSubmitting">
+                {{ isSubmitting ? 'Guardando...' : 'Guardar Programa' }}
+              </app-button>
+            </div>
+            
+          </form>
+        </app-card>
+      </div>
+    </div>
