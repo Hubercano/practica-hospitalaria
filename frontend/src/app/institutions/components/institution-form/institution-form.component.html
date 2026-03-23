@@ -1,0 +1,43 @@
+<div class="max-w-3xl mx-auto px-8 py-8 w-full">
+  <!-- Header Modal-like -->
+  <div class="mb-6 flex flex-col justify-center">
+    <h2 class="text-xl font-bold text-slate-900 tracking-tight">Registro de Institución</h2>
+    <p class="mt-1 text-[13px] text-slate-500">Completa el formulario para registrar una nueva institución en el sistema.</p>
+  </div>
+
+  <app-card>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+
+      <app-form-field label="Nombre de la Institución" [required]="true" [error]="controlErrors.name">
+        <app-input formControlName="name"></app-input>
+      </app-form-field>
+
+      <app-form-field label="NIT" [required]="true" hint="Número de Identificación Tributaria sin dígito de verificación." [error]="controlErrors.nit">
+        <app-input formControlName="nit" placeholder="Número de Identificación Tributaria sin dígito de verificación."></app-input>
+      </app-form-field>
+
+      <app-form-field label="Correo Electrónico" [required]="true" [error]="controlErrors.email">
+        <app-input type="email" formControlName="email"></app-input>
+      </app-form-field>
+
+      <app-form-field label="Tipo de Institución" [required]="true" [error]="controlErrors.typeId">
+        <app-select formControlName="typeId" [options]="typeOptions" placeholder="Seleccionar..."></app-select>
+      </app-form-field>
+
+      <app-form-field label="Dirección Física (Opcional)">
+        <app-input formControlName="address"></app-input>
+      </app-form-field>
+
+      <div class="pt-4 flex justify-end gap-3">
+        <app-button type="button" variant="secondary" routerLink="/institutions" customClass="!rounded-xl border-slate-200 bg-white shadow-none px-6">
+          Cancelar
+        </app-button>
+        <app-button variant="primary" type="submit" [disabled]="form.invalid || isSubmitting" customClass="!rounded-xl px-6">
+          {{ isSubmitting ? 'Guardando...' : (isEdit ? 'Actualizar' : 'Registrar') + ' Institución' }}
+        </app-button>
+      </div>
+
+    </form>
+  </app-card>
+</div>
+

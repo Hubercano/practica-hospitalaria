@@ -1,0 +1,18 @@
+@import "@ng-select/ng-select/themes/default.theme.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Base Styles */
+body {
+  @apply bg-slate-50 text-slate-900 font-sans antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold tracking-tight text-slate-900;
+}
+
+button {
+  @apply cursor-pointer;
+}
+

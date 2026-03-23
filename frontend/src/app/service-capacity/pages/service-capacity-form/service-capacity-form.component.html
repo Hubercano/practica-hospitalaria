@@ -1,0 +1,102 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">
+            {{ editingId ? 'Editar' : 'Nueva' }} Capacidad Instalada
+          </h2>
+          <p class="mt-1 text-sm text-slate-600">Completa el formulario para {{ editingId ? 'actualizar la' : 'registrar una nueva' }} capacidad instalada.</p>
+        </div>
+        <app-button variant="secondary" routerLink="/service-capacity" size="sm">
+          Volver al Listado
+        </app-button>
+      </div>
+
+      <app-card>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <app-form-field label="Sede" [required]="true" [error]="controlErrors.headquarters">
+              <app-input formControlName="headquarters" placeholder="Ej: Sede Norte"></app-input>
+            </app-form-field>
+            
+            <app-form-field label="Nombre de la Sede" [required]="true" [error]="controlErrors.headquartersName">
+              <app-input formControlName="headquartersName" placeholder="Ej: Hospital Universitario"></app-input>
+            </app-form-field>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <app-form-field label="Grupo de Capacidad">
+              <app-input formControlName="capacityGroup" placeholder="Ej: Consulta Externa"></app-input>
+            </app-form-field>
+            
+            <app-form-field label="Concepto (Agrupador)">
+              <app-input formControlName="concept" placeholder="Ej: General"></app-input>
+            </app-form-field>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <app-form-field label="Cantidad de Grupo de Capacidad" [required]="true" [error]="controlErrors.capacityQuantity">
+              <app-input type="number" formControlName="capacityQuantity" placeholder="0"></app-input>
+            </app-form-field>
+          </div>
+
+          <div class="pt-6 border-t border-slate-200">
+            <app-form-field label="Servicios Habilitados" [required]="true" [error]="controlErrors.serviceIds">
+              <ng-select
+                [items]="services()"
+                bindLabel="name"
+                bindValue="id"
+                [multiple]="true"
+                formControlName="serviceIds"
+                placeholder="Escriba para buscar servicios..."
+                notFoundText="No se encontraron servicios"
+                class="block w-full border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                [ngClass]="{'ring-rose-300 focus:ring-rose-500 text-rose-900': form.get('serviceIds')?.invalid && form.get('serviceIds')?.touched}"
+              >
+                <ng-template ng-option-tmp let-item="item" let-index="index">
+                  <div class="flex flex-col">
+                    <span class="font-medium text-sm text-slate-900">{{item.name}}</span>
+                    <span class="text-xs text-slate-500">{{item.code}}</span>
+                    <span class="text-xs text-slate-500">{{item.venueName}}</span>
+                  </div>
+                </ng-template>
+              </ng-select>
+            </app-form-field>
+
+            @if (selectedServicesList().length > 0) {
+              <div class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <h4 class="text-sm font-semibold text-slate-700 mb-3">Servicios Seleccionados ({{ selectedServicesList().length }}):</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  @for(service of selectedServicesList(); track service.id) {
+                    <div class="flex justify-between items-center p-3 bg-white rounded-md border border-slate-200 shadow-sm">
+                      <div>
+                        <div class="font-medium text-sm text-slate-900">{{ service.name }}</div>
+                        <div class="text-xs text-slate-500">Codigo: {{ service.code }}</div>
+                        <div class="text-xs text-slate-500">Sede: {{ service.venueName }}</div>
+                      </div>
+                      <button type="button" (click)="removeService(service.id)" class="text-rose-600 hover:text-rose-800 p-1">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+               <p class="text-slate-500 text-sm mt-3 italic">No hay servicios seleccionados aún.</p>
+            }
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+            <app-button type="button" variant="secondary" routerLink="/service-capacity">
+              Cancelar
+            </app-button>
+            <app-button variant="primary" type="submit" [disabled]="form.invalid || isSubmitting">
+              {{ isSubmitting ? 'Guardando...' : (editingId ? 'Actualizar' : 'Crear') + ' Capacidad' }}
+            </app-button>
+          </div>
+
+        </form>
+      </app-card>
+    </div>

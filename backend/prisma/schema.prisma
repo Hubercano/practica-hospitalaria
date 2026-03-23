@@ -1,0 +1,379 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// 🛠️ ENUMS (Listas de valores fijos)
+// -----------------------------------------------------------------------------
+
+enum RequirementType {
+  FILE // Requiere subir un PDF/Imagen
+  TEXT // Un campo de texto simple
+  DATE // Una fecha
+  NUMBER // Un valor numérico
+}
+
+enum ValidationStatus {
+  PENDING // Subido pero no revisado
+  APPROVED // Revisado y aprobado
+  REJECTED // Rechazado (debe subirse de nuevo)
+  EXPIRED // Vencido por fecha
+}
+
+enum EntityState {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+// -----------------------------------------------------------------------------
+// 🏗️ MÓDULO DE PARAMETRIZACIÓN (Configuracion del sistema)
+// -----------------------------------------------------------------------------
+
+// Paso 1: Definir los tipos (Ej: Universidad, Instituto Técnico, Colegio)
+model InstitutionType {
+  id          String  @id @default(uuid())
+  name        String  @unique // Ej: "Universidad", "Sena"
+  description String?
+
+  // Relación: Un tipo tiene muchos requisitos definidos
+  requirements RequirementDefinition[]
+
+  // Relación: Un tipo tiene muchas instituciones inscritas
+  institutions Institution[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft Delete
+}
+
+// Paso 2: Definir QUÉ se pide para cada tipo (La "Plantilla")
+model RequirementDefinition {
+  id String @id @default(uuid())
+
+  institutionTypeId String
+  institutionType   InstitutionType @relation(fields: [institutionTypeId], references: [id])
+
+  name               String // Ej: "Cámara de Comercio", "Registro Calificado"
+  description        String? // Ej: "Debe ser menor a 30 días"
+  type               RequirementType // FILE, TEXT, etc.
+  isRequired         Boolean         @default(true)
+  requiresExpiryDate Boolean         @default(false) // Si true, pide fecha de vencimiento obligatoria
+
+  // Relación: Los valores entregados por las instituciones reales
+  submissions InstitutionRequirementValue[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// -----------------------------------------------------------------------------
+// 🏥 MÓDULO DE INSTITUCIONES (La realidad operativa)
+// -----------------------------------------------------------------------------
+
+// Paso 3: La Institución en sí misma
+model Institution {
+  id String @id @default(uuid())
+
+  name    String // Ej: "Universidad Nacional"
+  nit     String  @unique
+  email   String // Correo de contacto oficial
+  address String?
+
+  // Clasificación
+  typeId String
+  type   InstitutionType @relation(fields: [typeId], references: [id])
+
+  state EntityState @default(INACTIVE) // Nace inactiva hasta que cumpla requisitos
+
+  // Relación: Sus documentos y datos específicos
+  requirements InstitutionRequirementValue[]
+
+  // Relación: Programas académicos
+  programs AcademicProgram[]
+
+  // Auditoría básica
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// Paso 4: El valor/documento entregado para cumplir un requisito
+model InstitutionRequirementValue {
+  id String @id @default(uuid())
+
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  definitionId String
+  definition   RequirementDefinition @relation(fields: [definitionId], references: [id])
+
+  // El contenido
+  value String? // Si es TEXT/NUMBER guarda el valor. Si es FILE guarda la URL del S3/Storage.
+
+  // Control de Vigencia (CRÍTICO para hospitales)
+  issueDate  DateTime? // Fecha de expedición del documento
+  expiryDate DateTime? // Fecha de vencimiento (Si la definición lo pide)
+
+  // Estado de Aprobación
+  status          ValidationStatus @default(PENDING)
+  rejectionReason String? // Si se rechaza, aquí se dice por qué
+
+  // Auditoría del documento
+  reviewedBy String? // ID del usuario que aprobó/rechazó (futuro User)
+  reviewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// 🛡️ AUDITORÍA GLOBAL (Trazabilidad estricta)
+// -----------------------------------------------------------------------------
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String // CREATE, UPDATE, DELETE, APPROVE_DOC
+  entity    String // Institution, Document, etc.
+  entityId  String // ID del registro afectado
+  userId    String // Quién lo hizo
+  details   Json? // Valores anteriores vs nuevos (snapshot)
+  ipAddress String?
+  timestamp DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// 🎓 MÓDULO ACADÉMICO (Programas)
+// -----------------------------------------------------------------------------
+
+model AcademicProgram {
+  id    String @id @default(uuid())
+  name  String
+  level String // "Pregrado", "Posgrado", "Técnico", etc.
+
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+
+  technicalAnnex String? // URL to file
+
+  // Relacion 1:N con Áreas de Rotación (Ahora pertenecen al programa)
+  rotationAreas RotationArea[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// -----------------------------------------------------------------------------
+// ?? M�DULO CL�NICO (Servicios y Capacidad)
+// -----------------------------------------------------------------------------
+
+// El cat�logo maestro "Single Source of Truth"
+model ClinicalService {
+  id   String @id @default(uuid())
+  code String @unique // Cdigo o distintivo del servicio (DHSS)
+  name String // Nombre del servicio
+
+  // Nuevos campos
+  venueName     String? // Nombre de la sede prestadora
+  venueSequence Int? // Consecutivo de la sede
+  venueCode     String? // Código de la sede
+
+  description String?
+  isActive    Boolean @default(true)
+
+  // Relaciones
+  capacities ServiceCapacity[]
+
+  // Relación implicita M:N con Áreas de Rotación (servicios asociados a áreas)
+  rotationAreas RotationArea[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// �reas de Rotaci�n (Agrupaci�n l�gica de servicios para pr�cticas)
+model RotationArea {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+
+  durationWeeks Int @default(0)
+  maxStudents   Int @default(0)
+
+  programId String?
+  program   AcademicProgram? @relation(fields: [programId], references: [id])
+
+  // Servicios asociados a esta área (M:N)
+  services ClinicalService[]
+
+  // Almacena los ids de servicios seleccionados (arreglo de strings)
+  serviceIds String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Programación de Rotaciones: vincula institución, programa, área, docentes y estudiantes
+model RotationSchedule {
+  id String @id @default(uuid())
+
+  institutionId String?
+  programId     String?
+  areaId        String?
+
+  // Guardamos arrays de IDs para docentes y estudiantes para evitar cambios estructurales profundos
+  teacherIds String[] @default([])
+  studentIds String[] @default([])
+
+  startDate DateTime
+  endDate   DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Capacidad Instalada (Definición de recursos por sede y servicios)
+model ServiceCapacity {
+  id String @id @default(uuid())
+
+  // Nuevos campos solicitados con default temporal para migración
+  headquarters     String  @default("") // Sede
+  headquartersName String  @default("") // Nombre de la Sede
+  capacityGroup    String? // Grupo de capacidad
+  concept          String? // Concepto (agrupador)
+  distinctiveCode  String? // Código de distintivo
+  capacityQuantity Int     @default(0) // Cantidad de grupo de capacidad
+
+  // Relación Muchos a Muchos con Servicios (Implicit M-N)
+  services ClinicalService[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+// -----------------------------------------------------------------------------
+// 👨‍🎓 MÓDULO DE ESTUDIANTES (Gestión y Tipos)
+// -----------------------------------------------------------------------------
+
+// Paso 1: Tipos de Estudiante (Ej: Pregrado, Posgrado, Técnico, Especialización)
+model StudentType {
+  id          String  @id @default(uuid())
+  name        String  @unique // Ej: "Estudiante de Pregrado", "Residente"
+  description String?
+
+  // Relación: Un tipo tiene muchos requisitos definidos (documentos de práctica)
+  requirements StudentRequirementDefinition[]
+
+  // Relación: Un tipo tiene muchos estudiantes
+  students Student[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? 
+}
+
+// Paso 2: Requisitos de práctica por Tipo de Estudiante (La "Plantilla")
+model StudentRequirementDefinition {
+  id String @id @default(uuid())
+
+  studentTypeId String
+  studentType   StudentType @relation(fields: [studentTypeId], references: [id])
+
+  name               String // Ej: "Carné de Vacunas", "Póliza de Responsabilidad"
+  description        String? 
+  type               RequirementType // Mismo enum FILE, TEXT, etc.
+  isRequired         Boolean         @default(true)
+  requiresExpiryDate Boolean         @default(false) 
+
+  // Relación: Los documentos entregados por los estudiantes
+  submissions StudentRequirementValue[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// Paso 3: El Estudiante
+model Student {
+  id String @id @default(uuid())
+
+  firstName    String 
+  lastName     String 
+  documentType String // Ej: "CC", "CE", "TI", "Pasaporte"
+  document     String  @unique // Número de documento
+  email        String  @unique
+  phone        String?
+
+  // Clasificación
+  typeId String
+  type   StudentType @relation(fields: [typeId], references: [id])
+
+  state EntityState @default(INACTIVE) 
+
+  // Relación: Sus documentos/requisitos de práctica entregados
+  requirements StudentRequirementValue[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// Paso 4: El valor/documento entregado por el Estudiante
+model StudentRequirementValue {
+  id String @id @default(uuid())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  definitionId String
+  definition   StudentRequirementDefinition @relation(fields: [definitionId], references: [id])
+
+  // El contenido
+  value String? 
+
+  // Control de Vigencia
+  issueDate  DateTime? 
+  expiryDate DateTime? 
+
+  // Estado de Aprobación
+  status          ValidationStatus @default(PENDING)
+  rejectionReason String? 
+
+  // Auditoría
+  reviewedBy String? 
+  reviewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+// -----------------------------------------------------------------------------
+// 👨‍🏫 MÓDULO DE DOCENTES
+// -----------------------------------------------------------------------------
+model Teacher {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  documentType String
+  document  String   @unique
+  phone     String?
+  email     String   @unique
+
+  supervisionType String 
+  contractType    String 
+
+  cvFile                 String?
+  dataAuthorizationFile  String?
+  conflictOfInterestFile String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}

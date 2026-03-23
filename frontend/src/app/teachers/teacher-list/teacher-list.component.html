@@ -1,0 +1,17 @@
+﻿<div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Docentes</h1>
+      <p class="mt-1 text-[13px] text-slate-500">Gestione los docentes registrados en la plataforma y sus expedientes.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <app-button variant="primary" routerLink="/teachers/new">
+        + Registrar Docente
+      </app-button>
+    </div>
+  </div>
+
+  <app-card [padding]="false">
+    <app-table [data]="teachers()" [columns]="columns" (edit)="editTeacher($event)" (delete)="deleteTeacher($event.id)"></app-table>
+  </app-card>
+</div>

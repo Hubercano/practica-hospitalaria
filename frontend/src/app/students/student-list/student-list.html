@@ -1,0 +1,22 @@
+﻿<div class="px-4 sm:px-6 lg:px-8 py-8">
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Estudiantes</h1>
+      <p class="mt-2 text-sm text-gray-700">
+        Gestión del padrón de estudiantes de medicina.
+      </p>
+    </div>
+    <div class="mt-4 sm:mt-0">
+      <app-button routerLink="/students/new" variant="primary">
+        Nuevo Estudiante
+      </app-button>
+    </div>
+  </div>
+
+  <!-- Binding signal con () en lugar de variable convencional -->
+  <app-table
+    [data]="students()"
+    [columns]="studentsColumns"
+    (onEdit)="onEdit($event)"
+    (onDelete)="onDelete($event)"></app-table>
+</div>

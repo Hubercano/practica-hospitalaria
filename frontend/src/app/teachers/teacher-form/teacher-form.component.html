@@ -1,0 +1,127 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900">
+        {{ isEditMode ? 'Editar' : 'Nuevo' }} Docente
+      </h2>
+      <p class="mt-1 text-sm text-slate-600">Completa el formulario para registrar la información del docente.</p>
+    </div>
+    <app-button variant="secondary" routerLink="/teachers" size="sm">
+      Volver al Listado
+    </app-button>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+    
+    <div class="xl:col-span-2">
+      <app-card>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <app-form-field label="Nombres" [required]="true" [error]="controlErrors.firstName">
+              <app-input formControlName="firstName" placeholder="Ej. Juan Carlos"></app-input>
+            </app-form-field>
+            
+            <app-form-field label="Apellidos" [required]="true" [error]="controlErrors.lastName">
+              <app-input formControlName="lastName" placeholder="Ej. Pérez Gómez"></app-input>
+            </app-form-field>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <app-form-field label="Tipo de Documento" [required]="true">
+              <app-select formControlName="documentType" [options]="documentTypeOptions"></app-select>
+            </app-form-field>
+            
+            <app-form-field label="Número de Documento" [required]="true" [error]="controlErrors.document">
+              <app-input formControlName="document" placeholder="Ej. 1020304050"></app-input>
+            </app-form-field>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <app-form-field label="Correo Electrónico" [required]="true" [error]="controlErrors.email">
+              <app-input type="email" formControlName="email" placeholder="docente@ejemplo.com"></app-input>
+            </app-form-field>
+
+            <app-form-field label="Teléfono / Celular">
+              <app-input formControlName="phone" placeholder="Ej. 3001234567"></app-input>
+            </app-form-field>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <app-form-field label="Tipo de Supervisión" [required]="true">
+              <app-select formControlName="supervisionType" [options]="supervisionOptions"></app-select>
+            </app-form-field>
+
+            <app-form-field label="Tipo de Contratación" [required]="true">
+              <app-select formControlName="contractType" [options]="contractOptions"></app-select>
+            </app-form-field>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+            <app-button type="button" variant="secondary" routerLink="/teachers">
+              Cancelar
+            </app-button>
+            <app-button variant="primary" type="submit" [disabled]="form.invalid || isSubmitting">
+              {{ isSubmitting ? 'Guardando...' : 'Guardar Docente' }}
+            </app-button>
+          </div>
+
+        </form>
+      </app-card>
+    </div>
+
+    <!-- Documents / Files side panel -->
+    <div class="xl:col-span-1 space-y-6">
+      
+      <app-card headerText="Hoja de Vida">
+        <app-file-upload 
+          accept=".pdf" 
+          helperText="Archivo PDF"
+          (fileChanged)="onFileSelected($event[0], 'cvFile')">
+        </app-file-upload>
+        @if (isEditMode && teacherData?.cvFile) {
+          <div class="mt-4 flex items-center justify-between p-3 bg-indigo-50 rounded border border-indigo-100">
+            <a [href]="'http://localhost:3000' + teacherData?.cvFile" target="_blank" class="text-sm font-medium text-indigo-700 hover:underline flex items-center gap-2">
+              Ver documento actual
+            </a>
+            <button type="button" (click)="deleteFile('cvFile')" class="text-xs font-semibold text-rose-600 hover:text-rose-800">Eliminar</button>
+          </div>
+        }
+      </app-card>
+
+      <app-card headerText="Consentimiento de Datos">
+        <app-file-upload 
+          accept=".pdf" 
+          helperText="Archivo PDF"
+          (fileChanged)="onFileSelected($event[0], 'dataAuthorizationFile')">
+        </app-file-upload>
+        @if (isEditMode && teacherData?.dataAuthorizationFile) {
+          <div class="mt-4 flex items-center justify-between p-3 bg-indigo-50 rounded border border-indigo-100">
+            <a [href]="'http://localhost:3000' + teacherData?.dataAuthorizationFile" target="_blank" class="text-sm font-medium text-indigo-700 hover:underline flex items-center gap-2">
+              Ver documento actual
+            </a>
+            <button type="button" (click)="deleteFile('dataAuthorizationFile')" class="text-xs font-semibold text-rose-600 hover:text-rose-800">Eliminar</button>
+          </div>
+        }
+      </app-card>
+
+      <app-card headerText="Conflictos de Interés">
+        <app-file-upload 
+          accept=".pdf" 
+          helperText="Archivo PDF"
+          (fileChanged)="onFileSelected($event[0], 'conflictOfInterestFile')">
+        </app-file-upload>
+        @if (isEditMode && teacherData?.conflictOfInterestFile) {
+          <div class="mt-4 flex items-center justify-between p-3 bg-indigo-50 rounded border border-indigo-100">
+            <a [href]="'http://localhost:3000' + teacherData?.conflictOfInterestFile" target="_blank" class="text-sm font-medium text-indigo-700 hover:underline flex items-center gap-2">
+              Ver documento actual
+            </a>
+            <button type="button" (click)="deleteFile('conflictOfInterestFile')" class="text-xs font-semibold text-rose-600 hover:text-rose-800">Eliminar</button>
+          </div>
+        }
+      </app-card>
+
+    </div>
+  </div>
+</div>
+

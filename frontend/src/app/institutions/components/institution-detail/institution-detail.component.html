@@ -1,0 +1,212 @@
+
+@if (institution) {
+  <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <!-- Page Header & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">{{ institution.name }}</h1>
+        <p class="text-slate-500 mt-1">Gestión de documentos y requisitos.</p>
+      </div>
+      <app-button variant="secondary" routerLink="/institutions/list" size="sm">
+        ← Volver
+      </app-button>
+    </div>
+
+    <!-- Institution Info Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <h3 class="text-lg font-semibold text-slate-900 mb-4">Información de la Institución</h3>
+      <div class="flex flex-wrap gap-x-8 gap-y-4 text-sm text-slate-500">
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">NIT</span>
+          <span class="text-slate-900 font-medium">{{ institution.nit }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tipo</span>
+          <span class="text-slate-900 font-medium">{{ institution.type.name }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Contacto</span>
+          <a href="mailto:{{ institution.email }}" class="text-blue-600 hover:text-blue-700 hover:underline font-medium">{{ institution.email }}</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requirements List -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <div class="mb-6 border-b border-slate-100 pb-4">
+        <h3 class="text-lg font-semibold text-slate-900">Lista de Chequeo de Documentos</h3>
+        <p class="text-sm text-slate-500 mt-1">
+          Gestione los documentos requeridos para su institución.
+        </p>
+      </div>
+
+      @if (!institution.requirements || institution.requirements.length === 0) {
+        <div class="text-center py-12 px-4 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
+          <p class="text-slate-500">No se han asignado requisitos a esta institución aún.</p>
+        </div>
+      }
+
+      <div class="space-y-4">
+        @for (req of institution.requirements; track req.id) {
+          <div class="border border-slate-200 rounded-lg p-5 transition-all hover:bg-slate-50/30">
+            
+            <!-- Requirement Header Info -->
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-start mb-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h4 class="text-base font-medium text-slate-900">
+                    {{ req.definition?.name || 'Requisito sin nombre' }}
+                  </h4>
+                  @if (req.definition?.isRequired) {
+                    <span class="text-rose-500 font-bold" title="Obligatorio">*</span>
+                  }
+                  
+                  <!-- Status Badges -->
+                  @switch(req.status) {
+                    @case('APPROVED') {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+                        Aprobado
+                      </span>
+                    }
+                    @case('REJECTED') {
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800">
+                        Rechazado
+                      </span>
+                    }
+                    @case('PENDIENTE') {
+                      <!-- Only show pending badge if it has a value, otherwise it's just 'empty' -->
+                      @if(req.value) {
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                          Pendiente de Revisión
+                        </span>
+                      }
+                    }
+                  }
+
+                  @if (req.definition?.requiresExpiryDate) {
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                      <span>📅</span> Requiere vigencia
+                    </span>
+                  }
+                </div>
+                
+                <p class="text-sm text-slate-600 mt-1">{{ req.definition?.description }}</p>
+
+                @if (req.status === 'REJECTED') {
+                  <div class="bg-rose-50 text-rose-700 text-sm p-3 rounded-md border border-rose-100 mt-2">
+                    <strong>Motivo de rechazo:</strong> {{ req.rejectionReason }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Content Area: View Mode vs Edit Mode -->
+            @if (req.value && !editingReqs.has(req.id)) {
+              <!-- VIEW MODE: Summary Card -->
+              <div class="bg-slate-50 border border-slate-200 rounded-md p-3 flex items-center justify-between group">
+                <div class="flex items-center gap-3 overflow-hidden">
+                  <div class="bg-white p-2 rounded border border-slate-200 text-xl">
+                    {{ req.definition.type === 'FILE' ? '📄' : '📝' }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-slate-900 truncate" title="{{ req.value }}">
+                      {{ req.value }}
+                    </p>
+                    @if(req.expiryDate) {
+                      <p class="text-xs text-slate-500 flex items-center gap-1">
+                        <span class="text-slate-400">Vence:</span> {{ req.expiryDate | date:'mediumDate' }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                   <button (click)="downloadFile(req)" 
+                           class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" 
+                           title="Ver documento">
+                     <span class="sr-only">Ver</span>
+                     👁️
+                   </button>
+                   
+                   @if (req.status !== 'APPROVED') {
+                     <button (click)="toggleEdit(req.id)" 
+                             class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors" 
+                             title="Reemplazar">
+                       <span class="sr-only">Reemplazar</span>
+                       🔄
+                     </button>
+                     <button (click)="deleteRequirementValue(req)" 
+                             class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors" 
+                             title="Eliminar">
+                       <span class="sr-only">Eliminar</span>
+                       🗑️
+                     </button>
+                   }
+                </div>
+              </div>
+
+            } @else {
+              <!-- EDIT MODE: Form -->
+              <!-- Using a reliable way to get form from map in template without 'as' variable which can be tricky in some angular versions if not strict -->
+              @if (reqForms.get(req.id)) {
+                <form [formGroup]="reqForms.get(req.id)!" (ngSubmit)="saveRequirement(req)">
+                  <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                    
+                    <!-- File Input -->
+                    <div class="flex-1 w-full">
+                      @if (req.definition.type === 'FILE') {
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Seleccionar Archivo</label>
+                        <input type="file" (change)="onFileSelected($event, req.id)" 
+                              class="block w-full text-sm text-slate-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-50 file:text-blue-700
+                                hover:file:bg-blue-100
+                                cursor-pointer bg-slate-50 rounded-md border border-slate-200">
+                      } @else if (req.definition.type === 'TEXT') {
+                         <label class="block text-xs font-medium text-slate-700 mb-1">Respuesta de Texto</label>
+                         <input type="text" formControlName="value" placeholder="Escriba aquí..."
+                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                      } @else if (req.definition.type === 'DATE') {
+                         <label class="block text-xs font-medium text-slate-700 mb-1">Seleccionar Fecha</label>
+                         <input type="date" formControlName="value" 
+                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                      }
+                    </div>
+
+                    <!-- Expiry Date Input (Side by side) -->
+                    @if (req.definition.requiresExpiryDate) {
+                      <div class="w-full sm:w-48">
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Fecha Vencimiento <span class="text-rose-500">*</span></label>
+                        <input type="date" formControlName="expiryDate" 
+                               class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                      </div>
+                    }
+
+                    <!-- Actions -->
+                    <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
+                      @if (req.value) { <!-- Editing existing -->
+                        <app-button variant="secondary" size="sm" type="button" (click)="toggleEdit(req.id)">
+                          Cancelar
+                        </app-button>
+                      }
+                      
+                      <!-- Save button only active if dirty/valid -->
+                      <app-button variant="primary" size="sm" type="submit" 
+                        [disabled]="reqForms.get(req.id)!.invalid || reqForms.get(req.id)!.pristine">
+                        Guardar
+                      </app-button>
+                    </div>
+                  </div>
+                </form>
+              }
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+}
+

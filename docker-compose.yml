@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: hospital_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password_seguro_123 # Cambiar en producción
+      POSTGRES_DB: practicas_hospitalarias
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hospital_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: hospital_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@hospital.com
+      PGADMIN_DEFAULT_PASSWORD: admin # Cambiar en producción
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - hospital_network
+
+volumes:
+  postgres_data:
+
+networks:
+  hospital_network:
+    driver: bridge

@@ -1,0 +1,61 @@
+
+<div style="padding: 20px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1>Instituciones Registradas</h1>
+    <button routerLink="/institutions/register" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      + Registrar Nueva Institución
+    </button>
+  </div>
+
+  <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <thead>
+      <tr style="background: #f8f9fa; text-align: left;">
+        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">Nombre</th>
+        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">NIT</th>
+        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">Tipo</th>
+        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">Progreso</th>
+        <th style="padding: 12px; border-bottom: 2px solid #dee2e6;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (inst of institutions; track inst.id) {
+        <tr style="border-bottom: 1px solid #dee2e6;">
+          <td style="padding: 12px;">{{ inst.name }}</td>
+          <td style="padding: 12px;">{{ inst.nit }}</td>
+          <td style="padding: 12px;">
+            <span style="background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">
+              {{ inst.type.name }}
+            </span>
+          </td>
+          <td style="padding: 12px;">
+            @if (inst.stats) {
+              <div style="display: flex; align-items: center;">
+                <div style="flex-grow: 1; height: 8px; background: #e9ecef; border-radius: 4px; margin-right: 8px; position: relative; width: 80px;">
+                  <div [style.width.%]="inst.stats.percentage" 
+                       [style.background]="inst.stats.percentage === 100 ? '#28a745' : '#ffc107'"
+                       style="height: 100%; border-radius: 4px;">
+                  </div>
+                </div>
+                <span style="font-size: 0.85em; font-weight: bold; color: #555;">{{ inst.stats.percentage }}%</span>
+              </div>
+              <div style="font-size: 0.7em; color: #6c757d; margin-top: 2px;">
+                {{ inst.stats.approved }} de {{ inst.stats.total }} aprobados
+              </div>
+            } @else {
+              <span style="color: #6c757d; font-size: 0.9em;">-</span>
+            }
+          </td>
+          <td style="padding: 12px;">
+            <a [routerLink]="['/institutions', inst.id]" style="color: #007bff; text-decoration: none; font-weight: bold;">
+              📂 Revisar
+            </a>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="5" style="padding: 20px; text-align: center; color: #6c757d;">No hay instituciones registradas.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
