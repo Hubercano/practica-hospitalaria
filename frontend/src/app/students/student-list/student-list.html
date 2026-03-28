@@ -7,14 +7,63 @@
       </p>
     </div>
     <div class="mt-4 sm:mt-0 flex items-center gap-3">
-      <app-button variant="secondary" (click)="openUploadModal()">
-        Carga Masiva
+      <app-button variant="secondary" (click)="toggleFiltersPanel()" customClass="!rounded-xl border-slate-200">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L14 13.5V19a1 1 0 01-1.447.894l-2-1A1 1 0 0110 18v-4.5L3.2 4.6A1 1 0 013 4z"></path></svg>
+        {{ showFilters ? 'Ocultar Filtros' : 'Filtros' }}
       </app-button>
-      <app-button routerLink="/students/new" variant="primary">
-        Nuevo Estudiante
-      </app-button>
+      <app-button variant="secondary" (click)="openUploadModal()">Carga Masiva</app-button>
+      <app-button routerLink="/students/new" variant="primary">Nuevo Estudiante</app-button>
     </div>
   </div>
+
+  @if (showFilters) {
+    <div class="mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm p-4 md:p-5">
+      <form [formGroup]="filtersForm" class="space-y-4" (ngSubmit)="applyFilters()">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Documento</label>
+            <input type="text" formControlName="document" placeholder="Buscar por documento" class="block w-full rounded-lg border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Nombre</label>
+            <input type="text" formControlName="name" placeholder="Buscar por nombre" class="block w-full rounded-lg border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Correo</label>
+            <input type="text" formControlName="email" placeholder="Buscar por correo" class="block w-full rounded-lg border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Institución</label>
+            <ng-select [items]="institutionOptions" [multiple]="true" [closeOnSelect]="false" [searchable]="true" [clearable]="true" [hideSelected]="true" placeholder="Todas" formControlName="institutions" class="w-full filter-ng-select"></ng-select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Tipo</label>
+            <ng-select [items]="typeOptions" [multiple]="true" [closeOnSelect]="false" [searchable]="true" [clearable]="true" [hideSelected]="true" placeholder="Todos" formControlName="types" class="w-full filter-ng-select"></ng-select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Estado Requisitos</label>
+            <ng-select [items]="statusOptions" [multiple]="true" [closeOnSelect]="false" [searchable]="true" [clearable]="true" [hideSelected]="true" placeholder="Todos" formControlName="statuses" class="w-full filter-ng-select"></ng-select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Estado</label>
+            <ng-select [items]="stateOptions" bindLabel="label" bindValue="value" [multiple]="true" [closeOnSelect]="false" [searchable]="false" [clearable]="true" [hideSelected]="true" placeholder="Todos" formControlName="states" class="w-full filter-ng-select"></ng-select>
+          </div>
+        </div>
+
+        <app-filter-chips [chips]="activeChips" (removeChip)="removeChip($event)"></app-filter-chips>
+
+        <div class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <app-button type="button" variant="secondary" (click)="exportCurrentTableData()" customClass="!rounded-xl border-slate-200 shrink-0">Exportar datos</app-button>
+          </div>
+          <div class="flex items-center justify-end gap-3 flex-wrap">
+            <app-button type="button" variant="secondary" (click)="clearFilters()" customClass="!rounded-xl border-slate-200">Limpiar filtros</app-button>
+            <app-button type="submit" variant="primary" customClass="!rounded-xl">Filtrar</app-button>
+          </div>
+        </div>
+      </form>
+    </div>
+  }
 
     <div class="overflow-x-auto w-full bg-white rounded-card shadow-card border border-gray-100">
       <table class="w-full text-left text-sm text-gray-600">

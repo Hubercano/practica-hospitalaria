@@ -1,31 +1,119 @@
-﻿import { Component, OnInit, inject, signal } from '@angular/core';
+﻿import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { StudentsService } from '../students.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { FileUploadComponent } from '../../shared/ui/file-upload/file-upload.component';
+import { exportToExcel } from '../../shared/utils/excel-export.util';
+import { FilterChipsComponent, FilterChip } from '../../shared/ui/filter-chips/filter-chips.component';
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonComponent, ModalComponent, FileUploadComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, NgSelectModule, ButtonComponent, ModalComponent, FileUploadComponent, FilterChipsComponent],
   templateUrl: './student-list.html',
   styleUrls: ['./student-list.css']
 })
 export class StudentList implements OnInit {
-  // Use signal instead of plain array to work with Angular 19 Reactivity
   students = signal<any[]>([]);
+  allStudents: any[] = [];
+
+  showFilters = false;
+  filtersForm: FormGroup;
+  institutionOptions: string[] = [];
+  typeOptions: string[] = [];
+  statusOptions: string[] = [];
+  stateOptions = [
+    { label: 'Activo', value: 'ACTIVE' },
+    { label: 'Inactivo', value: 'INACTIVE' }
+  ];
 
   private studentsService = inject(StudentsService);
   private router = inject(Router);
   private ns = inject(NotificationService);
+  private fb = inject(FormBuilder);
+  private cdr = inject(ChangeDetectorRef);
 
   showUploadModal = false;
   isUploading = false;
   uploadResult: any = null;
   selectedFile: File | null = null;
+
+  constructor() {
+    this.filtersForm = this.fb.group({
+      document: [''],
+      name: [''],
+      email: [''],
+      institutions: [[]],
+      types: [[]],
+      statuses: [[]],
+      states: [[]]
+    });
+  }
+
+  get activeChips(): FilterChip[] {
+    const chips: FilterChip[] = [];
+    const f = this.filtersForm.value;
+    (f.institutions || []).forEach((v: string) => chips.push({ id: `inst-${v}`, controlName: 'institutions', label: v, value: v, fieldLabel: 'Institución' }));
+    (f.types || []).forEach((v: string) => chips.push({ id: `type-${v}`, controlName: 'types', label: v, value: v, fieldLabel: 'Tipo' }));
+    (f.statuses || []).forEach((v: string) => chips.push({ id: `status-${v}`, controlName: 'statuses', label: v, value: v, fieldLabel: 'Estado Req.' }));
+    (f.states || []).forEach((v: string) => {
+      const label = this.stateOptions.find(o => o.value === v)?.label ?? v;
+      chips.push({ id: `state-${v}`, controlName: 'states', label, value: v, fieldLabel: 'Estado' });
+    });
+    return chips;
+  }
+
+  removeChip(chip: FilterChip): void {
+    const ctrl = this.filtersForm.get(chip.controlName);
+    if (ctrl) { ctrl.setValue((ctrl.value || []).filter((v: any) => v !== chip.value)); this.applyFilters(); }
+  }
+
+  toggleFiltersPanel() { this.showFilters = !this.showFilters; }
+
+  applyFilters() {
+    const f = this.filtersForm.value;
+    const doc = (f.document || '').trim().toLowerCase();
+    const name = (f.name || '').trim().toLowerCase();
+    const email = (f.email || '').trim().toLowerCase();
+    const institutions: string[] = f.institutions || [];
+    const types: string[] = f.types || [];
+    const statuses: string[] = f.statuses || [];
+    const states: string[] = f.states || [];
+
+    this.students.set(this.allStudents.filter(item => {
+      return (!doc || String(item.document || '').toLowerCase().includes(doc))
+        && (!name || (item.name || '').toLowerCase().includes(name))
+        && (!email || (item.email || '').toLowerCase().includes(email))
+        && (!institutions.length || institutions.includes(item.institutionName))
+        && (!types.length || types.includes(item.studentType))
+        && (!statuses.length || statuses.includes(item.status))
+        && (!states.length || states.includes(item.state));
+    }));
+  }
+
+  clearFilters() {
+    this.filtersForm.reset({ document: '', name: '', email: '', institutions: [], types: [], statuses: [], states: [] });
+    this.students.set([...this.allStudents]);
+  }
+
+  async exportCurrentTableData() {
+    const rows = this.students();
+    if (!rows.length) { this.ns.error('No hay datos para exportar.'); return; }
+    await exportToExcel(rows.map(item => ({
+      'Documento': item.document ?? '',
+      'Nombre': item.name ?? '',
+      'Correo': item.email ?? '',
+      'Institución': item.institutionName ?? '',
+      'Tipo': item.studentType ?? '',
+      'Estado Requisitos': item.status ?? '',
+      'Estado': item.stateLabel ?? ''
+    })), 'estudiantes', 'Estudiantes');
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -36,13 +124,12 @@ export class StudentList implements OnInit {
       next: (data) => {
         const rawData = Array.isArray(data) ? data : [];
         
-        // Map backend schema to match table columns
         const mappedData = rawData.map((s: any) => {
            const firstName = s.firstName ? s.firstName : '';
            const lastName = s.lastName ? s.lastName : '';
            return {
               ...s,
-              name: firstName + ' ' + lastName, // Avoid PS string escaping issues
+              name: firstName + ' ' + lastName,
               institutionName: s.institution?.name || '-',
               studentType: s.type ? s.type.name : '-',
               status: s.status || 'PENDIENTE',
@@ -50,7 +137,12 @@ export class StudentList implements OnInit {
            };
         });
         
+        this.allStudents = mappedData;
+        this.institutionOptions = Array.from(new Set(mappedData.map((s: any) => s.institutionName).filter((v: any) => !!v && v !== '-'))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
+        this.typeOptions = Array.from(new Set(mappedData.map((s: any) => s.studentType).filter((v: any) => !!v && v !== '-'))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
+        this.statusOptions = Array.from(new Set(mappedData.map((s: any) => s.status).filter(Boolean))) as string[];
         this.students.set(mappedData);
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error fetching students', err)
     });

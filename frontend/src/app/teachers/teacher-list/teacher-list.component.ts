@@ -1,30 +1,111 @@
-﻿import { Component, OnInit, signal } from '@angular/core';
+﻿import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { TeacherService, Teacher } from '../teacher.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { CardComponent } from '../../shared/ui/card/card.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { FileUploadComponent } from '../../shared/ui/file-upload/file-upload.component';
+import { exportToExcel } from '../../shared/utils/excel-export.util';
+import { FilterChipsComponent, FilterChip } from '../../shared/ui/filter-chips/filter-chips.component';
 
 @Component({
   selector: 'app-teacher-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonComponent, CardComponent, ModalComponent, FileUploadComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, NgSelectModule, ButtonComponent, CardComponent, ModalComponent, FileUploadComponent, FilterChipsComponent],
   templateUrl: './teacher-list.component.html'
 })
 export class TeacherListComponent implements OnInit {
-  // Fix reactivity by using Signals
   teachers = signal<any[]>([]);
+  allTeachers: any[] = [];
+
+  showFilters = false;
+  filtersForm: FormGroup;
+  supervisionOptions: string[] = [];
+  contractOptions: string[] = [];
+  stateOptions = [
+    { label: 'Activo', value: 'ACTIVE' },
+    { label: 'Inactivo', value: 'INACTIVE' }
+  ];
 
   showUploadModal = false;
   isUploading = false;
   uploadResult: any = null;
   selectedFile: File | null = null;
 
+  constructor(private teacherService: TeacherService, private fb: FormBuilder, private router: Router, private cdr: ChangeDetectorRef, private ns: NotificationService) {
+    this.filtersForm = this.fb.group({
+      fullName: [''],
+      document: [''],
+      email: [''],
+      phone: [''],
+      supervisions: [[]],
+      contracts: [[]],
+      states: [[]]
+    });
+  }
 
-  constructor(private teacherService: TeacherService, private router: Router, private ns: NotificationService) {}
+  get activeChips(): FilterChip[] {
+    const chips: FilterChip[] = [];
+    const f = this.filtersForm.value;
+    (f.supervisions || []).forEach((v: string) => chips.push({ id: `sv-${v}`, controlName: 'supervisions', label: v, value: v, fieldLabel: 'Supervisión' }));
+    (f.contracts || []).forEach((v: string) => chips.push({ id: `ct-${v}`, controlName: 'contracts', label: v, value: v, fieldLabel: 'Contratación' }));
+    (f.states || []).forEach((v: string) => {
+      const label = this.stateOptions.find(o => o.value === v)?.label ?? v;
+      chips.push({ id: `st-${v}`, controlName: 'states', label, value: v, fieldLabel: 'Estado' });
+    });
+    return chips;
+  }
+
+  removeChip(chip: FilterChip): void {
+    const ctrl = this.filtersForm.get(chip.controlName);
+    if (ctrl) { ctrl.setValue((ctrl.value || []).filter((v: any) => v !== chip.value)); this.applyFilters(); }
+  }
+
+  toggleFiltersPanel() { this.showFilters = !this.showFilters; }
+
+  applyFilters() {
+    const f = this.filtersForm.value;
+    const name = (f.fullName || '').trim().toLowerCase();
+    const doc = (f.document || '').trim().toLowerCase();
+    const email = (f.email || '').trim().toLowerCase();
+    const phone = (f.phone || '').trim().toLowerCase();
+    const supervisions: string[] = f.supervisions || [];
+    const contracts: string[] = f.contracts || [];
+    const states: string[] = f.states || [];
+
+    this.teachers.set(this.allTeachers.filter(t => {
+      return (!name || (t.fullName || '').toLowerCase().includes(name))
+        && (!doc || (t.documentInfo || '').toLowerCase().includes(doc))
+        && (!email || (t.email || '').toLowerCase().includes(email))
+        && (!phone || String(t.phone || '').toLowerCase().includes(phone))
+        && (!supervisions.length || supervisions.includes(t.supervisionType))
+        && (!contracts.length || contracts.includes(t.contractType))
+        && (!states.length || states.includes(t.state));
+    }));
+  }
+
+  clearFilters() {
+    this.filtersForm.reset({ fullName: '', document: '', email: '', phone: '', supervisions: [], contracts: [], states: [] });
+    this.teachers.set([...this.allTeachers]);
+  }
+
+  async exportCurrentTableData() {
+    const rows = this.teachers();
+    if (!rows.length) { this.ns.error('No hay datos para exportar.'); return; }
+    await exportToExcel(rows.map(t => ({
+      'Nombre Completo': t.fullName ?? '',
+      'Documento': t.documentInfo ?? '',
+      'Correo': t.email ?? '',
+      'Celular': t.phone ?? '',
+      'Supervisión': t.supervisionType ?? '',
+      'Contratación': t.contractType ?? '',
+      'Estado': t.state === 'ACTIVE' ? 'Activo' : 'Inactivo'
+    })), 'docentes', 'Docentes');
+  }
 
   ngOnInit(): void {
     this.loadTeachers();
@@ -62,7 +143,11 @@ export class TeacherListComponent implements OnInit {
           };
         });
 
+        this.allTeachers = mappedData;
+        this.supervisionOptions = Array.from(new Set(mappedData.map((t: any) => t.supervisionType).filter((v: any) => !!v && v !== '-'))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
+        this.contractOptions = Array.from(new Set(mappedData.map((t: any) => t.contractType).filter((v: any) => !!v && v !== '-'))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
         this.teachers.set(mappedData);
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error fetching teachers', err)
     });

@@ -74,29 +74,83 @@ input[type='radio'] {
   padding: 0;
 }
 
-/* Ng-select harmonization */
+/* Ng-select harmonization — visually identical to <input> */
 .ng-select .ng-select-container {
+  height: var(--ui-field-height) !important;
   min-height: var(--ui-field-height) !important;
   background: var(--ui-field-bg) !important;
   border: 1px solid var(--ui-field-border) !important;
   border-radius: var(--ui-field-radius) !important;
   box-shadow: none !important;
   font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  color: var(--ui-field-text) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  cursor: default;
+  align-items: center !important;
 }
 
 .ng-select.ng-select-focused .ng-select-container {
   background: var(--ui-field-bg-focus) !important;
   border-color: var(--ui-focus) !important;
   box-shadow: 0 0 0 3px rgba(92, 77, 255, 0.15) !important;
+  outline: none !important;
 }
 
 .ng-select .ng-select-container .ng-value-container {
-  padding-left: 0.625rem !important;
-  padding-right: 0.625rem !important;
+  padding-left: var(--ui-field-px) !important;
+  padding-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+.ng-select .ng-select-container .ng-value-container .ng-placeholder {
+  color: var(--ui-field-placeholder) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  top: auto !important;
+  position: static !important;
+}
+
+.ng-select .ng-select-container .ng-value-container .ng-input {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  top: auto !important;
+  position: static !important;
+}
+
+.ng-select .ng-select-container .ng-value-container .ng-input > input {
+  color: var(--ui-field-text) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: unset !important;
+}
+
+.ng-select .ng-arrow-wrapper {
+  padding-right: 0.5rem !important;
+  align-self: center !important;
+}
+
+.ng-select .ng-clear-wrapper {
+  align-self: center !important;
 }
 
 .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
   font-size: 0.85rem;
   padding: 0.45rem 0.625rem;
+}
+
+/* Filter panel multiselects: hide selected tags inside input, force placeholder visible */
+.filter-ng-select .ng-value {
+  display: none !important;
+}
+.filter-ng-select .ng-placeholder {
+  display: block !important;
 }
 

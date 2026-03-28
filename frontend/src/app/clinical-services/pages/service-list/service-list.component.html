@@ -5,6 +5,10 @@
       <p class="mt-1 text-sm text-slate-500">Listado de servicios habilitados en las sedes prestadoras.</p>
     </div>
     <div class="flex gap-4">
+      <app-button variant="secondary" (click)="toggleFiltersPanel()" customClass="!rounded-xl border-slate-200">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L14 13.5V19a1 1 0 01-1.447.894l-2-1A1 1 0 0110 18v-4.5L3.2 4.6A1 1 0 013 4z"></path></svg>
+        {{ showFilters ? 'Ocultar Filtros' : 'Filtros' }}
+      </app-button>
       <app-button variant="secondary" (click)="openUploadModal()" customClass="!rounded-xl border-slate-200">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
         Carga Masiva
@@ -14,6 +18,105 @@
       </app-button>
     </div>
   </div>
+
+  @if (showFilters) {
+    <div class="mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm p-4 md:p-5">
+      <form [formGroup]="filtersForm" class="space-y-4" (ngSubmit)="applyFilters()">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Código</label>
+            <input
+              type="text"
+              formControlName="code"
+              placeholder="Buscar por código"
+              class="block w-full rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Nombre</label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="Buscar por nombre"
+              class="block w-full rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Sede</label>
+            <ng-select
+              [items]="venueOptions"
+              [multiple]="true"
+              [closeOnSelect]="false"
+              [searchable]="true"
+              [clearable]="true"
+              [hideSelected]="true"
+              placeholder="Todas"
+              formControlName="venues"
+              class="w-full filter-ng-select"
+            ></ng-select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Sec. Sede</label>
+            <input
+              type="text"
+              formControlName="venueSequence"
+              placeholder="Ej: 1"
+              class="block w-full rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Cód. Sede</label>
+            <input
+              type="text"
+              formControlName="venueCode"
+              placeholder="Buscar por código de sede"
+              class="block w-full rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Estado</label>
+            <ng-select
+              [items]="stateOptions"
+              bindLabel="label"
+              bindValue="value"
+              [multiple]="true"
+              [closeOnSelect]="false"
+              [searchable]="false"
+              [clearable]="true"
+              [hideSelected]="true"
+              placeholder="Todos"
+              formControlName="states"
+              class="w-full filter-ng-select"
+            ></ng-select>
+          </div>
+        </div>
+
+        <app-filter-chips [chips]="activeChips" (removeChip)="removeChip($event)"></app-filter-chips>
+
+        <div class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <app-button type="button" variant="secondary" (click)="exportCurrentTableData()" customClass="!rounded-xl border-slate-200 shrink-0">
+              Exportar datos
+            </app-button>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 flex-wrap">
+            <app-button type="button" variant="secondary" (click)="clearFilters()" customClass="!rounded-xl border-slate-200">
+              Limpiar filtros
+            </app-button>
+            <app-button type="submit" variant="primary" customClass="!rounded-xl">
+              Filtrar
+            </app-button>
+          </div>
+        </div>
+      </form>
+    </div>
+  }
 
   <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
     <app-table

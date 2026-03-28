@@ -1,19 +1,30 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { TableComponent, Column } from '../../../shared/ui/table/table.component';
 import { RotationSchedulesService } from '../../../core/services/rotation-schedules.service';
 import { NotificationService } from '../../../shared/notification/notification.service';
+import { exportToExcel } from '../../../shared/utils/excel-export.util';
+import { FilterChipsComponent, FilterChip } from '../../../shared/ui/filter-chips/filter-chips.component';
 
 @Component({
   selector: 'app-rotation-schedule-list',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, TableComponent],
+  imports: [CommonModule, ReactiveFormsModule, NgSelectModule, ButtonComponent, TableComponent, FilterChipsComponent],
   templateUrl: './rotation-schedule-list.component.html'
 })
 export class RotationScheduleListComponent implements OnInit {
   schedules = signal<any[]>([]);
+  allMappedSchedules: any[] = [];
+
+  showFilters = false;
+  filtersForm: FormGroup;
+  filterInstitutionOptions: string[] = [];
+  filterProgramOptions: string[] = [];
+  filterAreaOptions: string[] = [];
 
   columns: Column[] = [
     { key: 'institutionName', label: 'Institución' },
@@ -38,7 +49,77 @@ export class RotationScheduleListComponent implements OnInit {
   private allPrograms: any[] = [];
   private allAreas: any[] = [];
 
-  constructor(private svc: RotationSchedulesService, private ns: NotificationService, private router: Router) {}
+  constructor(private svc: RotationSchedulesService, private fb: FormBuilder, private ns: NotificationService, private router: Router, private cdr: ChangeDetectorRef) {
+    this.filtersForm = this.fb.group({
+      institutions: [[]],
+      programs: [[]],
+      areas: [[]],
+      serviceText: [''],
+      teacherText: [''],
+      studentText: [''],
+      startDate: [''],
+      endDate: ['']
+    });
+  }
+
+  get activeChips(): FilterChip[] {
+    const chips: FilterChip[] = [];
+    const f = this.filtersForm.value;
+    (f.institutions || []).forEach((v: string) => chips.push({ id: `inst-${v}`, controlName: 'institutions', label: v, value: v, fieldLabel: 'Institución' }));
+    (f.programs || []).forEach((v: string) => chips.push({ id: `prog-${v}`, controlName: 'programs', label: v, value: v, fieldLabel: 'Programa' }));
+    (f.areas || []).forEach((v: string) => chips.push({ id: `area-${v}`, controlName: 'areas', label: v, value: v, fieldLabel: 'Área' }));
+    return chips;
+  }
+
+  removeChip(chip: FilterChip): void {
+    const ctrl = this.filtersForm.get(chip.controlName);
+    if (ctrl) { ctrl.setValue((ctrl.value || []).filter((v: any) => v !== chip.value)); this.applyFilters(); }
+  }
+
+  toggleFiltersPanel() { this.showFilters = !this.showFilters; }
+
+  applyFilters() {
+    const f = this.filtersForm.value;
+    const institutions: string[] = f.institutions || [];
+    const programs: string[] = f.programs || [];
+    const areas: string[] = f.areas || [];
+    const svcText = (f.serviceText || '').trim().toLowerCase();
+    const teacherText = (f.teacherText || '').trim().toLowerCase();
+    const studentText = (f.studentText || '').trim().toLowerCase();
+    const startDate = f.startDate ? new Date(f.startDate).getTime() : null;
+    const endDate = f.endDate ? new Date(f.endDate).getTime() : null;
+
+    this.schedules.set(this.allMappedSchedules.filter(item => {
+      return (!institutions.length || institutions.includes(item.institutionName))
+        && (!programs.length || programs.includes(item.programName))
+        && (!areas.length || areas.includes(item.areaName))
+        && (!svcText || (item.servicesList || '').toLowerCase().includes(svcText))
+        && (!teacherText || (item.teachersList || '').toLowerCase().includes(teacherText))
+        && (!studentText || (item.studentsList || '').toLowerCase().includes(studentText))
+        && (!startDate || !item.startDate || new Date(item.startDate).getTime() >= startDate)
+        && (!endDate || !item.endDate || new Date(item.endDate).getTime() <= endDate);
+    }));
+  }
+
+  clearFilters() {
+    this.filtersForm.reset({ institutions: [], programs: [], areas: [], serviceText: '', teacherText: '', studentText: '', startDate: '', endDate: '' });
+    this.schedules.set([...this.allMappedSchedules]);
+  }
+
+  async exportCurrentTableData() {
+    const rows = this.schedules();
+    if (!rows.length) { this.ns.error('No hay datos para exportar.'); return; }
+    await exportToExcel(rows.map(item => ({
+      'Institución': item.institutionName ?? '',
+      'Programa': item.programName ?? '',
+      'Área': item.areaName ?? '',
+      'Servicios': item.servicesList ?? '',
+      'Docentes': item.teachersList ?? '',
+      'Estudiantes': item.studentsList ?? '',
+      'Inicio': item.startDate ? new Date(item.startDate).toLocaleDateString('es-CO') : '',
+      'Fin': item.endDate ? new Date(item.endDate).toLocaleDateString('es-CO') : ''
+    })), 'rotaciones', 'Rotaciones');
+  }
 
   ngOnInit() {
     this.svc.getInstitutions().subscribe(data => { this.institutions = data || []; this.mapSchedules(); });
@@ -107,6 +188,10 @@ export class RotationScheduleListComponent implements OnInit {
       return { ...s, institutionName, programName, areaName, servicesList, teachersList, studentsList, startDate, endDate };
     });
 
+    this.allMappedSchedules = mapped;
+    this.filterInstitutionOptions = Array.from(new Set(mapped.map((m: any) => m.institutionName).filter((v: any) => !!v && v !== '-'))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
+    this.filterProgramOptions = Array.from(new Set(mapped.map((m: any) => m.programName).filter((v: any) => !!v && v !== '-'))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
+    this.filterAreaOptions = Array.from(new Set(mapped.map((m: any) => m.areaName).filter((v: any) => !!v && v !== '-'))).sort((a: any, b: any) => a.localeCompare(b)) as string[];
     this.schedules.set(mapped);
   }
 

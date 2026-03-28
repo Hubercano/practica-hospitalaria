@@ -1,10 +1,14 @@
-<div class="mx-auto p-4">
+﻿<div class="mx-auto p-4">
       <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-2xl font-bold text-slate-900">Capacidad Instalada</h2>
-          <p class="mt-1 text-sm text-slate-600">Gestión de la capacidad instalada por servicio.</p>
+          <p class="mt-1 text-sm text-slate-600">GestiÃ³n de la capacidad instalada por servicio.</p>
         </div>
         <div class="flex gap-4">
+          <app-button variant="secondary" (click)="toggleFiltersPanel()" customClass="!rounded-xl border-slate-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 01.8 1.6L14 13.5V19a1 1 0 01-1.447.894l-2-1A1 1 0 0110 18v-4.5L3.2 4.6A1 1 0 013 4z"></path></svg>
+            {{ showFilters ? 'Ocultar Filtros' : 'Filtros' }}
+          </app-button>
           <app-button variant="secondary" (click)="openUploadModal()" customClass="!rounded-xl border-slate-200">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             Carga Masiva
@@ -18,6 +22,63 @@
         </div>
       </div>
 
+      @if (showFilters) {
+        <div class="mb-6 rounded-2xl border border-slate-200 bg-white shadow-sm p-4 md:p-5">
+          <form [formGroup]="filtersForm" class="space-y-4" (ngSubmit)="applyFilters()">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Sede</label>
+                <input type="text" formControlName="headquarters" placeholder="Buscar por sede" class="block w-full rounded-lg border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Nombre Sede</label>
+                <input type="text" formControlName="headquartersName" placeholder="Buscar por nombre sede" class="block w-full rounded-lg border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Grupo</label>
+                <ng-select
+                  [items]="groupOptions"
+                  [multiple]="true"
+                  [closeOnSelect]="false"
+                  [searchable]="true"
+                  [clearable]="true"
+                  [hideSelected]="true"
+                  placeholder="Todos"
+                  formControlName="groups"
+                  class="w-full filter-ng-select"
+                ></ng-select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Concepto</label>
+                <input type="text" formControlName="concept" placeholder="Buscar concepto" class="block w-full rounded-lg border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Cantidad</label>
+                <input type="text" formControlName="quantity" placeholder="Ej: 5" class="block w-full rounded-lg border-slate-300 text-sm" />
+              </div>
+            </div>
+
+            <app-filter-chips [chips]="activeChips" (removeChip)="removeChip($event)"></app-filter-chips>
+
+            <div class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <app-button type="button" variant="secondary" (click)="exportCurrentTableData()" customClass="!rounded-xl border-slate-200 shrink-0">
+                  Exportar datos
+                </app-button>
+              </div>
+              <div class="flex items-center justify-end gap-3 flex-wrap">
+                <app-button type="button" variant="secondary" (click)="clearFilters()" customClass="!rounded-xl border-slate-200">
+                  Limpiar filtros
+                </app-button>
+                <app-button type="submit" variant="primary" customClass="!rounded-xl">
+                  Filtrar
+                </app-button>
+              </div>
+            </div>
+          </form>
+        </div>
+      }
+
       <app-table 
         [data]="capacities()" 
         [columns]="columns"
@@ -29,7 +90,7 @@
         <app-modal [isOpen]="true" title="Carga masiva de capacidad instalada" (closeEvent)="closeUploadModal()">
           <div class="space-y-4">
             <p class="text-sm text-gray-600">
-              Selecciona un archivo Excel que contenga las columnas: `nombre_prestador`, `sede_nombre`, `grupo_capacidad`, `coca_nombre`, `cantidad`. Otras columnas serán ignoradas.
+              Selecciona un archivo Excel que contenga las columnas: `nombre_prestador`, `sede_nombre`, `grupo_capacidad`, `coca_nombre`, `cantidad`. Otras columnas serÃ¡n ignoradas.
             </p>
 
             <div class="mt-4">
@@ -43,7 +104,7 @@
                 <div class="mt-4 p-4 rounded-lg bg-emerald-50 text-emerald-700 text-sm">
                     Carga procesada.<br>
                     Total registros: {{ uploadResult.total }} <br>
-                    Éxitos: {{ uploadResult.success }} <br>
+                    Ã‰xitos: {{ uploadResult.success }} <br>
                     Fallos: {{ uploadResult.failed }}
                 </div>
                 @if (uploadResult.errors && uploadResult.errors.length > 0) {
