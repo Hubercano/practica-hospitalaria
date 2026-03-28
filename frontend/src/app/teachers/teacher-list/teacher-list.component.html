@@ -12,6 +12,71 @@
   </div>
 
   <app-card [padding]="false">
-    <app-table [data]="teachers()" [columns]="columns" (edit)="editTeacher($event)" (delete)="deleteTeacher($event.id)"></app-table>
+    <!-- Custom Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200">
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Nombre Completo</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Documento</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Correo</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Celular</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Supervisión</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Contratación</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Documentos</th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Estado</th>
+            <th class="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          @for (teacher of teachers(); track teacher.id) {
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-4 text-sm text-slate-900 font-medium">{{ teacher.fullName }}</td>
+              <td class="px-6 py-4 text-sm text-slate-600">{{ teacher.documentInfo }}</td>
+              <td class="px-6 py-4 text-sm text-slate-600">{{ teacher.email }}</td>
+              <td class="px-6 py-4 text-sm text-slate-600">{{ teacher.phone || '-' }}</td>
+              <td class="px-6 py-4 text-sm text-slate-600">{{ teacher.supervisionType }}</td>
+              <td class="px-6 py-4 text-sm text-slate-600">{{ teacher.contractType }}</td>
+              <td class="px-6 py-4 text-sm text-slate-600">{{ teacher.files }}</td>
+              <td class="px-6 py-4 text-sm">
+                @if (teacher.state === 'ACTIVE') {
+                  <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Activo</span>
+                } @else {
+                  <span class="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-full">Inactivo</span>
+                }
+              </td>
+              <td class="px-6 py-4 text-sm">
+                <div class="flex items-center justify-end gap-4">
+                  <button
+                    (click)="editTeacher(teacher)"
+                    class="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Editar
+                  </button>
+                  <button
+                    (click)="toggleTeacherState(teacher)"
+                    [ngClass]="teacher.state === 'ACTIVE' ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'"
+                    class="flex items-center gap-1.5 font-medium text-sm transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {{ teacher.state === 'ACTIVE' ? 'Inactivar' : 'Activar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (teachers().length === 0) {
+        <div class="px-6 py-12 text-center">
+          <p class="text-slate-500">No hay docentes registrados</p>
+        </div>
+      }
+    </div>
   </app-card>
 </div>

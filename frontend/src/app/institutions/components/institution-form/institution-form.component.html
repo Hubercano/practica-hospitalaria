@@ -1,11 +1,18 @@
 <div class="max-w-3xl mx-auto px-8 py-8 w-full">
   <!-- Header Modal-like -->
   <div class="mb-6 flex flex-col justify-center">
-    <h2 class="text-xl font-bold text-slate-900 tracking-tight">Registro de Institución</h2>
-    <p class="mt-1 text-[13px] text-slate-500">Completa el formulario para registrar una nueva institución en el sistema.</p>
+    <h2 class="text-xl font-bold text-slate-900 tracking-tight">{{ isEdit ? 'Editar' : 'Registro de' }} Institución</h2>
+    <p class="mt-1 text-[13px] text-slate-500">Completa el formulario para {{ isEdit ? 'actualizar la información de la' : 'registrar una nueva' }} institución en el sistema.</p>
   </div>
 
   <app-card>
+    @if (!hasInstitutionTypes) {
+      <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
+        Aún no existen tipos de institución. Primero crea un tipo para poder registrar instituciones.
+        <a routerLink="/institutions/types/new" class="ml-1 font-semibold underline hover:text-amber-900">Crear tipo de institución</a>
+      </div>
+    }
+
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
 
       <app-form-field label="Nombre de la Institución" [required]="true" [error]="controlErrors.name">
@@ -20,6 +27,10 @@
         <app-input type="email" formControlName="email"></app-input>
       </app-form-field>
 
+      <app-form-field label="Teléfono">
+        <app-input formControlName="phone" placeholder="Ej. 3001234567"></app-input>
+      </app-form-field>
+
       <app-form-field label="Tipo de Institución" [required]="true" [error]="controlErrors.typeId">
         <app-select formControlName="typeId" [options]="typeOptions" placeholder="Seleccionar..."></app-select>
       </app-form-field>
@@ -29,10 +40,10 @@
       </app-form-field>
 
       <div class="pt-4 flex justify-end gap-3">
-        <app-button type="button" variant="secondary" routerLink="/institutions" customClass="!rounded-xl border-slate-200 bg-white shadow-none px-6">
+        <app-button type="button" variant="secondary" routerLink="/institutions/list" customClass="!rounded-xl border-slate-200 bg-white shadow-none px-6">
           Cancelar
         </app-button>
-        <app-button variant="primary" type="submit" [disabled]="form.invalid || isSubmitting" customClass="!rounded-xl px-6">
+        <app-button variant="primary" type="submit" [disabled]="form.invalid || isSubmitting || !hasInstitutionTypes" customClass="!rounded-xl px-6">
           {{ isSubmitting ? 'Guardando...' : (isEdit ? 'Actualizar' : 'Registrar') + ' Institución' }}
         </app-button>
       </div>

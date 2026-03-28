@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, BadRequestException } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { Prisma } from '@prisma/client';
 
@@ -8,6 +8,10 @@ export class StudentsController {
 
   @Post()
   create(@Body() body: any) {
+    if (!body.institutionId) {
+      throw new BadRequestException('Debe seleccionar una institución');
+    }
+
     // Adapter payload to Prisma's format, resolving relation connection
     const data: Prisma.StudentCreateInput = {
       firstName: body.firstName,
@@ -16,6 +20,9 @@ export class StudentsController {
       document: body.document,
       email: body.email,
       phone: body.phone,
+      institution: {
+        connect: { id: body.institutionId }
+      },
       type: {
         connect: { id: body.typeId }
       }
@@ -24,8 +31,9 @@ export class StudentsController {
   }
 
   @Get()
-  findAll() {
-    return this.studentsService.findAll();
+  findAll(@Query('includeInactive') includeInactive?: string) {
+    const includeAll = includeInactive === 'true' || includeInactive === '1';
+    return this.studentsService.findAll(includeAll);
   }
 
   @Get(':id')
@@ -34,7 +42,19 @@ export class StudentsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: Prisma.StudentUpdateInput) {
+  update(@Param('id') id: string, @Body() body: any) {
+    const data: Prisma.StudentUpdateInput = {
+      ...(body.firstName !== undefined ? { firstName: body.firstName } : {}),
+      ...(body.lastName !== undefined ? { lastName: body.lastName } : {}),
+      ...(body.documentType !== undefined ? { documentType: body.documentType } : {}),
+      ...(body.document !== undefined ? { document: body.document } : {}),
+      ...(body.email !== undefined ? { email: body.email } : {}),
+      ...(body.phone !== undefined ? { phone: body.phone } : {}),
+      ...(body.state !== undefined ? { state: body.state } : {}),
+      ...(body.institutionId ? { institution: { connect: { id: body.institutionId } } } : {}),
+      ...(body.typeId ? { type: { connect: { id: body.typeId } } } : {}),
+    };
+
     return this.studentsService.update(id, data);
   }
 

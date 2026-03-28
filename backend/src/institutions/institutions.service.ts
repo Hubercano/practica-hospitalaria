@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInstitutionDto, CreateInstitutionTypeDto, AddRequirementDto } from './dto';
-import { ValidationStatus } from '@prisma/client';
+import { EntityState, ValidationStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
 
 @Injectable()
@@ -30,6 +30,14 @@ export class InstitutionsService {
 
   async createType(data: CreateInstitutionTypeDto) {
     return this.prisma.institutionType.create({
+      data,
+    });
+  }
+
+  async updateType(id: string, data: CreateInstitutionTypeDto) {
+    await this.getType(id);
+    return this.prisma.institutionType.update({
+      where: { id },
       data,
     });
   }
@@ -124,6 +132,7 @@ export class InstitutionsService {
         name: data.name,
         nit: data.nit,
         email: data.email,
+        phone: data.phone,
         address: data.address,
         typeId: data.typeId,
         state: 'INACTIVE',
@@ -151,8 +160,50 @@ export class InstitutionsService {
     return institution;
   }
 
-  async findAll(): Promise<any[]> {
+  async updateInstitution(id: string, data: Partial<CreateInstitutionDto>) {
+    const existing = await this.prisma.institution.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Institución no encontrada');
+    }
+
+    if (data.nit && data.nit !== existing.nit) {
+      const nitInUse = await this.prisma.institution.findUnique({ where: { nit: data.nit } });
+      if (nitInUse) {
+        throw new ConflictException('Ya existe una institución con ese NIT');
+      }
+    }
+
+    return this.prisma.institution.update({
+      where: { id },
+      data: {
+        name: data.name,
+        nit: data.nit,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        typeId: data.typeId,
+      },
+    });
+  }
+
+  async updateInstitutionState(id: string, state: EntityState) {
+    const existing = await this.prisma.institution.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Institución no encontrada');
+    }
+
+    return this.prisma.institution.update({
+      where: { id },
+      data: { state },
+    });
+  }
+
+  async findAll(includeInactive = false): Promise<any[]> {
     const institutions = await this.prisma.institution.findMany({
+      where: {
+        deletedAt: null,
+        ...(includeInactive ? {} : { state: EntityState.ACTIVE }),
+      },
       include: {
         type: {
           include: { requirements: true }
@@ -282,6 +333,7 @@ export class InstitutionsService {
       { header: 'NIT (Obligatorio, Único)', key: 'nit', width: 20 },
       { header: 'Correo (Obligatorio)', key: 'email', width: 30 },
       { header: 'Tipo Institución (Exacto)', key: 'type', width: 25 },
+      { header: 'Teléfono (Opcional)', key: 'phone', width: 20 },
       { header: 'Dirección (Opcional)', key: 'address', width: 30 },
     ];
 
@@ -291,6 +343,7 @@ export class InstitutionsService {
       nit: '900123456-1',
       email: 'contacto@hsj.com',
       type: 'Hospital Nivel 1',
+      phone: '3001234567',
       address: 'Calle 123 # 45-67',
     });
 
@@ -330,7 +383,8 @@ export class InstitutionsService {
         nit: row.getCell(2).text,
         email: row.getCell(3).text,
         typeName: row.getCell(4).text,
-        address: row.getCell(5).text,
+        phone: row.getCell(5).text,
+        address: row.getCell(6).text,
       });
     });
 
@@ -359,6 +413,7 @@ export class InstitutionsService {
              nit: row.nit,
              email: row.email,
              typeId: typeId,
+             phone: row.phone,
              address: row.address
            });
            results.success++;

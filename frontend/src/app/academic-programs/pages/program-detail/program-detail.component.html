@@ -46,13 +46,14 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre del Área</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Duración (Semanas)</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cupos (Max Estudiantes)</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
                   <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-slate-200">
                 @if (!program()?.rotationAreas || program()?.rotationAreas?.length === 0) {
                   <tr>
-                    <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                    <td colspan="5" class="px-6 py-12 text-center text-slate-500">
                       No hay áreas de rotación asignadas.
                     </td>
                   </tr>
@@ -69,11 +70,23 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {{ area.maxStudents || '-' }} estudiantes
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <span class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
+                        [ngClass]="area.state === 'ACTIVE' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' : 'border-rose-200 text-rose-600 bg-rose-50'">
+                        {{ area.state === 'ACTIVE' ? 'Activa' : 'Inactiva' }}
+                      </span>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <!-- Future: Edit button -->
-                      <button (click)="deleteArea(area.id)" class="text-red-600 hover:text-red-900 ml-4">
-                        Eliminar
-                      </button>
+                      <div class="flex items-center justify-end gap-4">
+                        <button (click)="editArea(area)" class="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors">
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                          Editar
+                        </button>
+                        <button (click)="toggleAreaState(area)" [ngClass]="area.state === 'ACTIVE' ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'" class="flex items-center gap-1.5 font-medium text-sm transition-colors">
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                          {{ area.state === 'ACTIVE' ? 'Inactivar' : 'Activar' }}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
@@ -89,14 +102,14 @@
     @if (showAddAreaModal) {
       <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-lg w-full shadow-xl">
-          <h3 class="text-lg font-bold mb-4">Crear Nueva Área de Rotación</h3>
+          <h3 class="text-lg font-bold mb-4">{{ editingAreaId ? 'Editar Área de Rotación' : 'Crear Nueva Área de Rotación' }}</h3>
           
           <form [formGroup]="newAreaForm" (ngSubmit)="saveNewArea()">
             <div class="space-y-4">
               <!-- Name -->
               <div>
                 <label class="block text-sm font-medium text-gray-700">Nombre del Área</label>
-                <input formControlName="name" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm" placeholder="Ej: Rotación Medicina Interna">
+                <input formControlName="name" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border px-4 py-2.5 text-sm" placeholder="Ej: Rotación Medicina Interna">
                 @if(newAreaForm.get('name')?.invalid && newAreaForm.get('name')?.touched) {
                   <span class="text-red-500 text-xs">Requerido</span>
                 }
@@ -105,7 +118,7 @@
               <!-- Duration -->
               <div>
                 <label class="block text-sm font-medium text-gray-700">Duración (Semanas)</label>
-                <input type="number" formControlName="durationWeeks" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm" placeholder="Ej: 4">
+                <input type="number" formControlName="durationWeeks" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border px-4 py-2.5 text-sm" placeholder="Ej: 4">
                 @if(newAreaForm.get('durationWeeks')?.invalid && newAreaForm.get('durationWeeks')?.touched) {
                   <span class="text-red-500 text-xs">Requerido (> 0)</span>
                 }
@@ -114,7 +127,7 @@
               <!-- Max Students -->
               <div>
                 <label class="block text-sm font-medium text-gray-700">Máximo de Estudiantes (Cupos)</label>
-                <input type="number" formControlName="maxStudents" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-sm" placeholder="Ej: 5">
+                <input type="number" formControlName="maxStudents" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border px-4 py-2.5 text-sm" placeholder="Ej: 5">
                 @if(newAreaForm.get('maxStudents')?.invalid && newAreaForm.get('maxStudents')?.touched) {
                   <span class="text-red-500 text-xs">Requerido (> 0)</span>
                 }
@@ -172,7 +185,7 @@
                   Cancelar
                 </button>
                 <button type="submit" [disabled]="newAreaForm.invalid || isSubmitting" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
-                  {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
+                  {{ isSubmitting ? 'Guardando...' : (editingAreaId ? 'Actualizar' : 'Guardar') }}
                 </button>
               </div>
             </div>

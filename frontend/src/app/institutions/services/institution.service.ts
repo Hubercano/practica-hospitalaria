@@ -1,6 +1,6 @@
 // src/app/institutions/services/institution.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Requirement {
@@ -40,6 +40,10 @@ export class InstitutionService {
     return this.http.post<InstitutionType>(`${this.apiUrl}/types`, data);
   }
 
+  updateType(id: string, data: { name: string, description: string }): Observable<InstitutionType> {
+    return this.http.patch<InstitutionType>(`${this.apiUrl}/types/${id}`, data);
+  }
+
   addRequirement(typeId: string, data: any): Observable<Requirement> {
     return this.http.post<Requirement>(`${this.apiUrl}/types/${typeId}/requirements`, data);
   }
@@ -60,8 +64,17 @@ export class InstitutionService {
     return this.http.post<any>(`${this.apiUrl}`, data);
   }
 
-  getInstitutions(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}`);
+  updateInstitution(id: string, data: any): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${id}`, data);
+  }
+
+  updateInstitutionState(id: string, state: 'ACTIVE' | 'INACTIVE'): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${id}/state`, { state });
+  }
+
+  getInstitutions(includeInactive = false): Observable<any[]> {
+    const params = new HttpParams().set('includeInactive', includeInactive ? 'true' : 'false');
+    return this.http.get<any[]>(`${this.apiUrl}`, { params });
   }
 
   getInstitution(id: string): Observable<any> {

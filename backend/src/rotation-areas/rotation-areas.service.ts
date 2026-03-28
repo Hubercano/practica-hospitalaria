@@ -22,15 +22,20 @@ export class RotationAreasService {
   findAll() {
     return this.prisma.rotationArea.findMany({
       include: {
-        program: true
-      }
+        program: true,
+        services: true
+      },
+      orderBy: { name: 'asc' }
     });
   }
 
   findOne(id: string) {
     return this.prisma.rotationArea.findUnique({
       where: { id },
-      include: { program: true }
+      include: {
+        program: true,
+        services: true
+      }
     });
   }
 

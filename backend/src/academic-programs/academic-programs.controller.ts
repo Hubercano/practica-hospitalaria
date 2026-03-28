@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Patch } from '@nestjs/common';
 import { AcademicProgramsService } from './academic-programs.service';
 import { CreateAcademicProgramDto } from './dto/create-program.dto';
 
@@ -9,6 +9,11 @@ export class AcademicProgramsController {
   @Post()
   create(@Body() dto: CreateAcademicProgramDto) {
     return this.service.create(dto);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: Partial<CreateAcademicProgramDto> & { state?: 'ACTIVE' | 'INACTIVE' }) {
+    return this.service.update(id, dto);
   }
 
   @Get()

@@ -28,6 +28,7 @@ export class TeacherFormComponent implements OnInit {
 
   // Track files locally before uploading
   filesToUpload: { [key: string]: File } = {};
+  multipleFilesToUpload: { [key: string]: File[] } = {};
 
   documentTypeOptions = [
     { label: 'Cédula de Ciudadanía', value: 'CC' },
@@ -43,7 +44,9 @@ export class TeacherFormComponent implements OnInit {
 
   contractOptions = [
     { label: 'Interno', value: 'interno' },
-    { label: 'Externo / Convenio', value: 'externo' }
+    { label: 'Externo', value: 'externo' },
+    { label: 'Convenio', value: 'convenio' },
+    { label: 'Prestador', value: 'prestador' }
   ];
 
   constructor(
@@ -94,6 +97,14 @@ export class TeacherFormComponent implements OnInit {
     }
   }
 
+  onMultipleFilesSelected(files: File[], field: string) {
+    if (files && files.length > 0) {
+      this.multipleFilesToUpload[field] = files;
+    } else {
+      delete this.multipleFilesToUpload[field];
+    }
+  }
+
   async deleteFile(field: string) {
     if (!this.teacherId || !confirm('¿Seguro que desea eliminar este documento?')) return;
     try {
@@ -101,6 +112,19 @@ export class TeacherFormComponent implements OnInit {
       (this.teacherData as any)[field] = null;
     } catch (err: any) {
       this.ns.error('Error al eliminar: ' + (err.error?.message || err.message));
+    }
+  }
+
+  async deleteMultipleFile(field: 'teacherTrainingFiles' | 'teacherRecognitionFiles', filePath: string) {
+    if (!this.teacherId || !confirm('¿Seguro que desea eliminar este archivo?')) return;
+    try {
+      const updatedTeacher = await this.teacherService.deleteMultipleDocument(this.teacherId, field, filePath).toPromise();
+      if (updatedTeacher) {
+        this.teacherData = updatedTeacher;
+      }
+      this.ns.success('Archivo eliminado correctamente');
+    } catch (err: any) {
+      this.ns.error('Error al eliminar archivo: ' + (err.error?.message || err.message));
     }
   }
 
@@ -126,6 +150,12 @@ export class TeacherFormComponent implements OnInit {
       const uploadPromises = [];
       for (const [field, file] of Object.entries(this.filesToUpload)) {
          uploadPromises.push(this.teacherService.uploadDocument(createdOrUpdatedId, field, file).toPromise());
+      }
+
+      for (const [field, files] of Object.entries(this.multipleFilesToUpload)) {
+        if (files.length > 0) {
+          uploadPromises.push(this.teacherService.uploadMultipleDocuments(createdOrUpdatedId, field, files).toPromise());
+        }
       }
 
       if (uploadPromises.length > 0) {

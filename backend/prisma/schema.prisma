@@ -87,6 +87,7 @@ model Institution {
   name    String // Ej: "Universidad Nacional"
   nit     String  @unique
   email   String // Correo de contacto oficial
+  phone   String?
   address String?
 
   // Clasificación
@@ -100,6 +101,9 @@ model Institution {
 
   // Relación: Programas académicos
   programs AcademicProgram[]
+
+  // Relación: Estudiantes asociados
+  students Student[]
 
   // Auditoría básica
   createdAt DateTime  @default(now())
@@ -163,6 +167,7 @@ model AcademicProgram {
   institution   Institution? @relation(fields: [institutionId], references: [id])
 
   technicalAnnex String? // URL to file
+  state          EntityState @default(ACTIVE)
 
   // Relacion 1:N con Áreas de Rotación (Ahora pertenecen al programa)
   rotationAreas RotationArea[]
@@ -208,6 +213,7 @@ model RotationArea {
 
   durationWeeks Int @default(0)
   maxStudents   Int @default(0)
+  state         EntityState @default(ACTIVE)
 
   programId String?
   program   AcademicProgram? @relation(fields: [programId], references: [id])
@@ -316,6 +322,9 @@ model Student {
   typeId String
   type   StudentType @relation(fields: [typeId], references: [id])
 
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+
   state EntityState @default(INACTIVE) 
 
   // Relación: Sus documentos/requisitos de práctica entregados
@@ -372,6 +381,10 @@ model Teacher {
   cvFile                 String?
   dataAuthorizationFile  String?
   conflictOfInterestFile String?
+  teacherTrainingFiles   String[] @default([])
+  teacherRecognitionFiles String[] @default([])
+
+  state     EntityState @default(ACTIVE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

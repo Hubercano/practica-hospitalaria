@@ -17,6 +17,7 @@ export class StudentTypeDetail implements OnInit {
   form: FormGroup;
   reqForm: FormGroup;
   studentType: StudentType | null = null;
+  isEditingType = false;
 
   constructor(
     private fb: FormBuilder,
@@ -59,15 +60,46 @@ export class StudentTypeDetail implements OnInit {
         name: data.name,
         description: data.description
       });
-      this.form.controls['name'].disable();
+      if (!this.isEditingType) {
+        this.form.disable({ emitEvent: false });
+      }
     });
+  }
+
+  startEditingType() {
+    if (!this.typeId || this.typeId === 'new') return;
+    this.isEditingType = true;
+    this.form.enable({ emitEvent: false });
+  }
+
+  cancelEditingType() {
+    if (!this.typeId || this.typeId === 'new') return;
+    this.isEditingType = false;
+    this.loadData();
   }
 
   saveType() {
     if (this.form.invalid) return;
 
-    this.service.createType(this.form.value).subscribe(res => {
-      this.router.navigate(['/student-types', res.id]);
+    if (this.typeId === 'new') {
+      this.service.createType(this.form.value).subscribe(res => {
+        this.router.navigate(['/student-types', res.id]);
+      });
+      return;
+    }
+
+    this.service.updateType(this.typeId!, this.form.getRawValue()).subscribe({
+      next: (updated) => {
+        this.studentType = {
+          ...(this.studentType as StudentType),
+          ...updated,
+          requirements: this.studentType?.requirements ?? []
+        };
+        this.isEditingType = false;
+        this.form.disable({ emitEvent: false });
+        this.ns.success('Tipo de estudiante actualizado');
+      },
+      error: (err) => this.ns.error('Error al actualizar: ' + (err.error?.message || err.message))
     });
   }
 
@@ -78,9 +110,14 @@ export class StudentTypeDetail implements OnInit {
     }
 
     this.service.addRequirement(this.typeId, this.reqForm.value).subscribe({
-      next: () => {
+      next: (newRequirement) => {
+        const currentRequirements = this.studentType?.requirements ?? [];
+        this.studentType = {
+          ...(this.studentType as StudentType),
+          requirements: [...currentRequirements, newRequirement]
+        };
         this.reqForm.reset({ type: 'FILE', isRequired: true, requiresExpiryDate: false });
-        this.loadData();
+        this.ns.success('Requisito agregado');
       },
       error: (err) => this.ns.error('Error: ' + err.message)
     });

@@ -23,6 +23,10 @@ export class RotationAreasService {
     return this.http.put<RotationArea>(`${this.apiUrl}/${id}`, dto);
   }
 
+  updateState(id: string, state: 'ACTIVE' | 'INACTIVE'): Observable<RotationArea> {
+    return this.http.patch<RotationArea>(`${this.apiUrl}/${id}`, { state });
+  }
+
   remove(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

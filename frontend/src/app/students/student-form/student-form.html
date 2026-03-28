@@ -2,9 +2,9 @@
   <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-2xl font-bold text-slate-900">
-        Nuevo Estudiante
+        {{ isEditMode ? 'Editar Estudiante' : 'Nuevo Estudiante' }}
       </h2>
-      <p class="mt-1 text-sm text-slate-600">Completa el formulario para registrar un nuevo estudiante.</p>
+      <p class="mt-1 text-sm text-slate-600">Completa el formulario para {{ isEditMode ? 'actualizar la información del' : 'registrar un nuevo' }} estudiante.</p>
     </div>
     <app-button variant="secondary" routerLink="/students" size="sm">
       Volver al Listado
@@ -45,6 +45,10 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <app-form-field label="Institución" [required]="true" [error]="controlErrors.institutionId">
+          <app-select formControlName="institutionId" [options]="institutionOptions" placeholder="Seleccionar institución activa"></app-select>
+        </app-form-field>
+
         <app-form-field label="Tipo de Estudiante" [required]="true">
           <app-select formControlName="typeId" [options]="typeOptions"></app-select>
         </app-form-field>
@@ -55,7 +59,7 @@
           Cancelar
         </app-button>
         <app-button variant="primary" type="submit" [disabled]="form.invalid || isSubmitting">
-          {{ isSubmitting ? 'Guardando...' : 'Guardar Estudiante' }}
+          {{ isSubmitting ? 'Guardando...' : (isEditMode ? 'Actualizar Estudiante' : 'Guardar Estudiante') }}
         </app-button>
       </div>
 
