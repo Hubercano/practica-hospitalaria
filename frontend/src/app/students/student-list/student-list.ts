@@ -1,30 +1,20 @@
 ﻿import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { StudentsService, Student } from '../students.service';
+import { StudentsService } from '../students.service';
 import { NotificationService } from '../../shared/notification/notification.service';
-import { TableComponent, Column } from '../../shared/ui/table/table.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, TableComponent, ButtonComponent],
+  imports: [CommonModule, RouterModule, ButtonComponent],
   templateUrl: './student-list.html',
   styleUrls: ['./student-list.css']
 })
 export class StudentList implements OnInit {
   // Use signal instead of plain array to work with Angular 19 Reactivity
   students = signal<any[]>([]);
-
-  studentsColumns: Column[] = [
-    { key: 'document', label: 'Documento' },
-    { key: 'name', label: 'Nombre' },
-    { key: 'email', label: 'Correo' },
-    { key: 'studentType', label: 'Tipo' },
-    { key: 'status', label: 'Estado Requisitos', type: 'status' },
-    { key: 'actions', label: 'Acciones', type: 'actions' }
-  ];
 
   private studentsService = inject(StudentsService);
   private router = inject(Router);
@@ -35,7 +25,7 @@ export class StudentList implements OnInit {
   }
 
   loadData() {
-    this.studentsService.getStudents().subscribe({
+    this.studentsService.getStudents(true).subscribe({
       next: (data) => {
         const rawData = Array.isArray(data) ? data : [];
         
@@ -46,8 +36,10 @@ export class StudentList implements OnInit {
            return {
               ...s,
               name: firstName + ' ' + lastName, // Avoid PS string escaping issues
+              institutionName: s.institution?.name || '-',
               studentType: s.type ? s.type.name : '-',
-              status: s.status || 'Pendiente'
+              status: s.status || 'PENDIENTE',
+              stateLabel: s.state === 'ACTIVE' ? 'Activo' : 'Inactivo'
            };
         });
         
@@ -57,16 +49,29 @@ export class StudentList implements OnInit {
     });
   }
 
-  onEdit(item: any) {
+  onViewDetail(item: any) {
     this.router.navigate(['/students', item.id]);
   }
 
-  onDelete(item: any) {
-    if (confirm('¿Seguro que desea eliminar a este estudiante?')) {
-      this.studentsService.deleteStudent(item.id).subscribe({
-        next: () => this.loadData(),
-        error: (err) => this.ns.error('Error al eliminar: ' + (err.error?.message || err.message))
-      });
+  onEdit(item: any) {
+    this.router.navigate(['/students', item.id, 'edit']);
+  }
+
+  onToggleState(item: any) {
+    const isActive = item.state === 'ACTIVE';
+    const nextState = isActive ? 'INACTIVE' : 'ACTIVE';
+    const actionLabel = isActive ? 'inactivar' : 'activar';
+
+    if (!confirm(`¿Seguro que deseas ${actionLabel} este estudiante?`)) {
+      return;
     }
+
+    this.studentsService.updateStudentState(item.id, nextState).subscribe({
+      next: () => {
+        this.ns.success(`Estudiante ${isActive ? 'inactivado' : 'activado'} correctamente`);
+        this.loadData();
+      },
+      error: (err) => this.ns.error('Error al actualizar estado: ' + (err.error?.message || err.message))
+    });
   }
 }

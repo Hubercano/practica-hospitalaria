@@ -9,6 +9,7 @@ import { AcademicProgramsService } from '../../../core/services/academic-program
 import { RotationAreasService } from '../../../core/services/rotation-areas.service';
 import { AcademicProgram } from '../../../core/models/academic-program.model';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
+import { NotificationService } from '../../../shared/notification/notification.service';
 
 @Component({
   selector: 'app-program-detail',
@@ -18,6 +19,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
 export class ProgramDetailComponent implements OnInit {
   program = signal<AcademicProgram | null>(null);
   showAddAreaModal = false;
+  editingAreaId: string | null = null;
   newAreaForm: FormGroup;
   isSubmitting = false;
   services = signal<any[]>([]);
@@ -28,7 +30,8 @@ export class ProgramDetailComponent implements OnInit {
     private service: AcademicProgramsService,
     private rotationAreaService: RotationAreasService,
     private fb: FormBuilder,
-    private clinicalService: ClinicalServicesService
+    private clinicalService: ClinicalServicesService,
+    private ns: NotificationService
   ) {
     this.newAreaForm = this.fb.group({
       name: ['', Validators.required],
@@ -78,7 +81,21 @@ export class ProgramDetailComponent implements OnInit {
   }
 
   openAddAreaModal() {
-    this.newAreaForm.reset();
+    this.editingAreaId = null;
+    this.newAreaForm.reset({ serviceIds: [] });
+    this.selectedServicesList.set([]);
+    this.showAddAreaModal = true;
+  }
+
+  editArea(area: any) {
+    this.editingAreaId = area.id;
+    this.newAreaForm.patchValue({
+      name: area.name,
+      durationWeeks: area.durationWeeks,
+      maxStudents: area.maxStudents,
+      serviceIds: area.serviceIds || []
+    });
+    this._updateSelectedList();
     this.showAddAreaModal = true;
   }
 
@@ -91,15 +108,21 @@ export class ProgramDetailComponent implements OnInit {
         serviceIds: this.newAreaForm.value.serviceIds || []
       };
       
-      // Ensure we convert number strings to numbers
       payload.durationWeeks = Number(payload.durationWeeks);
       payload.maxStudents = Number(payload.maxStudents);
 
-      this.rotationAreaService.create(payload).subscribe({
+      const isEditing = !!this.editingAreaId;
+      const request$ = isEditing && this.editingAreaId
+        ? this.rotationAreaService.update(this.editingAreaId, payload)
+        : this.rotationAreaService.create(payload);
+
+      request$.subscribe({
         next: () => {
           this.isSubmitting = false;
           this.showAddAreaModal = false;
-          this.loadProgram(); // Reload to see new area
+          this.editingAreaId = null;
+          this.ns.success(`Área ${isEditing ? 'actualizada' : 'creada'} correctamente`);
+          this.loadProgram();
         },
         error: (err) => {
           console.error(err);
@@ -109,13 +132,21 @@ export class ProgramDetailComponent implements OnInit {
     }
   }
 
-  deleteArea(areaId: string) {
-    if (confirm('¿Está seguro de eliminar esta área de rotación?')) {
-      this.rotationAreaService.remove(areaId).subscribe({
-        next: () => this.loadProgram(),
-        error: (err) => console.error(err)
-      });
+  toggleAreaState(area: any) {
+    const nextState = area.state === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const actionLabel = nextState === 'ACTIVE' ? 'activar' : 'inactivar';
+
+    if (!confirm(`¿Seguro que deseas ${actionLabel} esta área de práctica?`)) {
+      return;
     }
+
+    this.rotationAreaService.updateState(area.id, nextState).subscribe({
+      next: () => {
+        this.ns.success(`Área ${nextState === 'ACTIVE' ? 'activada' : 'inactivada'} correctamente`);
+        this.loadProgram();
+      },
+      error: (err) => console.error(err)
+    });
   }
 }
 

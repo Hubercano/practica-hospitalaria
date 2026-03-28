@@ -1,124 +1,173 @@
-<div class="max-w-5xl mx-auto px-4 py-8">
-  <div class="flex items-center justify-between mb-8">
-    <div>
-      <h1 class="text-3xl font-bold text-slate-900 border-b pb-2 mb-2">Detalle de Estudiante</h1>
-      <p class="text-lg text-slate-600 font-semibold" *ngIf="student">{{ student.firstName }} {{ student.lastName }}</p>
-      <div class="flex gap-4 text-sm mt-2 text-slate-500" *ngIf="student">
-        <span><b class="text-slate-700">Doc:</b> {{ student.documentType }} {{ student.document }}</span>
-        <span><b class="text-slate-700">Tipo:</b> {{ student.type.name }}</span>
-        <span><b class="text-slate-700">Correo:</b> {{ student.email }}</span>
+@if (student) {
+  <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">{{ student.firstName }} {{ student.lastName }}</h1>
+        <p class="text-slate-500 mt-1">Gestión de documentos y requisitos del estudiante.</p>
+      </div>
+      <app-button variant="secondary" routerLink="/students" size="sm">
+        ← Volver
+      </app-button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <h3 class="text-lg font-semibold text-slate-900 mb-4">Información del Estudiante</h3>
+      <div class="flex flex-wrap gap-x-8 gap-y-4 text-sm text-slate-500">
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Documento</span>
+          <span class="text-slate-900 font-medium">{{ student.documentType }} {{ student.document }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Institución</span>
+          <span class="text-slate-900 font-medium">{{ student.institution?.name || '-' }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tipo</span>
+          <span class="text-slate-900 font-medium">{{ student.type?.name }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Contacto</span>
+          <a href="mailto:{{ student.email }}" class="text-blue-600 hover:text-blue-700 hover:underline font-medium">{{ student.email }}</a>
+        </div>
       </div>
     </div>
-    <a routerLink="/students" class="bg-white hover:bg-slate-50 text-slate-700 py-2 px-4 border border-slate-300 rounded shadow-sm">
-      ← Volver al Listado
-    </a>
-  </div>
 
-  <div class="bg-white shadow rounded-lg border border-slate-200">
-    <div class="px-6 py-5 border-b border-slate-200 bg-slate-50">
-      <h2 class="text-xl font-semibold text-slate-800">Requisitos Documentales de Práctica</h2>
-      <p class="text-sm text-slate-500">Documentos obligatorios según lo configurado en su tipo ({{ student?.type?.name }})</p>
-    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <div class="mb-6 border-b border-slate-100 pb-4">
+        <h3 class="text-lg font-semibold text-slate-900">Lista de Chequeo de Documentos</h3>
+        <p class="text-sm text-slate-500 mt-1">Gestione los documentos requeridos para el estudiante.</p>
+      </div>
 
-    <ul class="divide-y divide-slate-200" *ngIf="student?.requirements as requirements">
-      <li *ngFor="let req of requirements" class="px-6 py-6 hover:bg-slate-50 relative">
-        <div class="flex flex-col md:flex-row gap-6 md:items-start">
-          
-          <!-- Requirement Info (Left) -->
-          <div class="md:w-1/3">
-            <h3 class="text-base font-medium text-slate-900 flex items-center gap-2">
-              {{ req.definition.name }}
-              <span *ngIf="req.definition.isRequired" class="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">Obligatorio</span>
-            </h3>
-            <p class="text-sm text-slate-500 mt-1 mb-2">{{ req.definition.description }}</p>
-
-            <div class="flex items-center mt-2">
-              Status: 
-              <span class="ml-2 font-bold px-2 py-1 rounded text-xs"
-                    [ngClass]="{
-                      'bg-emerald-100 text-emerald-800': req.status === 'APPROVED',
-                      'bg-amber-100 text-amber-800': req.status === 'PENDING' && req.value,
-                      'bg-slate-100 text-slate-500': !req.value
-                    }">
-                {{ req.value ? req.status : 'SIN SUBIR' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Interaction Form (Right) -->
-          <div class="md:w-2/3 border-l pl-6 border-slate-200 min-h-24">
-            
-            <!-- View Mode (File exists and not editing) -->
-            <div *ngIf="req.value && !editingReqs.has(req.id)" class="bg-indigo-50 border border-indigo-100 rounded p-4 relative">
-              <div class="flex justify-between items-start">
-                <div class="flex gap-3 items-center">
-                  <span class="text-indigo-500 text-2xl">📄</span>
-                  <div>
-                    <a href="#" (click)="$event.preventDefault()" class="text-indigo-600 font-medium hover:underline flex items-center gap-1">
-                      {{ req.value }}
-                    </a>
-                    <p class="text-xs text-slate-500 mt-1" *ngIf="req.expiryDate">
-                      Vence: <strong class="text-slate-700">{{ req.expiryDate | date:'shortDate' }}</strong>
-                    </p>
-                  </div>
-                </div>
-                
-                <div class="flex gap-2">
-                  <button (click)="toggleEdit(req.id)" class="text-sm text-blue-600 hover:text-blue-800">Reemplazar</button>
-                  <button (click)="deleteRequirementValue(req)" class="text-sm text-rose-600 hover:text-rose-800">Borrar</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Edit/Upload Mode (No file yet, or explicitly editing) -->
-            <div *ngIf="!req.value || editingReqs.has(req.id)">
-              <form *ngIf="getForm(req.id) as reqForm" [formGroup]="reqForm" (submit)="saveRequirement(req)">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                  
-                  <!-- File Upload or Text -->
-                  <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">
-                      {{ req.definition.type === 'FILE' ? 'Cargar Archivo (PDF/Img)' : 'Valor' }}
-                    </label>
-                    <div *ngIf="req.definition.type === 'FILE'">
-                      <input type="file" (change)="onFileSelected($event, req.id)" 
-                             class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-slate-300 rounded">
-                      <p class="mt-1 text-xs text-slate-500" *ngIf="reqForm.get('value')?.value">Seleccionado: {{reqForm.get('value')?.value}}</p>
-                    </div>
-                    <div *ngIf="req.definition.type !== 'FILE'">
-                      <input [type]="req.definition.type === 'DATE' ? 'date' : 'text'" formControlName="value" 
-                             class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                    </div>
-                  </div>
-
-                  <!-- Optional Expiry Date -->
-                  <div *ngIf="req.definition.requiresExpiryDate">
-                     <label class="block text-sm font-medium text-slate-700 mb-1">Fecha de Vencimiento <span class="text-rose-500">*</span></label>
-                     <input type="date" formControlName="expiryDate" 
-                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                  </div>
-                  
-                  <div class="flex gap-2 w-full mt-2 md:mt-0 col-span-full justify-end">
-                    <button *ngIf="editingReqs.has(req.id) && req.value" type="button" (click)="toggleEdit(req.id)" 
-                            class="px-3 py-1.5 text-sm bg-white border border-slate-300 text-slate-700 rounded hover:bg-slate-50">
-                      Cancelar
-                    </button>
-                    <button type="submit" [disabled]="reqForm.invalid || !reqForm.dirty" 
-                            class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50">
-                      Guardar Documento
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-
-          </div> <!-- End Right -->
+      @if (!student.requirements || student.requirements.length === 0) {
+        <div class="text-center py-12 px-4 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
+          <p class="text-slate-500">Este tipo de estudiante no tiene requisitos configurados aún.</p>
         </div>
-      </li>
-      <li *ngIf="requirements.length === 0" class="px-6 py-12 text-center text-slate-500 border-2 border-dashed m-6 rounded bg-slate-50">
-        Este tipo de estudiante no tiene requisitos configurados aún.
-      </li>
-    </ul>
+      }
 
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Requisito</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Documento / Valor</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-slate-200">
+            @for (req of student.requirements; track req.id) {
+              <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4 align-top">
+                  <div class="text-sm font-medium text-slate-900">
+                    {{ req.definition?.name || 'Requisito sin nombre' }}
+                    @if (req.definition?.isRequired) {
+                      <span class="text-rose-500 font-bold ml-1" title="Obligatorio">*</span>
+                    }
+                  </div>
+                  <div class="text-xs text-slate-500 mt-1">{{ req.definition?.description || 'Sin descripción' }}</div>
+                  @if (req.definition?.requiresExpiryDate) {
+                    <div class="text-xs text-slate-500 mt-1">Requiere vigencia</div>
+                  }
+                </td>
+
+                <td class="px-6 py-4 align-top">
+                  @if (req.value && !editingReqs.has(req.id)) {
+                    <div class="text-sm text-slate-900" [title]="req.value">{{ req.value }}</div>
+                    @if(req.expiryDate) {
+                      <div class="text-xs text-slate-500 mt-1">Vence: {{ req.expiryDate | date:'mediumDate' }}</div>
+                    }
+                  } @else {
+                    @if (reqForms.get(req.id)) {
+                      <form [formGroup]="reqForms.get(req.id)!" (ngSubmit)="saveRequirement(req)" class="space-y-3">
+                        @if (req.definition.type === 'FILE') {
+                          <input type="file" (change)="onFileSelected($event, req.id)"
+                            class="block w-full text-sm text-slate-500
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-md file:border-0
+                              file:text-sm file:font-semibold
+                              file:bg-blue-50 file:text-blue-700
+                              hover:file:bg-blue-100
+                              cursor-pointer bg-slate-50 rounded-md border border-slate-200">
+                        } @else if (req.definition.type === 'TEXT') {
+                          <input type="text" formControlName="value" placeholder="Escriba aquí..."
+                            class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        } @else if (req.definition.type === 'DATE') {
+                          <input type="date" formControlName="value"
+                            class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        }
+
+                        @if (req.definition.requiresExpiryDate) {
+                          <input type="date" formControlName="expiryDate"
+                            class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        }
+
+                        <div class="flex justify-end gap-2">
+                          @if (req.value) {
+                            <app-button variant="secondary" size="sm" type="button" (click)="toggleEdit(req.id)">
+                              Cancelar
+                            </app-button>
+                          }
+                          <app-button variant="primary" size="sm" type="submit"
+                            [disabled]="reqForms.get(req.id)!.invalid || reqForms.get(req.id)!.pristine">
+                            Guardar
+                          </app-button>
+                        </div>
+                      </form>
+                    }
+                  }
+                </td>
+
+                <td class="px-6 py-4 align-top">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                    [ngClass]="getChecklistStatusClass(getChecklistStatus(req))"
+                  >
+                    {{ getChecklistStatus(req) }}
+                  </span>
+                  @if (req.status === 'REJECTED' && req.rejectionReason) {
+                    <div class="mt-2 text-xs text-rose-700 bg-rose-50 border border-rose-100 rounded px-2 py-1">
+                      {{ req.rejectionReason }}
+                    </div>
+                  }
+                </td>
+
+                <td class="px-6 py-4 text-right align-top">
+                  @if (req.value && !editingReqs.has(req.id)) {
+                    <div class="flex items-center justify-end gap-2">
+                      <button (click)="downloadFile(req)"
+                        class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                        title="Ver documento">
+                        <span class="sr-only">Ver</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                      </button>
+
+                      <button (click)="toggleEdit(req.id)"
+                        class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
+                        title="Reemplazar">
+                        <span class="sr-only">Reemplazar</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                      </button>
+                      <button (click)="deleteRequirementValue(req)"
+                        class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
+                        title="Eliminar">
+                        <span class="sr-only">Eliminar</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</div>
+}

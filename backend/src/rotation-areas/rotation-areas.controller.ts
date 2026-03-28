@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Patch } from '@nestjs/common';
 import { RotationAreasService } from './rotation-areas.service';
 import { CreateRotationAreaDto } from './dto/create-rotation-area.dto';
 
@@ -9,6 +9,16 @@ export class RotationAreasController {
   @Post()
   create(@Body() dto: CreateRotationAreaDto) {
     return this.service.create(dto);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: Partial<CreateRotationAreaDto> & { state?: 'ACTIVE' | 'INACTIVE' }) {
+    return this.service.update(id, dto);
+  }
+
+  @Patch(':id')
+  updateState(@Param('id') id: string, @Body() dto: { state: 'ACTIVE' | 'INACTIVE' }) {
+    return this.service.update(id, dto);
   }
 
   @Get()

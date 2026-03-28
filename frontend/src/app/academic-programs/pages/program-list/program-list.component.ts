@@ -4,28 +4,21 @@ import { RouterModule, Router } from '@angular/router';
 import { AcademicProgramsService } from '../../../core/services/academic-programs.service';
 import { AcademicProgram } from '../../../core/models/academic-program.model';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { TableComponent, Column } from '../../../shared/ui/table/table.component';
+import { NotificationService } from '../../../shared/notification/notification.service';
 
 @Component({
   selector: 'app-program-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonComponent, TableComponent],
+  imports: [CommonModule, RouterModule, ButtonComponent],
   templateUrl: './program-list.component.html'})
 export class ProgramListComponent implements OnInit {
-  programs = signal<AcademicProgram[]>([]);
+  programs = signal<any[]>([]);
 
-  columns: Column[] = [
-    { key: 'name', label: 'Nombre' },
-    { key: 'level', label: 'Nivel', type: 'badge' },
-    { key: 'institution', label: 'Institución' },
-    { key: 'actions', label: 'Acciones', type: 'actions' }
-  ];
-
-  constructor(private service: AcademicProgramsService, private router: Router) {}
-
-  onEdit(item: any) {
-    this.router.navigate(['/academic-programs', item.id]);
-  }
+  constructor(
+    private service: AcademicProgramsService,
+    private router: Router,
+    private ns: NotificationService
+  ) {}
 
   ngOnInit() {
     this.loadPrograms();
@@ -34,13 +27,42 @@ export class ProgramListComponent implements OnInit {
   loadPrograms() {
     this.service.getAll().subscribe({
       next: (data) => {
-        const mappedData = data.map(program => ({
+        const mappedData = data.map((program: AcademicProgram) => ({
           ...program,
-          institution: program.institution?.name || '-'
+          institution: program.institution?.name || '-',
+          areasSummary: program.rotationAreas?.length
+            ? program.rotationAreas.map(area => area.name).join(', ')
+            : '-',
+          stateLabel: program.state === 'INACTIVE' ? 'Inactivo' : 'Activo'
         }));
         this.programs.set(mappedData);
       },
       error: (err) => console.error('Error loading programs', err)
+    });
+  }
+
+  viewDetail(item: any) {
+    this.router.navigate(['/academic-programs', item.id]);
+  }
+
+  editProgram(item: any) {
+    this.router.navigate(['/academic-programs', item.id, 'edit']);
+  }
+
+  toggleState(item: any) {
+    const nextState = item.state === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const actionLabel = nextState === 'ACTIVE' ? 'activar' : 'inactivar';
+
+    if (!confirm(`¿Seguro que deseas ${actionLabel} este programa?`)) {
+      return;
+    }
+
+    this.service.update(item.id, { state: nextState }).subscribe({
+      next: () => {
+        this.ns.success(`Programa ${nextState === 'ACTIVE' ? 'activado' : 'inactivado'} correctamente`);
+        this.loadPrograms();
+      },
+      error: (err) => this.ns.error('Error al actualizar estado: ' + (err.error?.message || err.message))
     });
   }
 }

@@ -10,11 +10,11 @@
   </div>
 
   <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-    <app-table [data]="schedules()" [columns]="columns"></app-table>
+    <app-table [data]="schedules()" [columns]="columns" (edit)="onViewDetail($event)" (delete)="onDelete($event)"></app-table>
   </div>
 
   @if (showModal) {
-    <app-modal [isOpen]="true" title="Programar rotación" (closeEvent)="closeModal()">
+    <app-modal [isOpen]="true" [title]="editingScheduleId ? 'Ver detalle / Editar rotación' : 'Programar rotación'" (closeEvent)="closeModal()">
       <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
         <app-form-field label="Institución">
           <ng-select [items]="institutions" bindLabel="name" bindValue="id" formControlName="institutionId" placeholder="Seleccione institución"></ng-select>
@@ -47,7 +47,7 @@
 
         <div class="flex justify-end gap-3">
           <app-button variant="secondary" (click)="closeModal()">Cancelar</app-button>
-          <app-button variant="primary" type="submit">{{ isSubmitting ? 'Guardando...' : 'Programar' }}</app-button>
+          <app-button variant="primary" type="submit">{{ isSubmitting ? 'Guardando...' : (editingScheduleId ? 'Actualizar' : 'Programar') }}</app-button>
         </div>
       </form>
     </app-modal>

@@ -13,10 +13,84 @@
     </div>
   </div>
 
-  <!-- Binding signal con () en lugar de variable convencional -->
-  <app-table
-    [data]="students()"
-    [columns]="studentsColumns"
-    (onEdit)="onEdit($event)"
-    (onDelete)="onDelete($event)"></app-table>
+    <div class="overflow-x-auto w-full bg-white rounded-card shadow-card border border-gray-100">
+      <table class="w-full text-left text-sm text-gray-600">
+        <thead class="text-xs uppercase bg-white text-gray-900 border-b border-gray-200 font-bold">
+          <tr>
+            <th class="px-6 py-4 font-bold tracking-wider">Documento</th>
+            <th class="px-6 py-4 font-bold tracking-wider">Nombre</th>
+            <th class="px-6 py-4 font-bold tracking-wider">Correo</th>
+            <th class="px-6 py-4 font-bold tracking-wider">Institución</th>
+            <th class="px-6 py-4 font-bold tracking-wider">Tipo</th>
+            <th class="px-6 py-4 font-bold tracking-wider">Estado Requisitos</th>
+            <th class="px-6 py-4 font-bold tracking-wider">Estado</th>
+            <th class="px-6 py-4 font-bold tracking-wider text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (item of students(); track item.id) {
+            <tr class="hover:bg-gray-50/50 transition-colors duration-200">
+              <td class="px-6 py-4">{{ item.document }}</td>
+              <td class="px-6 py-4 font-medium text-gray-900">{{ item.name }}</td>
+              <td class="px-6 py-4">{{ item.email }}</td>
+              <td class="px-6 py-4">{{ item.institutionName }}</td>
+              <td class="px-6 py-4">{{ item.studentType }}</td>
+              <td class="px-6 py-4">
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
+                  [ngClass]="
+                    item.status === 'COMPLETADO' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' :
+                    item.status === 'CRÍTICO' ? 'border-rose-200 text-rose-600 bg-rose-50' :
+                    item.status === 'PRÓXIMO A VENCER' ? 'border-orange-200 text-orange-600 bg-orange-50' :
+                    'border-amber-200 text-amber-600 bg-amber-50'
+                  "
+                >
+                  {{ item.status }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
+                  [ngClass]="item.state === 'ACTIVE' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' : 'border-rose-200 text-rose-600 bg-rose-50'"
+                >
+                  {{ item.stateLabel }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-4">
+                  <button
+                    (click)="onViewDetail(item)"
+                    class="flex items-center gap-1.5 text-brand-button hover:text-brand-hover font-medium text-sm transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    Ver detalle
+                  </button>
+                   <button
+                     (click)="onEdit(item)"
+                     class="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+                   >
+                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                     Editar
+                   </button>
+                  <button
+                    (click)="onToggleState(item)"
+                    [ngClass]="item.state === 'ACTIVE' ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'"
+                    class="flex items-center gap-1.5 font-medium text-sm transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    {{ item.state === 'ACTIVE' ? 'Inactivar' : 'Activar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                No hay estudiantes disponibles.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 </div>

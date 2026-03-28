@@ -30,6 +30,7 @@ export const routes: Routes = [
   { path: 'institutions/types/new', component: TypeDetailComponent },
   { path: 'institutions/types/:id', component: TypeDetailComponent },
   { path: 'institutions/register', component: InstitutionFormComponent },
+  { path: 'institutions/:id/edit', component: InstitutionFormComponent },
   { path: 'institutions/:id', component: InstitutionDetailComponent },
   
   // New Modules
@@ -41,12 +42,14 @@ export const routes: Routes = [
   { path: 'service-capacity/:id', component: ServiceCapacityFormComponent },
   { path: 'academic-programs', component: ProgramListComponent },
   { path: 'academic-programs/new', component: ProgramFormComponent },
+  { path: 'academic-programs/:id/edit', component: ProgramFormComponent },
   { path: 'academic-programs/:id', component: ProgramDetailComponent },
   { path: 'rotation-schedules', component: RotationScheduleListComponent },
 
   // Students Modules
   { path: 'students', component: StudentList },
   { path: 'students/new', component: StudentForm },
+  { path: 'students/:id/edit', component: StudentForm },
   { path: 'students/:id', component: StudentDetail },
   { path: 'student-types', component: StudentTypeList },
   { path: 'student-types/new', component: StudentTypeDetail },

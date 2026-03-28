@@ -8,6 +8,7 @@ export interface AcademicProgram {
   institutionId: string;
   institution?: any;
   technicalAnnex?: string;
+  state?: 'ACTIVE' | 'INACTIVE';
   rotationAreas?: RotationArea[];
   createdAt?: string;
   updatedAt?: string;
@@ -18,4 +19,5 @@ export interface CreateAcademicProgramDto {
   level: string;
   institutionId: string;
   technicalAnnex?: string;
+  state?: 'ACTIVE' | 'INACTIVE';
 }

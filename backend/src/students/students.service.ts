@@ -1,6 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, ValidationStatus } from '@prisma/client';
+import { EntityState, Prisma, ValidationStatus } from '@prisma/client';
 
 @Injectable()
 export class StudentsService {
@@ -46,9 +46,14 @@ export class StudentsService {
     return student;
   }
 
-  async findAll() {
+  async findAll(includeInactive = false) {
     const students = await this.prisma.student.findMany({
+      where: {
+        deletedAt: null,
+        ...(includeInactive ? {} : { state: EntityState.ACTIVE }),
+      },
       include: { 
+        institution: true,
         type: { include: { requirements: true } }, 
         requirements: { include: { definition: true } } 
       },
@@ -114,7 +119,7 @@ export class StudentsService {
   findOne(id: string) {
     return this.prisma.student.findUnique({
       where: { id },
-      include: { type: true, requirements: { include: { definition: true } } },
+      include: { institution: true, type: true, requirements: { include: { definition: true } } },
     });
   }
 

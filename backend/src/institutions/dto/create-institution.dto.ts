@@ -20,6 +20,10 @@ export class CreateInstitutionDto {
 
   @IsString()
   @IsOptional()
+  phone?: string;
+
+  @IsString()
+  @IsOptional()
   address?: string;
 
   // Los documentos pueden no enviarse al momento de crear, o sí.
