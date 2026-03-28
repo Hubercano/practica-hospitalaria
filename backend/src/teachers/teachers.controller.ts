@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException, Res } from '@nestjs/common';
 import { TeachersService } from './teachers.service';
 import { Prisma } from '@prisma/client';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
+import type { Response } from 'express';
 
 @Controller('teachers')
 export class TeachersController {
@@ -22,6 +23,23 @@ export class TeachersController {
   @Get()
   findAll() {
     return this.teachersService.findAll();
+  }
+
+  @Get('template')
+  async downloadTemplate(@Res() res: Response) {
+    const buffer = await this.teachersService.generateTemplate();
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename=plantilla_docentes.xlsx',
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
+  @Post('bulk-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadBulk(@UploadedFile() file: Express.Multer.File) {
+    return this.teachersService.processBulkUpload(file);
   }
 
   @Get(':id')

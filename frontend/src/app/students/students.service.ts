@@ -48,4 +48,14 @@ export class StudentsService {
   updateStudentState(id: string, state: 'ACTIVE' | 'INACTIVE'): Observable<Student> {
     return this.http.patch<Student>(`${this.apiUrl}/${id}`, { state });
   }
+
+  downloadTemplate() {
+    return this.http.get(`${this.apiUrl}/template`, { responseType: 'blob' });
+  }
+
+  uploadBulk(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/bulk-upload`, formData);
+  }
 }

@@ -5,6 +5,9 @@
       <p class="mt-1 text-[13px] text-slate-500">Gestione los docentes registrados en la plataforma y sus expedientes.</p>
     </div>
     <div class="flex items-center gap-3">
+      <app-button variant="secondary" (click)="openUploadModal()">
+        Carga Masiva
+      </app-button>
       <app-button variant="primary" routerLink="/teachers/new">
         + Registrar Docente
       </app-button>
@@ -79,4 +82,37 @@
       }
     </div>
   </app-card>
+
+  @if (showUploadModal) {
+    <app-modal [isOpen]="true" title="Carga Masiva de Docentes" (closeEvent)="closeUploadModal()">
+      <div class="space-y-4">
+        <p class="text-sm text-gray-600">
+          Descarga la plantilla de Excel, llénala con los datos de docentes y súbela aquí.
+        </p>
+        <button type="button" (click)="downloadTemplate()" class="text-brand-button hover:text-brand-hover text-sm font-medium underline flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m0 0l-4-4m4 4l4-4"></path></svg>
+          Descargar plantilla
+        </button>
+
+        <div class="mt-4">
+          <app-file-upload
+            label="Archivo de Docentes (Excel)"
+            (fileChanged)="onFileSelected($event[0])">
+          </app-file-upload>
+        </div>
+
+        @if (uploadResult) {
+          <div class="mt-4 p-4 rounded-lg bg-emerald-50 text-emerald-700 text-sm">
+            Carga exitosa.
+          </div>
+        }
+      </div>
+      <div footer class="flex justify-end gap-3 w-full">
+        <app-button variant="secondary" (click)="closeUploadModal()">Cancelar</app-button>
+        <app-button variant="primary" (click)="uploadFile()" [disabled]="!selectedFile || isUploading">
+          {{ isUploading ? 'Subiendo...' : 'Cargar Archivo' }}
+        </app-button>
+      </div>
+    </app-modal>
+  }
 </div>

@@ -69,4 +69,14 @@ export class TeacherService {
     const params = new HttpParams().set('filePath', filePath);
     return this.http.delete<Teacher>(`${this.apiUrl}/${id}/document-multiple/${field}`, { params });
   }
+
+  downloadTemplate() {
+    return this.http.get(`${this.apiUrl}/template`, { responseType: 'blob' });
+  }
+
+  uploadBulk(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/bulk-upload`, formData);
+  }
 }

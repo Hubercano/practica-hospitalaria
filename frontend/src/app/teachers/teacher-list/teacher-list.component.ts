@@ -5,16 +5,23 @@ import { TeacherService, Teacher } from '../teacher.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { CardComponent } from '../../shared/ui/card/card.component';
+import { ModalComponent } from '../../shared/ui/modal/modal.component';
+import { FileUploadComponent } from '../../shared/ui/file-upload/file-upload.component';
 
 @Component({
   selector: 'app-teacher-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonComponent, CardComponent],
+  imports: [CommonModule, RouterModule, ButtonComponent, CardComponent, ModalComponent, FileUploadComponent],
   templateUrl: './teacher-list.component.html'
 })
 export class TeacherListComponent implements OnInit {
   // Fix reactivity by using Signals
   teachers = signal<any[]>([]);
+
+  showUploadModal = false;
+  isUploading = false;
+  uploadResult: any = null;
+  selectedFile: File | null = null;
 
 
   constructor(private teacherService: TeacherService, private router: Router, private ns: NotificationService) {}
@@ -79,6 +86,55 @@ export class TeacherListComponent implements OnInit {
         this.loadTeachers();
       },
       error: (err) => this.ns.error('Error al actualizar: ' + (err.error?.message || err.message))
+    });
+  }
+
+  openUploadModal() {
+    this.showUploadModal = true;
+    this.uploadResult = null;
+    this.selectedFile = null;
+  }
+
+  closeUploadModal() {
+    this.showUploadModal = false;
+    this.uploadResult = null;
+    this.selectedFile = null;
+    this.isUploading = false;
+    this.loadTeachers();
+  }
+
+  downloadTemplate() {
+    this.teacherService.downloadTemplate().subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'plantilla_docentes.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    });
+  }
+
+  onFileSelected(file: File) {
+    this.selectedFile = file || null;
+  }
+
+  uploadFile() {
+    if (!this.selectedFile) return;
+
+    this.isUploading = true;
+    this.teacherService.uploadBulk(this.selectedFile).subscribe({
+      next: (res) => {
+        this.isUploading = false;
+        this.uploadResult = res;
+        this.ns.success('Carga masiva de docentes exitosa.');
+        this.closeUploadModal();
+      },
+      error: (err) => {
+        this.isUploading = false;
+        this.ns.error('Error en la carga: ' + (err.error?.message || err.message));
+      }
     });
   }
 }
