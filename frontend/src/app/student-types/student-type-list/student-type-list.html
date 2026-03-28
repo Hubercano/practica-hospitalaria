@@ -1,4 +1,4 @@
-<div class="mx-auto px-4 py-8">
+<div class="mx-auto p-4">
   <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
     <div>
       <h1 class="text-3xl font-bold text-slate-900">Tipos de Estudiantes</h1>
@@ -19,21 +19,22 @@
         <table class="w-full text-left text-sm text-slate-600">
           <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
             <tr>
-              <th class="px-6 py-4">Nombre</th>
-              <th class="px-6 py-4">Descripción</th>
-              <th class="px-6 py-4">Requisitos Configurados</th>
-              <th class="px-6 py-4 text-right">Acciones</th>
+              <th class="px-4 py-2">Nombre</th>
+              <th class="px-4 py-2">Descripción</th>
+              <th class="px-4 py-2">Requisitos Configurados</th>
+              <th class="px-4 py-2 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr *ngFor="let type of types" class="hover:bg-slate-50 transition-colors">
-              <td class="px-6 py-4 font-medium text-slate-900">{{ type.name }}</td>
-              <td class="px-6 py-4 max-w-md truncate">{{ type.description }}</td>
-              <td class="px-6 py-4">{{ type.requirements.length || 0 }} de documentos</td>
-              <td class="px-6 py-4 text-right flex justify-end gap-3">
+              <td class="px-4 py-2 font-medium text-slate-900">{{ type.name }}</td>
+              <td class="px-4 py-2 max-w-md truncate">{{ type.description }}</td>
+              <td class="px-4 py-2">{{ type.requirements.length || 0 }} de documentos</td>
+              <td class="px-4 py-2 text-right flex justify-end gap-3">
                 <a [routerLink]="['/student-types', type.id]" 
-                   class="font-medium text-indigo-600 hover:text-indigo-800 hover:underline">
-                  📄 Requisitos Documentales
+                   class="flex items-center gap-1.5 font-medium text-indigo-600 hover:text-indigo-800 hover:underline">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                   Requisitos Documentales
                 </a>
                 <button (click)="deleteType(type.id)" 
                         class="font-medium text-rose-600 hover:text-rose-800">

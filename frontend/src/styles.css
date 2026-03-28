@@ -3,6 +3,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global compact scale */
+html {
+  font-size: 14px;
+}
+
+:root {
+  --ui-field-bg: #f1f5f9;
+  --ui-field-bg-focus: #ffffff;
+  --ui-field-border: #dbe3ef;
+  --ui-field-text: #0f172a;
+  --ui-field-placeholder: #94a3b8;
+  --ui-focus: #5c4dff;
+  --ui-field-radius: 0.65rem;
+  --ui-field-height: 2.4rem;
+  --ui-field-px: 0.75rem;
+}
+
 /* Custom Base Styles */
 body {
   @apply bg-slate-50 text-slate-900 font-sans antialiased;
@@ -14,5 +31,72 @@ h1, h2, h3, h4, h5, h6 {
 
 button {
   @apply cursor-pointer;
+}
+
+/* Unified controls across app */
+input:not([type='checkbox']):not([type='radio']):not([type='file']),
+select,
+textarea {
+  background: var(--ui-field-bg) !important;
+  border: 1px solid var(--ui-field-border) !important;
+  color: var(--ui-field-text) !important;
+  border-radius: var(--ui-field-radius) !important;
+  min-height: var(--ui-field-height);
+  padding: 0.5rem var(--ui-field-px) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ui-field-placeholder) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none !important;
+  background: var(--ui-field-bg-focus) !important;
+  border-color: var(--ui-focus) !important;
+  box-shadow: 0 0 0 3px rgba(92, 77, 255, 0.15) !important;
+}
+
+textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+/* Keep native choice controls visually standard */
+input[type='checkbox'],
+input[type='radio'] {
+  min-height: auto;
+  padding: 0;
+}
+
+/* Ng-select harmonization */
+.ng-select .ng-select-container {
+  min-height: var(--ui-field-height) !important;
+  background: var(--ui-field-bg) !important;
+  border: 1px solid var(--ui-field-border) !important;
+  border-radius: var(--ui-field-radius) !important;
+  box-shadow: none !important;
+  font-size: 0.875rem !important;
+}
+
+.ng-select.ng-select-focused .ng-select-container {
+  background: var(--ui-field-bg-focus) !important;
+  border-color: var(--ui-focus) !important;
+  box-shadow: 0 0 0 3px rgba(92, 77, 255, 0.15) !important;
+}
+
+.ng-select .ng-select-container .ng-value-container {
+  padding-left: 0.625rem !important;
+  padding-right: 0.625rem !important;
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+  font-size: 0.85rem;
+  padding: 0.45rem 0.625rem;
 }
 

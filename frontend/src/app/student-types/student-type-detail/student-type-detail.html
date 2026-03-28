@@ -70,24 +70,24 @@
         </thead>
         <tbody class="bg-white divide-y divide-slate-200">
           <tr *ngFor="let req of studentType?.requirements" class="hover:bg-slate-50">
-            <td class="px-6 py-4">
+            <td class="px-4 py-2">
               <div class="text-sm font-medium text-slate-900">{{ req.name }}</div>
               <div class="text-xs text-slate-500 mt-1">{{ req.description }}</div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-2 whitespace-nowrap">
               <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
                 {{ req.type }}
               </span>
             </td>
-            <td class="px-6 py-4 text-center whitespace-nowrap">
+            <td class="px-4 py-2 text-center whitespace-nowrap">
               <span *ngIf="req.isRequired" class="text-emerald-600 text-lg">✓</span>
               <span *ngIf="!req.isRequired" class="text-slate-300 text-lg">-</span>
             </td>
-            <td class="px-6 py-4 text-center whitespace-nowrap">
+            <td class="px-4 py-2 text-center whitespace-nowrap">
               <span *ngIf="req.requiresExpiryDate" class="text-amber-600 text-lg" title="Requiere vigencia">🕒</span>
               <span *ngIf="!req.requiresExpiryDate" class="text-slate-300 text-lg">-</span>
             </td>
-            <td class="px-6 py-4 text-right whitespace-nowrap">
+            <td class="px-4 py-2 text-right whitespace-nowrap">
               <button (click)="deleteRequirement(req.id!)" class="text-rose-600 hover:text-rose-900 transition-colors">
                 🗑️ Eliminar
               </button>

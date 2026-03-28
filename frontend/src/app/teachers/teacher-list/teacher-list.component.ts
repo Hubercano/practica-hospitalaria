@@ -51,7 +51,7 @@ export class TeacherListComponent implements OnInit {
             phone: phone,
             supervisionType: t.supervisionType || '-',
             contractType: t.contractType || '-',
-            files: `${requiredDocumentCount} de 5 documentos requeridos`
+            files: `${requiredDocumentCount} de 5`
           };
         });
 

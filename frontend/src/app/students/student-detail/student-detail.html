@@ -48,16 +48,16 @@
         <table class="min-w-full divide-y divide-slate-200">
           <thead class="bg-slate-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Requisito</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Documento / Valor</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Requisito</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Documento / Valor</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
+              <th class="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-slate-200">
             @for (req of student.requirements; track req.id) {
               <tr class="hover:bg-slate-50">
-                <td class="px-6 py-4 align-top">
+                <td class="px-4 py-2 align-top">
                   <div class="text-sm font-medium text-slate-900">
                     {{ req.definition?.name || 'Requisito sin nombre' }}
                     @if (req.definition?.isRequired) {
@@ -70,7 +70,7 @@
                   }
                 </td>
 
-                <td class="px-6 py-4 align-top">
+                <td class="px-4 py-2 align-top">
                   @if (req.value && !editingReqs.has(req.id)) {
                     <div class="text-sm text-slate-900" [title]="req.value">{{ req.value }}</div>
                     @if(req.expiryDate) {
@@ -117,7 +117,7 @@
                   }
                 </td>
 
-                <td class="px-6 py-4 align-top">
+                <td class="px-4 py-2 align-top">
                   <span
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                     [ngClass]="getChecklistStatusClass(getChecklistStatus(req))"
@@ -131,7 +131,7 @@
                   }
                 </td>
 
-                <td class="px-6 py-4 text-right align-top">
+                <td class="px-4 py-2 text-right align-top">
                   @if (req.value && !editingReqs.has(req.id)) {
                     <div class="flex items-center justify-end gap-2">
                       <button (click)="downloadFile(req)"

@@ -1,4 +1,4 @@
-<div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="mx-auto p-4">
   <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
       <h2 class="text-2xl font-bold text-slate-900">Programas Académicos</h2>
@@ -13,30 +13,30 @@
     <table class="w-full text-left text-sm text-gray-600">
       <thead class="text-xs uppercase bg-white text-gray-900 border-b border-gray-200 font-bold">
         <tr>
-          <th class="px-6 py-4 font-bold tracking-wider">Nombre</th>
-          <th class="px-6 py-4 font-bold tracking-wider">Nivel</th>
-          <th class="px-6 py-4 font-bold tracking-wider">Institución</th>
-          <th class="px-6 py-4 font-bold tracking-wider">Áreas</th>
-          <th class="px-6 py-4 font-bold tracking-wider">Estado</th>
-          <th class="px-6 py-4 font-bold tracking-wider text-right">Acciones</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Nombre</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Nivel</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Institución</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Áreas</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Estado</th>
+          <th class="px-4 py-2 font-bold tracking-wider text-right">Acciones</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         @for (item of programs(); track item.id) {
           <tr class="hover:bg-gray-50/50 transition-colors duration-200">
-            <td class="px-6 py-4 font-medium text-gray-900">{{ item.name }}</td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-2 font-medium text-gray-900">{{ item.name }}</td>
+            <td class="px-4 py-2">
               <span class="px-3 py-1 text-xs font-semibold rounded-badge bg-blue-100 text-blue-600">{{ item.level }}</span>
             </td>
-            <td class="px-6 py-4">{{ item.institution }}</td>
-            <td class="px-6 py-4 max-w-sm truncate" [title]="item.areasSummary">{{ item.areasSummary }}</td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-2">{{ item.institution }}</td>
+            <td class="px-4 py-2 max-w-sm truncate" [title]="item.areasSummary">{{ item.areasSummary }}</td>
+            <td class="px-4 py-2">
               <span class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
                 [ngClass]="item.state === 'ACTIVE' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' : 'border-rose-200 text-rose-600 bg-rose-50'">
                 {{ item.stateLabel }}
               </span>
             </td>
-            <td class="px-6 py-4">
+            <td class="px-4 py-2">
               <div class="flex items-center justify-end gap-4">
                 <button (click)="viewDetail(item)" class="flex items-center gap-1.5 text-brand-button hover:text-brand-hover font-medium text-sm transition-colors">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>

@@ -1,4 +1,4 @@
-﻿<div class="px-4 sm:px-6 lg:px-8 py-8">
+﻿<div class="p-4">
   <div class="sm:flex sm:items-center sm:justify-between mb-8">
     <div>
       <h1 class="text-2xl font-bold text-gray-900">Estudiantes</h1>
@@ -17,25 +17,25 @@
       <table class="w-full text-left text-sm text-gray-600">
         <thead class="text-xs uppercase bg-white text-gray-900 border-b border-gray-200 font-bold">
           <tr>
-            <th class="px-6 py-4 font-bold tracking-wider">Documento</th>
-            <th class="px-6 py-4 font-bold tracking-wider">Nombre</th>
-            <th class="px-6 py-4 font-bold tracking-wider">Correo</th>
-            <th class="px-6 py-4 font-bold tracking-wider">Institución</th>
-            <th class="px-6 py-4 font-bold tracking-wider">Tipo</th>
-            <th class="px-6 py-4 font-bold tracking-wider">Estado Requisitos</th>
-            <th class="px-6 py-4 font-bold tracking-wider">Estado</th>
-            <th class="px-6 py-4 font-bold tracking-wider text-right">Acciones</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Documento</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Nombre</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Correo</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Institución</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Tipo</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Estado Requisitos</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Estado</th>
+            <th class="px-4 py-2 font-bold tracking-wider text-right">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           @for (item of students(); track item.id) {
             <tr class="hover:bg-gray-50/50 transition-colors duration-200">
-              <td class="px-6 py-4">{{ item.document }}</td>
-              <td class="px-6 py-4 font-medium text-gray-900">{{ item.name }}</td>
-              <td class="px-6 py-4">{{ item.email }}</td>
-              <td class="px-6 py-4">{{ item.institutionName }}</td>
-              <td class="px-6 py-4">{{ item.studentType }}</td>
-              <td class="px-6 py-4">
+              <td class="px-4 py-2">{{ item.document }}</td>
+              <td class="px-4 py-2 font-medium text-gray-900">{{ item.name }}</td>
+              <td class="px-4 py-2">{{ item.email }}</td>
+              <td class="px-4 py-2">{{ item.institutionName }}</td>
+              <td class="px-4 py-2">{{ item.studentType }}</td>
+              <td class="px-4 py-2">
                 <span
                   class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
                   [ngClass]="
@@ -48,7 +48,7 @@
                   {{ item.status }}
                 </span>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-4 py-2">
                 <span
                   class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
                   [ngClass]="item.state === 'ACTIVE' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' : 'border-rose-200 text-rose-600 bg-rose-50'"
@@ -56,7 +56,7 @@
                   {{ item.stateLabel }}
                 </span>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-4 py-2">
                 <div class="flex items-center justify-end gap-4">
                   <button
                     (click)="onViewDetail(item)"

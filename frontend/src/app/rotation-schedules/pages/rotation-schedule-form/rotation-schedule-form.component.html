@@ -1,0 +1,97 @@
+<div class="max-w-6xl mx-auto p-4">
+  <div class="mb-6 flex items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900">
+        {{ isEditMode ? 'Detalle / Edición de Rotación' : 'Programar Rotación' }}
+      </h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Completa la información de la programación de rotación.
+      </p>
+    </div>
+    <app-button variant="secondary" routerLink="/rotation-schedules">Volver</app-button>
+  </div>
+
+  <app-card>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-form-field label="Institución" [required]="true">
+          <ng-select
+            class="rotation-select"
+            [items]="institutions"
+            bindLabel="name"
+            bindValue="id"
+            formControlName="institutionId"
+            placeholder="Seleccione institución">
+          </ng-select>
+        </app-form-field>
+
+        <app-form-field label="Programa" [required]="true">
+          <ng-select
+            class="rotation-select"
+            [items]="programs"
+            bindLabel="name"
+            bindValue="id"
+            formControlName="programId"
+            placeholder="Seleccione programa"
+            [disabled]="!form.get('institutionId')?.value">
+          </ng-select>
+        </app-form-field>
+
+        <app-form-field label="Área" [required]="true">
+          <ng-select
+            class="rotation-select"
+            [items]="areas"
+            bindLabel="name"
+            bindValue="id"
+            formControlName="areaId"
+            placeholder="Seleccione área"
+            [disabled]="!form.get('programId')?.value">
+          </ng-select>
+        </app-form-field>
+
+        <app-form-field label="Docentes">
+          <ng-select
+            class="rotation-select"
+            [items]="teachers"
+            bindLabel="fullName"
+            bindValue="id"
+            [multiple]="true"
+            formControlName="teacherIds"
+            placeholder="Seleccione docentes"
+            [disabled]="!form.get('areaId')?.value">
+          </ng-select>
+        </app-form-field>
+
+        <app-form-field label="Estudiantes">
+          <ng-select
+            class="rotation-select"
+            [items]="students"
+            bindLabel="fullName"
+            bindValue="id"
+            [multiple]="true"
+            formControlName="studentIds"
+            placeholder="Seleccione estudiantes"
+            [disabled]="!form.get('areaId')?.value">
+          </ng-select>
+        </app-form-field>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-form-field label="Fecha inicio" [required]="true">
+          <input type="date" formControlName="startDate" class="w-full" [disabled]="!form.get('areaId')?.value" />
+        </app-form-field>
+
+        <app-form-field label="Fecha fin" [required]="true">
+          <input type="date" formControlName="endDate" class="w-full" [disabled]="!form.get('areaId')?.value" />
+        </app-form-field>
+      </div>
+
+      <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
+        <app-button variant="secondary" routerLink="/rotation-schedules">Cancelar</app-button>
+        <app-button variant="primary" type="submit">
+          {{ isSubmitting ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Programar') }}
+        </app-button>
+      </div>
+    </form>
+  </app-card>
+</div>

@@ -18,6 +18,10 @@ export class RotationSchedulesService {
     return this.http.get<any[]>(this.apiUrl);
   }
 
+  getOne(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  }
+
   create(payload: any) {
     return this.http.post(this.apiUrl, payload);
   }

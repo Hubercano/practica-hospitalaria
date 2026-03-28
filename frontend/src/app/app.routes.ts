@@ -12,6 +12,7 @@ import { ProgramListComponent } from './academic-programs/pages/program-list/pro
 import { ProgramFormComponent } from './academic-programs/pages/program-form/program-form.component';
 import { ProgramDetailComponent } from './academic-programs/pages/program-detail/program-detail.component';
 import { RotationScheduleListComponent } from './rotation-schedules/pages/rotation-schedule-list/rotation-schedule-list.component';
+import { RotationScheduleFormComponent } from './rotation-schedules/pages/rotation-schedule-form/rotation-schedule-form.component';
 
 import { StudentList } from './students/student-list/student-list';
 import { StudentTypeList } from './student-types/student-type-list/student-type-list';
@@ -45,6 +46,8 @@ export const routes: Routes = [
   { path: 'academic-programs/:id/edit', component: ProgramFormComponent },
   { path: 'academic-programs/:id', component: ProgramDetailComponent },
   { path: 'rotation-schedules', component: RotationScheduleListComponent },
+  { path: 'rotation-schedules/new', component: RotationScheduleFormComponent },
+  { path: 'rotation-schedules/:id/edit', component: RotationScheduleFormComponent },
 
   // Students Modules
   { path: 'students', component: StudentList },

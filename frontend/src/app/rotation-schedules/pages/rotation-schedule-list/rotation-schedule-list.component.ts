@@ -1,25 +1,19 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { TableComponent, Column } from '../../../shared/ui/table/table.component';
-import { ModalComponent } from '../../../shared/ui/modal/modal.component';
-import { FormFieldComponent } from '../../../shared/ui/form-field/form-field.component';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { RotationSchedulesService } from '../../../core/services/rotation-schedules.service';
 import { NotificationService } from '../../../shared/notification/notification.service';
 
 @Component({
   selector: 'app-rotation-schedule-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonComponent, TableComponent, ModalComponent, FormFieldComponent, NgSelectModule],
+  imports: [CommonModule, ButtonComponent, TableComponent],
   templateUrl: './rotation-schedule-list.component.html'
 })
 export class RotationScheduleListComponent implements OnInit {
   schedules = signal<any[]>([]);
-  showModal = false;
-  isSubmitting = false;
-  editingScheduleId: string | null = null;
 
   columns: Column[] = [
     { key: 'institutionName', label: 'Institución' },
@@ -43,19 +37,8 @@ export class RotationScheduleListComponent implements OnInit {
   private rawSchedules: any[] = [];
   private allPrograms: any[] = [];
   private allAreas: any[] = [];
-  form!: FormGroup;
 
-  constructor(private fb: FormBuilder, private svc: RotationSchedulesService, private ns: NotificationService) {
-    this.form = this.fb.group({
-      institutionId: [''],
-      programId: [''],
-      areaId: [''],
-      teacherIds: [[]],
-      studentIds: [[]],
-      startDate: [''],
-      endDate: ['']
-    });
-  }
+  constructor(private svc: RotationSchedulesService, private ns: NotificationService, private router: Router) {}
 
   ngOnInit() {
     this.svc.getInstitutions().subscribe(data => { this.institutions = data || []; this.mapSchedules(); });
@@ -81,24 +64,7 @@ export class RotationScheduleListComponent implements OnInit {
       this.mapSchedules();
     });
 
-    // initial schedules load
     this.loadAll();
-
-    this.form.get('institutionId')?.valueChanges.subscribe(val => {
-      // Filter from source copy to avoid losing data after successive selections
-      this.programs = val
-        ? this.allPrograms.filter((p: any) => p.institutionId === val)
-        : this.allPrograms;
-      this.areas = [];
-      this.form.patchValue({ programId: '', areaId: '' });
-    });
-
-    this.form.get('programId')?.valueChanges.subscribe(val => {
-      this.areas = val
-        ? this.allAreas.filter((a: any) => a.programId === val)
-        : this.allAreas;
-      this.form.patchValue({ areaId: '' });
-    });
   }
 
   loadAll() {
@@ -161,52 +127,13 @@ export class RotationScheduleListComponent implements OnInit {
     return entry.name || entry.id || '';
   }
 
-  openModal(schedule?: any) {
-    this.showModal = true;
-    if (!schedule) {
-      this.editingScheduleId = null;
-      this.form.reset({
-        institutionId: '',
-        programId: '',
-        areaId: '',
-        teacherIds: [],
-        studentIds: [],
-        startDate: '',
-        endDate: ''
-      });
-      this.programs = this.allPrograms;
-      this.areas = this.allAreas;
-      return;
-    }
-
-    this.editingScheduleId = schedule.id;
-    const institutionId = schedule.institutionId || '';
-    const programId = schedule.programId || '';
-    this.programs = institutionId
-      ? this.allPrograms.filter((p: any) => p.institutionId === institutionId)
-      : this.allPrograms;
-    this.areas = programId
-      ? this.allAreas.filter((a: any) => a.programId === programId)
-      : this.allAreas;
-
-    this.form.patchValue({
-      institutionId,
-      programId,
-      areaId: schedule.areaId || '',
-      teacherIds: Array.isArray(schedule.teacherIds) ? schedule.teacherIds : [],
-      studentIds: Array.isArray(schedule.studentIds) ? schedule.studentIds : [],
-      startDate: schedule.startDate ? new Date(schedule.startDate).toISOString().slice(0, 10) : '',
-      endDate: schedule.endDate ? new Date(schedule.endDate).toISOString().slice(0, 10) : ''
-    });
-  }
-
-  closeModal() {
-    this.showModal = false;
-    this.editingScheduleId = null;
+  goToCreate() {
+    this.router.navigate(['/rotation-schedules/new']);
   }
 
   onViewDetail(schedule: any) {
-    this.openModal(schedule);
+    if (!schedule?.id) return;
+    this.router.navigate(['/rotation-schedules', schedule.id, 'edit']);
   }
 
   onDelete(schedule: any) {
@@ -220,39 +147,6 @@ export class RotationScheduleListComponent implements OnInit {
       },
       error: (err) => {
         this.ns.error(err?.error?.message || 'Error al eliminar programación');
-      }
-    });
-  }
-
-  submit() {
-    if (this.form.invalid) return;
-    const payload = this.form.value;
-    // Validate endDate > startDate (null-safe)
-    if (!payload.startDate || !payload.endDate) {
-      this.ns.error('Debe completar fecha inicio y fecha fin');
-      return;
-    }
-    const start = new Date(payload.startDate as string);
-    const end = new Date(payload.endDate as string);
-    if (end <= start) {
-      this.ns.error('La fecha fin debe ser mayor que la fecha inicio');
-      return;
-    }
-    this.isSubmitting = true;
-    const request$ = this.editingScheduleId
-      ? this.svc.update(this.editingScheduleId, payload)
-      : this.svc.create(payload);
-
-    request$.subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.ns.success(this.editingScheduleId ? 'Programación actualizada correctamente' : 'Programación creada correctamente');
-        this.closeModal();
-        this.loadAll();
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.ns.error(err?.error?.message || 'Error al guardar programación');
       }
     });
   }

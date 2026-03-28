@@ -43,11 +43,11 @@
             <table class="min-w-full divide-y divide-slate-200">
               <thead class="bg-slate-50">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre del Área</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Duración (Semanas)</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cupos (Max Estudiantes)</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nombre del Área</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Duración (Semanas)</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cupos (Max Estudiantes)</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
+                  <th class="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-slate-200">
@@ -61,22 +61,22 @@
 
                 @for (area of program()?.rotationAreas; track area.id) {
                   <tr class="hover:bg-slate-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-slate-900">
                       {{ area.name }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-slate-500">
                       {{ area.durationWeeks || '-' }} semanas
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-slate-500">
                       {{ area.maxStudents || '-' }} estudiantes
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-slate-500">
                       <span class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
                         [ngClass]="area.state === 'ACTIVE' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' : 'border-rose-200 text-rose-600 bg-rose-50'">
                         {{ area.state === 'ACTIVE' ? 'Activa' : 'Inactiva' }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex items-center justify-end gap-4">
                         <button (click)="editArea(area)" class="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors">
                           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
