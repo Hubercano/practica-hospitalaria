@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, UseInterceptors, UploadedFile, Res, Query } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { InstitutionsService } from './institutions.service';
-import { CreateInstitutionDto, CreateInstitutionTypeDto, AddRequirementDto } from './dto';
+import { CreateInstitutionDto, CreateInstitutionTypeDto, AddRequirementDto, UpdateInstitutionDto } from './dto';
+import { EntityState } from '@prisma/client';
 
 @Controller('institutions')
 export class InstitutionsController {
@@ -21,6 +22,11 @@ export class InstitutionsController {
   @Get('types/:id')
   getType(@Param('id') id: string) {
     return this.institutionsService.getType(id);
+  }
+
+  @Patch('types/:id')
+  updateType(@Param('id') id: string, @Body() dto: CreateInstitutionTypeDto) {
+    return this.institutionsService.updateType(id, dto);
   }
 
   @Post('types/:id/requirements')
@@ -53,9 +59,23 @@ export class InstitutionsController {
     return this.institutionsService.create(dto);
   }
 
+  @Patch(':id')
+  updateInstitution(@Param('id') id: string, @Body() dto: UpdateInstitutionDto) {
+    return this.institutionsService.updateInstitution(id, dto);
+  }
+
+  @Patch(':id/state')
+  updateInstitutionState(
+    @Param('id') id: string,
+    @Body() body: { state: EntityState },
+  ) {
+    return this.institutionsService.updateInstitutionState(id, body.state);
+  }
+
   @Get()
-  listAll() {
-    return this.institutionsService.findAll();
+  listAll(@Query('includeInactive') includeInactive?: string) {
+    const includeAll = includeInactive === 'true' || includeInactive === '1';
+    return this.institutionsService.findAll(includeAll);
   }
 
   @Get('template')

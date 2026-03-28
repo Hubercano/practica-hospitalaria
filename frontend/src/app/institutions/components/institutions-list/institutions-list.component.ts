@@ -7,25 +7,16 @@ import { NotificationService } from '../../../shared/notification/notification.s
 // UI Components
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { ModalComponent } from '../../../shared/ui/modal/modal.component';
-import { TableComponent, Column } from '../../../shared/ui/table/table.component';
 import { FileUploadComponent } from '../../../shared/ui/file-upload/file-upload.component';
 
 @Component({
   selector: 'app-institutions-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonComponent, ModalComponent, TableComponent, FileUploadComponent],
+  imports: [CommonModule, RouterModule, ButtonComponent, ModalComponent, FileUploadComponent],
   templateUrl: './institutions-list.component.html',
 })
 export class InstitutionsListComponent implements OnInit {
   institutions: any[] = [];
-
-  columns: Column[] = [
-    { key: 'name', label: 'NOMBRE' },
-    { key: 'nit', label: 'NIT' },
-    { key: 'type', label: 'TIPO', type: 'badge' },
-    { key: 'status', label: 'ESTADO', type: 'status' },
-    { key: 'actions', label: 'ACCIONES', type: 'actions' }
-  ];
 
   // Bulk Upload State
   showUploadModal = false;
@@ -41,14 +32,14 @@ export class InstitutionsListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.service.getInstitutions().subscribe({
+    this.service.getInstitutions(true).subscribe({
       next: (data) => {
         this.institutions = Array.isArray(data) ? data : (data as any).data || [];
-        // Map data to ensure tags match UI expectations
         this.institutions = this.institutions.map(inst => ({
             ...inst,
             type: inst.type?.name || inst.type || 'universidades',
-            status: inst.status || 'Pendiente'
+            requirementStatus: inst.status || 'PENDIENTE',
+            institutionStateLabel: inst.state === 'ACTIVE' ? 'Activa' : 'Inactiva'
         }));
         this.cdr.detectChanges();
       },
@@ -56,18 +47,26 @@ export class InstitutionsListComponent implements OnInit {
     });
   }
 
-  onEdit(item: any) {
+  onViewDetails(item: any) {
     this.router.navigate(['/institutions', item.id]);
   }
 
-  onDelete(item: any) {
-    if (!confirm('¿Seguro que desea eliminar esta institución y todos sus documentos cargados?')) return;
+  onEdit(item: any) {
+    this.router.navigate(['/institutions', item.id, 'edit']);
+  }
 
-    this.service.deleteInstitution(item.id).subscribe({
+  onToggleState(item: any) {
+    const isActive = item.state === 'ACTIVE';
+    const nextState = isActive ? 'INACTIVE' : 'ACTIVE';
+    const actionLabel = isActive ? 'inactivar' : 'activar';
+    if (!confirm(`¿Seguro que deseas ${actionLabel} esta institución?`)) return;
+
+    this.service.updateInstitutionState(item.id, nextState).subscribe({
       next: () => {
+        this.ns.success(`Institución ${isActive ? 'inactivada' : 'activada'} correctamente`);
         this.ngOnInit();
       },
-      error: (err) => this.ns.error('Error al eliminar: ' + (err.error?.message || err.message))
+      error: (err) => this.ns.error('Error al actualizar estado: ' + (err.error?.message || err.message))
     });
   }
 
@@ -115,6 +114,8 @@ export class InstitutionsListComponent implements OnInit {
       next: (res) => {
         this.isUploading = false;
         this.uploadResult = res;
+        this.ns.success('Carga masiva exitosa. Listado actualizado.');
+        this.closeUploadModal();
       },
       error: (err) => {
         this.isUploading = false;

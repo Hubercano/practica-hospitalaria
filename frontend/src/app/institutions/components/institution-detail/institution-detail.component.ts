@@ -19,7 +19,7 @@ interface RequirementValue {
   };
   value: string;
   expiryDate?: string; // Added to interface
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
   rejectionReason?: string;
 }
 
@@ -157,5 +157,57 @@ export class InstitutionDetailComponent implements OnInit {
   // Placeholder for download/view
   downloadFile(req: RequirementValue) {
     this.ns.info(`Descargando archivo: ${req.value}`);
+  }
+
+  getChecklistStatus(req: RequirementValue): 'PENDIENTE' | 'CRÍTICO' | 'PRÓXIMO A VENCER' | 'COMPLETADO' {
+    const hasValue = !!req.value;
+
+    // Requisito obligatorio sin documento/valor cargado
+    if (req.definition?.isRequired && !hasValue) {
+      return 'PENDIENTE';
+    }
+
+    // Si requiere vigencia y no tiene fecha, queda pendiente
+    if (req.definition?.requiresExpiryDate && hasValue && !req.expiryDate) {
+      return 'PENDIENTE';
+    }
+
+    if (hasValue && req.expiryDate) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const expiry = new Date(req.expiryDate);
+      expiry.setHours(0, 0, 0, 0);
+
+      const criticalThreshold = new Date(now);
+      criticalThreshold.setDate(now.getDate() + 5);
+
+      const warningThreshold = new Date(now);
+      warningThreshold.setDate(now.getDate() + 30);
+
+      if (expiry <= criticalThreshold) {
+        return 'CRÍTICO';
+      }
+
+      if (expiry <= warningThreshold) {
+        return 'PRÓXIMO A VENCER';
+      }
+    }
+
+    return 'COMPLETADO';
+  }
+
+  getChecklistStatusClass(checklistStatus: 'PENDIENTE' | 'CRÍTICO' | 'PRÓXIMO A VENCER' | 'COMPLETADO') {
+    switch (checklistStatus) {
+      case 'COMPLETADO':
+        return 'bg-emerald-100 text-emerald-800';
+      case 'CRÍTICO':
+        return 'bg-rose-100 text-rose-800';
+      case 'PRÓXIMO A VENCER':
+        return 'bg-orange-100 text-orange-800';
+      case 'PENDIENTE':
+      default:
+        return 'bg-amber-100 text-amber-800';
+    }
   }
 }

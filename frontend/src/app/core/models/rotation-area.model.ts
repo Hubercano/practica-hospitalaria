@@ -5,6 +5,8 @@ export interface RotationArea {
   programId: string;
   durationWeeks?: number;
   maxStudents?: number;
+  state?: 'ACTIVE' | 'INACTIVE';
+  serviceIds?: string[];
 }
 
 export interface CreateRotationAreaDto {
@@ -13,4 +15,5 @@ export interface CreateRotationAreaDto {
   durationWeeks?: number;
   maxStudents?: number;
   serviceIds?: string[];
+  state?: 'ACTIVE' | 'INACTIVE';
 }

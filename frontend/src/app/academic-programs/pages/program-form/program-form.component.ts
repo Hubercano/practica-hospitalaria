@@ -58,7 +58,12 @@ export class ProgramFormComponent implements OnInit {
   }
 
   ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.isEditMode = !!id;
     this.loadInstitutions();
+    if (id) {
+      this.loadProgram(id);
+    }
   }
 
   onFileSelected(file: File) {
@@ -81,15 +86,31 @@ export class ProgramFormComponent implements OnInit {
     });
   }
 
+  loadProgram(id: string) {
+    this.service.getOne(id).subscribe({
+      next: (program) => {
+        this.programForm.patchValue({
+          name: program.name,
+          level: program.level,
+          institutionId: program.institutionId,
+          technicalAnnex: program.technicalAnnex || ''
+        });
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
   onSubmit() {
     if (this.programForm.valid) {
       this.isSubmitting = true;
       const payload = { ...this.programForm.value };
       if(!payload.technicalAnnex) delete payload.technicalAnnex;
+      const id = this.route.snapshot.paramMap.get('id');
+      const request$ = this.isEditMode && id ? this.service.update(id, payload) : this.service.create(payload);
 
-      this.service.create(payload).subscribe({
-        next: () => {
-          this.router.navigate(['/academic-programs']);
+      request$.subscribe({
+        next: (program) => {
+          this.router.navigate(['/academic-programs', program.id]);
         },
         error: (err) => {
           console.error(err);

@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException } from '@nestjs/common';
 import { TeachersService } from './teachers.service';
 import { Prisma } from '@prisma/client';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
@@ -34,12 +34,32 @@ export class TeachersController {
     return this.teachersService.update(id, data);
   }
 
+  @Patch(':id/state')
+  updateState(@Param('id') id: string, @Body() body: { state: 'ACTIVE' | 'INACTIVE' }) {
+    return this.teachersService.updateState(id, body.state);
+  }
+
   @Delete(':id/document/:field')
   deleteDocument(@Param('id') id: string, @Param('field') field: string) {
     if (!['cvFile', 'dataAuthorizationFile', 'conflictOfInterestFile'].includes(field)) {
       throw new BadRequestException('Campo inválido');
     }
     return this.teachersService.uploadDocument(id, field as any, null as any);
+  }
+
+  @Delete(':id/document-multiple/:field')
+  deleteMultipleDocument(
+    @Param('id') id: string,
+    @Param('field') field: string,
+    @Query('filePath') filePath: string
+  ) {
+    if (!['teacherTrainingFiles', 'teacherRecognitionFiles'].includes(field)) {
+      throw new BadRequestException('Campo inválido para eliminación múltiple');
+    }
+    if (!filePath) {
+      throw new BadRequestException('filePath es requerido');
+    }
+    return this.teachersService.deleteMultipleDocument(id, field as any, filePath);
   }
 
   @Delete(':id')
@@ -68,5 +88,29 @@ export class TeachersController {
     }
     const realPath = `/uploads/teachers/${file.filename}`;
     return this.teachersService.uploadDocument(id, field as any, realPath);
+  }
+
+  @Post(':id/upload-multiple/:field')
+  @UseInterceptors(FilesInterceptor('files', 20, {
+    storage: diskStorage({
+      destination: './uploads/teachers',
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `${req.params.id}-${req.params.field}-${uniqueSuffix}${extname(file.originalname)}`);
+      }
+    })
+  }))
+  uploadMultipleDocuments(
+    @Param('id') id: string,
+    @Param('field') field: string,
+    @UploadedFiles() files: Express.Multer.File[]
+  ) {
+    if (!files || files.length === 0) throw new BadRequestException('Archivos no subidos');
+    if (!['teacherTrainingFiles', 'teacherRecognitionFiles'].includes(field)) {
+      throw new BadRequestException('Campo inválido para carga múltiple');
+    }
+
+    const filePaths = files.map((file) => `/uploads/teachers/${file.filename}`);
+    return this.teachersService.uploadMultipleDocuments(id, field as any, filePaths);
   }
 }

@@ -34,6 +34,7 @@ export class TypeDetailComponent implements OnInit {
   form: FormGroup;
   reqForm: FormGroup;
   institutionType: InstitutionType | null = null;
+  isEditingType = false;
   
   constructor(
     private fb: FormBuilder,
@@ -76,16 +77,46 @@ export class TypeDetailComponent implements OnInit {
         name: data.name,
         description: data.description
       });
-      // In edit mode, disable main fields for now (or implement update endpoint later)
-      this.form.controls['name'].disable();
+      if (this.typeId !== 'new' && !this.isEditingType) {
+        this.form.disable({ emitEvent: false });
+      }
     });
+  }
+
+  startEditingType() {
+    if (this.typeId === 'new') return;
+    this.isEditingType = true;
+    this.form.enable({ emitEvent: false });
+  }
+
+  cancelEditingType() {
+    if (this.typeId === 'new') return;
+    this.isEditingType = false;
+    this.loadData();
   }
 
   saveType() {
     if (this.form.invalid) return;
-    
-    this.service.createType(this.form.value).subscribe(res => {
-      this.router.navigate(['/institutions/types', res.id]);
+
+    if (this.typeId === 'new') {
+      this.service.createType(this.form.value).subscribe(res => {
+        this.router.navigate(['/institutions/types', res.id]);
+      });
+      return;
+    }
+
+    this.service.updateType(this.typeId!, this.form.getRawValue()).subscribe({
+      next: (updated) => {
+        this.institutionType = {
+          ...(this.institutionType as InstitutionType),
+          ...updated,
+          requirements: this.institutionType?.requirements ?? []
+        };
+        this.isEditingType = false;
+        this.form.disable({ emitEvent: false });
+        this.ns.success('Tipo de institución actualizado');
+      },
+      error: (err) => this.ns.error('Error al actualizar: ' + (err.error?.message || err.message))
     });
   }
 
@@ -96,10 +127,14 @@ export class TypeDetailComponent implements OnInit {
     }
     
     this.service.addRequirement(this.typeId, this.reqForm.value).subscribe({
-      next: () => {
+      next: (newRequirement) => {
+        const currentRequirements = this.institutionType?.requirements ?? [];
+        this.institutionType = {
+          ...(this.institutionType as InstitutionType),
+          requirements: [...currentRequirements, newRequirement]
+        };
         this.reqForm.reset({ type: 'FILE', isRequired: true, requiresExpiryDate: false });
-        // Refresh the list immediately to show the new requirement and updated status
-        this.loadData();
+        this.ns.success('Requisito agregado');
       },
       error: (err) => this.ns.error('Error: ' + err.message)
     });

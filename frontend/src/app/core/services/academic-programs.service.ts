@@ -23,6 +23,10 @@ export class AcademicProgramsService {
     return this.http.post<AcademicProgram>(this.apiUrl, dto);
   }
 
+  update(id: string, dto: Partial<CreateAcademicProgramDto>): Observable<AcademicProgram> {
+    return this.http.patch<AcademicProgram>(`${this.apiUrl}/${id}`, dto);
+  }
+
   addRotationArea(programId: string, areaId: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/${programId}/areas/${areaId}`, {});
   }

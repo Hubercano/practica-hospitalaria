@@ -4,11 +4,12 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { StudentsService, Student } from '../students.service';
 import { NotificationService } from '../../shared/notification/notification.service';
+import { ButtonComponent } from '../../shared/ui/button/button.component';
 
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ButtonComponent],
   templateUrl: './student-detail.html',
   styleUrls: ['./student-detail.css']
 })
@@ -114,6 +115,60 @@ export class StudentDetail implements OnInit {
       if (req) this.initReqForm(req);
     } else {
       this.editingReqs.add(reqId);
+    }
+  }
+
+  downloadFile(req: any) {
+    this.ns.info(`Descargando archivo: ${req.value}`);
+  }
+
+  getChecklistStatus(req: any): 'PENDIENTE' | 'CRÍTICO' | 'PRÓXIMO A VENCER' | 'COMPLETADO' {
+    const hasValue = !!req.value;
+
+    if (req.definition?.isRequired && !hasValue) {
+      return 'PENDIENTE';
+    }
+
+    if (req.definition?.requiresExpiryDate && hasValue && !req.expiryDate) {
+      return 'PENDIENTE';
+    }
+
+    if (hasValue && req.expiryDate) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const expiry = new Date(req.expiryDate);
+      expiry.setHours(0, 0, 0, 0);
+
+      const criticalThreshold = new Date(now);
+      criticalThreshold.setDate(now.getDate() + 5);
+
+      const warningThreshold = new Date(now);
+      warningThreshold.setDate(now.getDate() + 30);
+
+      if (expiry <= criticalThreshold) {
+        return 'CRÍTICO';
+      }
+
+      if (expiry <= warningThreshold) {
+        return 'PRÓXIMO A VENCER';
+      }
+    }
+
+    return 'COMPLETADO';
+  }
+
+  getChecklistStatusClass(checklistStatus: 'PENDIENTE' | 'CRÍTICO' | 'PRÓXIMO A VENCER' | 'COMPLETADO') {
+    switch (checklistStatus) {
+      case 'COMPLETADO':
+        return 'bg-emerald-100 text-emerald-800';
+      case 'CRÍTICO':
+        return 'bg-rose-100 text-rose-800';
+      case 'PRÓXIMO A VENCER':
+        return 'bg-orange-100 text-orange-800';
+      case 'PENDIENTE':
+      default:
+        return 'bg-amber-100 text-amber-800';
     }
   }
 }

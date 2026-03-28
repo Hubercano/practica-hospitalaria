@@ -12,12 +12,20 @@ export class AcademicProgramsService {
     });
   }
 
+  update(id: string, dto: Partial<CreateAcademicProgramDto> & { state?: 'ACTIVE' | 'INACTIVE' }) {
+    return this.prisma.academicProgram.update({
+      where: { id },
+      data: dto
+    });
+  }
+
   findAll() {
     return this.prisma.academicProgram.findMany({
       include: { 
         institution: true,
         rotationAreas: true
-      }
+      },
+      orderBy: { name: 'asc' }
     });
   }
 
