@@ -11,6 +11,7 @@ import { StudentTypesModule } from './student-types/student-types.module';
 import { StudentsModule } from './students/students.module';
 import { TeachersModule } from './teachers/teachers.module';
 import { RotationSchedulesModule } from './rotation-schedules/rotation-schedules.module';
+import { InductionsModule } from './inductions/inductions.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { RotationSchedulesModule } from './rotation-schedules/rotation-schedules
     StudentTypesModule,
     StudentsModule,
     TeachersModule
-    ,RotationSchedulesModule
+    ,RotationSchedulesModule,
+    InductionsModule
   ],
   controllers: [AppController],
   providers: [AppService],

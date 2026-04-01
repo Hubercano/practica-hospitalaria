@@ -6,6 +6,7 @@ import { StudentsService } from '../students.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { HttpClient } from '@angular/common/http';
 import { InstitutionService } from '../../institutions/services/institution.service';
+import { toDateOnly } from '../../shared/utils/date.util';
 
 import { CardComponent } from '../../shared/ui/card/card.component';
 import { FormFieldComponent } from '../../shared/ui/form-field/form-field.component';
@@ -62,7 +63,9 @@ export class StudentForm implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       phone: [''],
       institutionId: ['', Validators.required],
-      typeId: ['', Validators.required]
+      typeId: ['', Validators.required],
+      numeroCarnet: [''],
+      fechaDevolucionCarnet: ['']
     });
   }
 
@@ -92,6 +95,8 @@ export class StudentForm implements OnInit {
           phone: student.phone || '',
           institutionId: student.institutionId || student.institution?.id || '',
           typeId: student.typeId,
+          numeroCarnet: (student as any).numeroCarnet || '',
+          fechaDevolucionCarnet: (student as any).fechaDevolucionCarnet ? toDateOnly((student as any).fechaDevolucionCarnet) : ''
         });
       },
       error: (err) => {

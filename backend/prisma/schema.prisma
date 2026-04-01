@@ -34,6 +34,28 @@ enum EntityState {
   BLOCKED
 }
 
+enum InductionStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+enum InductionLinkMode {
+  PERMANENT
+  TEMPORARY
+}
+
+enum InductionExpiryPolicy {
+  FIXED_END_DATE
+  DAYS_FROM_COMPLETION
+}
+
+enum InductionChannel {
+  QR_PUBLIC
+  ADMIN_MANUAL
+}
+
 // -----------------------------------------------------------------------------
 // 🏗️ MÓDULO DE PARAMETRIZACIÓN (Configuracion del sistema)
 // -----------------------------------------------------------------------------
@@ -211,8 +233,8 @@ model RotationArea {
   name        String
   description String?
 
-  durationWeeks Int @default(0)
-  maxStudents   Int @default(0)
+  durationWeeks Int         @default(0)
+  maxStudents   Int         @default(0)
   state         EntityState @default(ACTIVE)
 
   programId String?
@@ -265,6 +287,7 @@ model ServiceCapacity {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 // -----------------------------------------------------------------------------
 // 👨‍🎓 MÓDULO DE ESTUDIANTES (Gestión y Tipos)
 // -----------------------------------------------------------------------------
@@ -283,7 +306,7 @@ model StudentType {
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime? 
+  deletedAt DateTime?
 }
 
 // Paso 2: Requisitos de práctica por Tipo de Estudiante (La "Plantilla")
@@ -294,10 +317,10 @@ model StudentRequirementDefinition {
   studentType   StudentType @relation(fields: [studentTypeId], references: [id])
 
   name               String // Ej: "Carné de Vacunas", "Póliza de Responsabilidad"
-  description        String? 
+  description        String?
   type               RequirementType // Mismo enum FILE, TEXT, etc.
   isRequired         Boolean         @default(true)
-  requiresExpiryDate Boolean         @default(false) 
+  requiresExpiryDate Boolean         @default(false)
 
   // Relación: Los documentos entregados por los estudiantes
   submissions StudentRequirementValue[]
@@ -311,8 +334,8 @@ model StudentRequirementDefinition {
 model Student {
   id String @id @default(uuid())
 
-  firstName    String 
-  lastName     String 
+  firstName    String
+  lastName     String
   documentType String // Ej: "CC", "CE", "TI", "Pasaporte"
   document     String  @unique // Número de documento
   email        String  @unique
@@ -325,10 +348,18 @@ model Student {
   institutionId String?
   institution   Institution? @relation(fields: [institutionId], references: [id])
 
-  state EntityState @default(INACTIVE) 
+  state EntityState @default(INACTIVE)
+
+  // Gestión de carnet del estudiante
+  numeroCarnet           String? // Número del carnet asignado al estudiante
+  fechaDevolucionCarnet  DateTime? // Fecha cuando el estudiante devolvió el carnet
 
   // Relación: Sus documentos/requisitos de práctica entregados
   requirements StudentRequirementValue[]
+
+  // Relación: Historial de inducciones realizadas
+  inductionAttendances InductionAttendance[]     @relation("StudentInductionAttendances")
+  allowedInductions    InductionAllowedStudent[] @relation("StudentAllowedInductions")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -346,47 +377,155 @@ model StudentRequirementValue {
   definition   StudentRequirementDefinition @relation(fields: [definitionId], references: [id])
 
   // El contenido
-  value String? 
+  value String?
 
   // Control de Vigencia
-  issueDate  DateTime? 
-  expiryDate DateTime? 
+  issueDate  DateTime?
+  expiryDate DateTime?
 
   // Estado de Aprobación
   status          ValidationStatus @default(PENDING)
-  rejectionReason String? 
+  rejectionReason String?
 
   // Auditoría
-  reviewedBy String? 
+  reviewedBy String?
   reviewedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 // -----------------------------------------------------------------------------
 // 👨‍🏫 MÓDULO DE DOCENTES
 // -----------------------------------------------------------------------------
 model Teacher {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
+  id           String  @id @default(uuid())
+  firstName    String
+  lastName     String
   documentType String
-  document  String   @unique
-  phone     String?
-  email     String   @unique
+  document     String  @unique
+  phone        String?
+  email        String  @unique
 
-  supervisionType String 
-  contractType    String 
+  supervisionType String
+  contractType    String
 
-  cvFile                 String?
-  dataAuthorizationFile  String?
-  conflictOfInterestFile String?
-  teacherTrainingFiles   String[] @default([])
+  cvFile                  String?
+  dataAuthorizationFile   String?
+  conflictOfInterestFile  String?
+  teacherTrainingFiles    String[] @default([])
   teacherRecognitionFiles String[] @default([])
 
-  state     EntityState @default(ACTIVE)
+  state EntityState @default(ACTIVE)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// -----------------------------------------------------------------------------
+// 🏥 MÓDULO DE INDUCCIONES
+// -----------------------------------------------------------------------------
+model Induction {
+  id String @id @default(uuid())
+
+  name   String
+  status InductionStatus @default(DRAFT)
+
+  startAt DateTime
+  endAt   DateTime
+
+  validityCode   String @default("ONE_YEAR")
+  validityMonths Int    @default(12)
+
+  expiryPolicy InductionExpiryPolicy @default(FIXED_END_DATE)
+  expiryDays   Int?
+
+  linkMode   InductionLinkMode @default(TEMPORARY)
+  publicSlug String?           @unique
+
+  accessTokens    InductionAccessToken[]
+  allowedStudents InductionAllowedStudent[]
+  attendances     InductionAttendance[]
+  auditEvents     InductionAuditEvent[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([status, startAt, endAt])
+}
+
+model InductionAccessToken {
+  id String @id @default(uuid())
+
+  inductionId String
+  induction   Induction @relation(fields: [inductionId], references: [id])
+
+  tokenHash String    @unique
+  expiresAt DateTime?
+  isRevoked Boolean   @default(false)
+  maxUses   Int?
+  usesCount Int       @default(0)
+
+  createdBy String?
+  createdAt DateTime @default(now())
+
+  @@index([inductionId, isRevoked, expiresAt])
+}
+
+model InductionAllowedStudent {
+  id String @id @default(uuid())
+
+  inductionId String
+  induction   Induction @relation(fields: [inductionId], references: [id])
+
+  studentId String?
+  student   Student? @relation("StudentAllowedInductions", fields: [studentId], references: [id])
+
+  document String
+  source   String @default("MANUAL")
+
+  createdAt DateTime @default(now())
+
+  @@unique([inductionId, document])
+  @@index([studentId])
+}
+
+model InductionAttendance {
+  id String @id @default(uuid())
+
+  inductionId String
+  induction   Induction @relation(fields: [inductionId], references: [id])
+
+  studentId String
+  student   Student @relation("StudentInductionAttendances", fields: [studentId], references: [id])
+
+  documentSnapshot String
+  completedAt      DateTime
+  expiresAt        DateTime
+
+  channel   InductionChannel @default(QR_PUBLIC)
+  ipAddress String?
+  userAgent String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+
+  @@unique([inductionId, studentId])
+  @@index([studentId, expiresAt])
+}
+
+model InductionAuditEvent {
+  id String @id @default(uuid())
+
+  inductionId String
+  induction   Induction @relation(fields: [inductionId], references: [id])
+
+  eventType String
+  actor     String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([inductionId, eventType])
 }

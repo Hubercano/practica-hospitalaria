@@ -8,6 +8,7 @@ import { NotificationService } from '../../../shared/notification/notification.s
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
 import { FormFieldComponent } from '../../../shared/ui/form-field/form-field.component';
+import { compareDateOnly, toDateOnly } from '../../../shared/utils/date.util';
 
 @Component({
   selector: 'app-rotation-schedule-form',
@@ -128,8 +129,8 @@ export class RotationScheduleFormComponent implements OnInit {
           areaId: schedule.areaId || '',
           teacherIds: Array.isArray(schedule.teacherIds) ? schedule.teacherIds : [],
           studentIds: Array.isArray(schedule.studentIds) ? schedule.studentIds : [],
-          startDate: schedule.startDate ? new Date(schedule.startDate).toISOString().slice(0, 10) : '',
-          endDate: schedule.endDate ? new Date(schedule.endDate).toISOString().slice(0, 10) : ''
+          startDate: toDateOnly(schedule.startDate),
+          endDate: toDateOnly(schedule.endDate)
         }, { emitEvent: false });
       },
       error: (err) => {
@@ -146,9 +147,7 @@ export class RotationScheduleFormComponent implements OnInit {
     }
 
     const payload = this.form.value;
-    const start = new Date(payload.startDate as string);
-    const end = new Date(payload.endDate as string);
-    if (end <= start) {
+    if (compareDateOnly(payload.endDate as string, payload.startDate as string) <= 0) {
       this.ns.error('La fecha fin debe ser mayor que la fecha inicio');
       return;
     }

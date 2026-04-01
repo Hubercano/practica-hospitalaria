@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { StudentsService, Student } from '../students.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
+import { dateOnlyToUtcDate, toDateOnly } from '../../shared/utils/date.util';
 
 @Component({
   selector: 'app-student-detail',
@@ -137,7 +138,7 @@ export class StudentDetail implements OnInit {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
 
-      const expiry = new Date(req.expiryDate);
+      const expiry = dateOnlyToUtcDate(toDateOnly(req.expiryDate));
       expiry.setHours(0, 0, 0, 0);
 
       const criticalThreshold = new Date(now);

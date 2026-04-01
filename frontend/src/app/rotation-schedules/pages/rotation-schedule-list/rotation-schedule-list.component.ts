@@ -9,6 +9,7 @@ import { RotationSchedulesService } from '../../../core/services/rotation-schedu
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { exportToExcel } from '../../../shared/utils/excel-export.util';
 import { FilterChipsComponent, FilterChip } from '../../../shared/ui/filter-chips/filter-chips.component';
+import { compareDateOnly, formatDateOnly, toDateOnly } from '../../../shared/utils/date.util';
 
 @Component({
   selector: 'app-rotation-schedule-list',
@@ -86,8 +87,8 @@ export class RotationScheduleListComponent implements OnInit {
     const svcText = (f.serviceText || '').trim().toLowerCase();
     const teacherText = (f.teacherText || '').trim().toLowerCase();
     const studentText = (f.studentText || '').trim().toLowerCase();
-    const startDate = f.startDate ? new Date(f.startDate).getTime() : null;
-    const endDate = f.endDate ? new Date(f.endDate).getTime() : null;
+    const startDate = toDateOnly(f.startDate);
+    const endDate = toDateOnly(f.endDate);
 
     this.schedules.set(this.allMappedSchedules.filter(item => {
       return (!institutions.length || institutions.includes(item.institutionName))
@@ -96,8 +97,8 @@ export class RotationScheduleListComponent implements OnInit {
         && (!svcText || (item.servicesList || '').toLowerCase().includes(svcText))
         && (!teacherText || (item.teachersList || '').toLowerCase().includes(teacherText))
         && (!studentText || (item.studentsList || '').toLowerCase().includes(studentText))
-        && (!startDate || !item.startDate || new Date(item.startDate).getTime() >= startDate)
-        && (!endDate || !item.endDate || new Date(item.endDate).getTime() <= endDate);
+        && (!startDate || !item.startDate || compareDateOnly(item.startDate, startDate) >= 0)
+        && (!endDate || !item.endDate || compareDateOnly(item.endDate, endDate) <= 0);
     }));
   }
 
@@ -116,8 +117,8 @@ export class RotationScheduleListComponent implements OnInit {
       'Servicios': item.servicesList ?? '',
       'Docentes': item.teachersList ?? '',
       'Estudiantes': item.studentsList ?? '',
-      'Inicio': item.startDate ? new Date(item.startDate).toLocaleDateString('es-CO') : '',
-      'Fin': item.endDate ? new Date(item.endDate).toLocaleDateString('es-CO') : ''
+      'Inicio': item.startDate ? formatDateOnly(item.startDate) : '',
+      'Fin': item.endDate ? formatDateOnly(item.endDate) : ''
     })), 'rotaciones', 'Rotaciones');
   }
 
@@ -182,8 +183,8 @@ export class RotationScheduleListComponent implements OnInit {
         ? studentsArr.map((st: any) => this.resolvePersonName(st, this.students)).join(', ')
         : (s.studentNames || '');
 
-      const startDate = s.startDate ? new Date(s.startDate).toISOString() : s.startDate || null;
-      const endDate = s.endDate ? new Date(s.endDate).toISOString() : s.endDate || null;
+      const startDate = toDateOnly(s.startDate) || null;
+      const endDate = toDateOnly(s.endDate) || null;
 
       return { ...s, institutionName, programName, areaName, servicesList, teachersList, studentsList, startDate, endDate };
     });

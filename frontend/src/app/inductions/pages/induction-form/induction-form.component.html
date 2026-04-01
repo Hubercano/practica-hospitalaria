@@ -1,0 +1,82 @@
+<div class="max-w-3xl mx-auto p-4 space-y-4">
+  <div>
+    <h2 class="text-2xl font-bold text-slate-900">{{ isEditMode ? 'Editar Inducción' : 'Nueva Inducción' }}</h2>
+    <p class="text-sm text-slate-600">Define fecha, vigencia y estudiantes asistentes. El link permanente se genera automáticamente.</p>
+  </div>
+
+  <form [formGroup]="form" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 md:p-5 space-y-4" (ngSubmit)="save()">
+    @if (loadingForm) {
+      <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Cargando datos de la inducción...</div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Nombre</label>
+        <input type="text" formControlName="name" class="block w-full rounded-lg border-slate-300 text-sm" placeholder="Inducción de bioseguridad" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Fecha de la inducción</label>
+        <input type="date" formControlName="inductionDate" class="block w-full rounded-lg border-slate-300 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Vigencia</label>
+        <select formControlName="validityCode" class="block w-full rounded-lg border-slate-300 text-sm">
+          @for (option of validityOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Rotaciones que asisten</label>
+        <ng-select
+          [items]="rotationOptions"
+          bindLabel="label"
+          bindValue="id"
+          [multiple]="true"
+          [closeOnSelect]="false"
+          [searchable]="true"
+          [clearable]="true"
+          [hideSelected]="true"
+          [loading]="loadingRotations"
+          [notFoundText]="hasInductionDate ? 'No hay rotaciones con inicio en este mes.' : 'Selecciona la fecha de la inducción para cargar rotaciones.'"
+          placeholder="Busca y selecciona rotaciones"
+          formControlName="rotationIds"
+          class="w-full filter-ng-select"
+        ></ng-select>
+        @if (!hasInductionDate) {
+          <p class="mt-1 text-xs text-slate-500">Selecciona primero la fecha de la inducción para cargar rotaciones programadas en ese mes.</p>
+        }
+        <app-filter-chips [chips]="selectedStudentChips" (removeChip)="removeStudent($event)"></app-filter-chips>
+      </div>
+
+      <div class="md:col-span-2 rounded-xl border border-slate-200 bg-white">
+        <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+          <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Estudiantes incluidos</div>
+          <div class="text-xs font-semibold text-slate-700">{{ totalSelectedStudents }} estudiantes</div>
+        </div>
+        @if (derivedStudents.length === 0) {
+          <div class="px-4 py-4 text-sm text-slate-500">Selecciona una o más rotaciones para ver el listado consolidado de estudiantes.</div>
+        } @else {
+          <div class="max-h-52 overflow-y-auto divide-y divide-slate-100">
+            @for (student of derivedStudents; track student.id) {
+              <div class="px-4 py-2.5 flex items-center justify-between gap-3">
+                <div class="text-sm text-slate-900">{{ student.name }}</div>
+                <div class="text-xs text-slate-600">{{ student.document }}</div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha de vencimiento calculada</div>
+        <div class="mt-1 text-sm font-medium text-slate-900">{{ calculatedExpiryDate || 'Selecciona fecha y vigencia para calcularla.' }}</div>
+      </div>
+    </div>
+
+    <div class="pt-2 flex justify-end gap-3">
+      <app-button type="button" variant="secondary" routerLink="/inductions">Cancelar</app-button>
+      <app-button type="submit" variant="primary">{{ isEditMode ? 'Guardar cambios' : 'Guardar inducción' }}</app-button>
+    </div>
+  </form>
+</div>

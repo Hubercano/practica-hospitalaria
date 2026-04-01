@@ -60,6 +60,11 @@ export class StudentsController {
     return this.studentsService.findOne(id);
   }
 
+  @Get(':id/inductions')
+  getInductionHistory(@Param('id') id: string) {
+    return this.studentsService.getInductionHistory(id);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() body: any) {
     const data: Prisma.StudentUpdateInput = {

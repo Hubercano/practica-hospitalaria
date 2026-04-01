@@ -54,6 +54,22 @@
         </app-form-field>
       </div>
 
+      <div class="pt-4 border-t border-slate-200">
+        <h3 class="text-lg font-semibold text-slate-900 mb-4">Gestión de Carnet</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <app-form-field label="Número de Carnet" [required]="false">
+            <app-input formControlName="numeroCarnet" placeholder="Ej. CARNET-12345" type="text"></app-input>
+            <p class="text-xs text-slate-500 mt-1">Opcional - Dejar en blanco si el estudiante aún no tiene carnet</p>
+          </app-form-field>
+
+          <app-form-field label="Fecha de Devolución del Carnet" [required]="false">
+            <input type="date" formControlName="fechaDevolucionCarnet" class="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+            <p class="text-xs text-slate-500 mt-1">Opcional - Fecha cuando se devolvió el carnet</p>
+          </app-form-field>
+        </div>
+      </div>
+
       <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
         <app-button type="button" variant="secondary" routerLink="/students">
           Cancelar

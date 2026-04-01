@@ -1,0 +1,92 @@
+<div class="max-w-5xl mx-auto p-4 space-y-4">
+  <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900">Detalle de inducción</h2>
+      <p class="text-sm text-slate-600">Consulta fecha, vigencia, vencimiento y estudiantes asociados.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <app-button variant="secondary" routerLink="/inductions">Volver</app-button>
+      @if (induction()) {
+        <app-button variant="secondary" [routerLink]="['/inductions', induction()!.id, 'edit']">Editar</app-button>
+      }
+      <app-button variant="primary" (click)="copyLink()" [disabled]="!induction()">Copiar link</app-button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Cargando detalle...</div>
+  } @else if (errorMessage()) {
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{{ errorMessage() }}</div>
+  } @else if (induction()) {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nombre</div>
+            <div class="mt-1 text-base font-semibold text-slate-900">{{ induction()!.name }}</div>
+          </div>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Vigencia</div>
+            <div class="mt-1 text-base font-semibold text-slate-900">{{ induction()!.validityLabel }}</div>
+          </div>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha de inducción</div>
+            <div class="mt-1 text-base text-slate-900">{{ induction()!.inductionDate | date:'yyyy-MM-dd' }}</div>
+          </div>
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha de vencimiento</div>
+            <div class="mt-1 text-base text-slate-900">{{ induction()!.expiryDate | date:'yyyy-MM-dd' }}</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Link permanente</div>
+          <div class="mt-2 break-all text-sm text-slate-800">{{ induction()!.publicUrl }}</div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-5 space-y-3">
+        <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumen</div>
+        <div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+          <span class="text-sm text-slate-600">Estudiantes asociados</span>
+          <span class="text-sm font-semibold text-slate-900">{{ induction()!.studentCount }}</span>
+        </div>
+        <div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+          <span class="text-sm text-slate-600">Estado</span>
+          <span class="text-sm font-semibold text-slate-900">{{ induction()!.status }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="border-b border-slate-200 px-5 py-4">
+        <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wide">Estudiantes asociados</h3>
+      </div>
+
+      @if (studentRows.length === 0) {
+        <div class="p-5 text-sm text-slate-500">No hay estudiantes asociados a esta inducción.</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-700">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
+              <tr>
+                <th class="px-5 py-3">Documento</th>
+                <th class="px-5 py-3">Nombre</th>
+                <th class="px-5 py-3">Correo</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (row of studentRows; track row.id) {
+                <tr>
+                  <td class="px-5 py-3">{{ row.student?.document || row.document }}</td>
+                  <td class="px-5 py-3">{{ row.student ? (row.student.firstName + ' ' + row.student.lastName) : 'Sin vínculo' }}</td>
+                  <td class="px-5 py-3">{{ row.student?.email || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -13,6 +13,10 @@ import { ProgramFormComponent } from './academic-programs/pages/program-form/pro
 import { ProgramDetailComponent } from './academic-programs/pages/program-detail/program-detail.component';
 import { RotationScheduleListComponent } from './rotation-schedules/pages/rotation-schedule-list/rotation-schedule-list.component';
 import { RotationScheduleFormComponent } from './rotation-schedules/pages/rotation-schedule-form/rotation-schedule-form.component';
+import { InductionListComponent } from './inductions/pages/induction-list/induction-list.component';
+import { InductionFormComponent } from './inductions/pages/induction-form/induction-form.component';
+import { InductionDetailComponent } from './inductions/pages/induction-detail/induction-detail.component';
+import { PublicInductionCheckinComponent } from './inductions/pages/public-induction-checkin/public-induction-checkin.component';
 
 import { StudentList } from './students/student-list/student-list';
 import { StudentTypeList } from './student-types/student-type-list/student-type-list';
@@ -48,6 +52,13 @@ export const routes: Routes = [
   { path: 'rotation-schedules', component: RotationScheduleListComponent },
   { path: 'rotation-schedules/new', component: RotationScheduleFormComponent },
   { path: 'rotation-schedules/:id/edit', component: RotationScheduleFormComponent },
+
+  // Inductions Module
+  { path: 'inductions', component: InductionListComponent },
+  { path: 'inductions/new', component: InductionFormComponent },
+  { path: 'inductions/:id/edit', component: InductionFormComponent },
+  { path: 'inductions/:id', component: InductionDetailComponent },
+  { path: 'public/inductions/access/:token', component: PublicInductionCheckinComponent },
 
   // Students Modules
   { path: 'students', component: StudentList },

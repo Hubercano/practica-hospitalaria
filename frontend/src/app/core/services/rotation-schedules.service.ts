@@ -2,6 +2,27 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface RotationMonthStudent {
+  id: string;
+  name: string;
+  document: string;
+  rotationStartDate: string;
+}
+
+export interface RotationGroupStudent {
+  id: string;
+  name: string;
+  document: string;
+}
+
+export interface RotationMonthGroup {
+  id: string;
+  name: string;
+  startDate: string;
+  studentCount: number;
+  students: RotationGroupStudent[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class RotationSchedulesService {
   private apiUrl = 'http://localhost:3000/rotation-schedules';
@@ -20,6 +41,14 @@ export class RotationSchedulesService {
 
   getOne(id: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${id}`);
+  }
+
+  getStudentsByStartMonth(month: number, year: number): Observable<RotationMonthStudent[]> {
+    return this.http.get<RotationMonthStudent[]>(`${this.apiUrl}/students/by-start-month?month=${month}&year=${year}`);
+  }
+
+  getGroupsByStartMonth(month: number, year: number): Observable<RotationMonthGroup[]> {
+    return this.http.get<RotationMonthGroup[]>(`${this.apiUrl}/groups/by-start-month?month=${month}&year=${year}`);
   }
 
   create(payload: any) {

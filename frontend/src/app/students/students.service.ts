@@ -17,6 +17,9 @@ export interface Student {
   requirements?: any[];
   state: string;
   status?: string;
+  inductionStatus?: 'VIGENTE' | 'VENCIDA' | 'NO_REALIZADA';
+  inductionCompletedAt?: string | null;
+  inductionExpiresAt?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +34,10 @@ export class StudentsService {
 
   getStudent(id: string): Observable<Student> {
     return this.http.get<Student>(`${this.apiUrl}/${id}`);
+  }
+
+  getStudentInductions(id: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${id}/inductions`);
   }
 
   createStudent(data: any): Observable<Student> {

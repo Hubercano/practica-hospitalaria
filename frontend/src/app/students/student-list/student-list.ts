@@ -10,6 +10,8 @@ import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { FileUploadComponent } from '../../shared/ui/file-upload/file-upload.component';
 import { exportToExcel } from '../../shared/utils/excel-export.util';
 import { FilterChipsComponent, FilterChip } from '../../shared/ui/filter-chips/filter-chips.component';
+import { toDateOnly } from '../../shared/utils/date.util';
+import { getEstadoInduccion, getEstadoCarnet, tieneCarnetEntregado } from '../../shared/utils/student-induction.util';
 
 @Component({
   selector: 'app-student-list',
@@ -111,6 +113,9 @@ export class StudentList implements OnInit {
       'Institución': item.institutionName ?? '',
       'Tipo': item.studentType ?? '',
       'Estado Requisitos': item.status ?? '',
+      'Estado Inducción': item.estadoInduccion ?? '',
+      'Carnet': item.numeroCarnet ? item.numeroCarnet : 'Sin carnet',
+      'Estado Carnet': item.estadoCarnet ?? '',
       'Estado': item.stateLabel ?? ''
     })), 'estudiantes', 'Estudiantes');
   }
@@ -127,12 +132,22 @@ export class StudentList implements OnInit {
         const mappedData = rawData.map((s: any) => {
            const firstName = s.firstName ? s.firstName : '';
            const lastName = s.lastName ? s.lastName : '';
+           const estado = getEstadoInduccion(s.inductionCompletedAt, s.inductionExpiresAt);
+           const estadoCarnet = getEstadoCarnet(s.numeroCarnet, s.fechaDevolucionCarnet);
+           
            return {
               ...s,
               name: firstName + ' ' + lastName,
               institutionName: s.institution?.name || '-',
               studentType: s.type ? s.type.name : '-',
               status: s.status || 'PENDIENTE',
+              estadoInduccion: estado,
+              inductionCompletedAt: s.inductionCompletedAt || null,
+              inductionExpiresAt: s.inductionExpiresAt || null,
+              numeroCarnet: s.numeroCarnet || null,
+              fechaDevolucionCarnet: s.fechaDevolucionCarnet || null,
+              estadoCarnet: estadoCarnet,
+              tieneCarnet: tieneCarnetEntregado(s.numeroCarnet),
               stateLabel: s.state === 'ACTIVE' ? 'Activo' : 'Inactivo'
            };
         });

@@ -7,6 +7,79 @@ import * as ExcelJS from 'exceljs';
 export class StudentsService {
   constructor(private prisma: PrismaService) {}
 
+  private getRequirementStatus(student: any): string {
+    let status = 'COMPLETADO';
+    let hasCritical = false;
+    let hasExpiringSoon = false;
+    let hasPending = false;
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const criticalThreshold = new Date(now);
+    criticalThreshold.setDate(now.getDate() + 5);
+
+    const warningThreshold = new Date(now);
+    warningThreshold.setDate(now.getDate() + 30);
+
+    const valuesMap = new Map<string, any>(student.requirements.map((r: any) => [r.definitionId, r]));
+
+    for (const def of student.type.requirements) {
+      const val: any = valuesMap.get(def.id);
+
+      if (def.isRequired) {
+        if (!val || !val.value || val.status === ValidationStatus.PENDING) {
+          hasPending = true;
+        }
+      }
+
+      if (val && val.expiryDate) {
+        const expiry = new Date(val.expiryDate);
+        expiry.setHours(0, 0, 0, 0);
+
+        if (expiry <= criticalThreshold) {
+          hasCritical = true;
+        } else if (expiry <= warningThreshold) {
+          hasExpiringSoon = true;
+        }
+      }
+    }
+
+    if (hasCritical) {
+      status = 'CRITICO';
+    } else if (hasExpiringSoon) {
+      status = 'PROXIMO A VENCER';
+    } else if (hasPending) {
+      status = 'PENDIENTE';
+    }
+
+    return status;
+  }
+
+  private getInductionSummary(attendances: Array<{ completedAt: Date; expiresAt: Date }>) {
+    if (!attendances.length) {
+      return {
+        inductionStatus: 'NO_REALIZADA',
+        inductionCompletedAt: null,
+        inductionExpiresAt: null,
+      };
+    }
+
+    const now = new Date();
+    const sorted = [...attendances].sort((a, b) =>
+      new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
+    );
+    const latest = sorted[0];
+
+    const hasValid = attendances.some((a) => new Date(a.expiresAt).getTime() >= now.getTime());
+
+    return {
+      inductionStatus: hasValid ? 'VIGENTE' : 'VENCIDA',
+      inductionCompletedAt: latest.completedAt,
+      inductionExpiresAt: latest.expiresAt,
+    };
+  }
+
   async create(data: Prisma.StudentCreateInput) {
     // 1. Check if student already exists by document
     const exists = await this.prisma.student.findUnique({
@@ -53,66 +126,28 @@ export class StudentsService {
         deletedAt: null,
         ...(includeInactive ? {} : { state: EntityState.ACTIVE }),
       },
-      include: { 
+      include: {
         institution: true,
-        type: { include: { requirements: true } }, 
-        requirements: { include: { definition: true } } 
+        type: { include: { requirements: true } },
+        requirements: { include: { definition: true } },
+        inductionAttendances: {
+          select: {
+            completedAt: true,
+            expiresAt: true,
+          },
+        },
       },
-      orderBy: { lastName: 'asc' }
+      orderBy: { lastName: 'asc' },
     });
 
-    return students.map(student => {
-      let status = 'COMPLETADO';
-      let hasCritical = false;
-      let hasExpiringSoon = false;
-      let hasPending = false;
-
-      const now = new Date();
-      now.setHours(0,0,0,0);
-
-      const criticalThreshold = new Date(now);
-      criticalThreshold.setDate(now.getDate() + 5);
-
-      const warningThreshold = new Date(now);
-      warningThreshold.setDate(now.getDate() + 30);
-
-      const valuesMap = new Map(student.requirements.map(r => [r.definitionId, r]));
-
-      for (const def of student.type.requirements) {
-        const val = valuesMap.get(def.id);
-
-        // 1. Verify missing required documents
-        if (def.isRequired) {
-            if (!val || !val.value || val.status === ValidationStatus.PENDING) {
-                hasPending = true;
-            }
-        }
-
-        // 2. Verify expirations
-        if (val && val.expiryDate) {
-            const expiry = new Date(val.expiryDate);
-            expiry.setHours(0,0,0,0);
-
-            if (expiry <= criticalThreshold) {
-                hasCritical = true;
-            } else if (expiry <= warningThreshold) {
-                hasExpiringSoon = true;
-            }
-        }
-      }
-
-      // Priority: CRITICAL > EXPIRING > PENDING > COMPLETED
-      if (hasCritical) {
-        status = 'CRÍTICO';
-      } else if (hasExpiringSoon) {
-        status = 'PRÓXIMO A VENCER';
-      } else if (hasPending) {
-        status = 'PENDIENTE';
-      }
+    return students.map((student) => {
+      const status = this.getRequirementStatus(student);
+      const inductionSummary = this.getInductionSummary(student.inductionAttendances || []);
 
       return {
         ...student,
-        status
+        status,
+        ...inductionSummary,
       };
     });
   }
@@ -120,7 +155,38 @@ export class StudentsService {
   findOne(id: string) {
     return this.prisma.student.findUnique({
       where: { id },
-      include: { institution: true, type: true, requirements: { include: { definition: true } } },
+      include: {
+        institution: true,
+        type: true,
+        requirements: { include: { definition: true } },
+        inductionAttendances: {
+          include: {
+            induction: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: { completedAt: 'desc' },
+        },
+      },
+    });
+  }
+
+  async getInductionHistory(studentId: string) {
+    return this.prisma.inductionAttendance.findMany({
+      where: { studentId },
+      include: {
+        induction: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: { completedAt: 'desc' },
     });
   }
 

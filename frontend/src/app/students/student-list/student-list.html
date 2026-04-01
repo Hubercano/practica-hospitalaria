@@ -75,6 +75,8 @@
             <th class="px-4 py-2 font-bold tracking-wider">Institución</th>
             <th class="px-4 py-2 font-bold tracking-wider">Tipo</th>
             <th class="px-4 py-2 font-bold tracking-wider">Estado Requisitos</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Estado Inducción</th>
+            <th class="px-4 py-2 font-bold tracking-wider">Carnet</th>
             <th class="px-4 py-2 font-bold tracking-wider">Estado</th>
             <th class="px-4 py-2 font-bold tracking-wider text-right">Acciones</th>
           </tr>
@@ -99,6 +101,26 @@
                 >
                   {{ item.status }}
                 </span>
+              </td>
+              <td class="px-4 py-2">
+                <span
+                  class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
+                  [ngClass]="
+                    item.estadoInduccion === 'Realizada' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' :
+                    item.estadoInduccion === 'Próxima a vencer' ? 'border-orange-200 text-orange-600 bg-orange-50' :
+                    item.estadoInduccion === 'Vencida' ? 'border-rose-200 text-rose-600 bg-rose-50' :
+                    'border-slate-200 text-slate-600 bg-slate-50'
+                  "
+                >
+                  {{ item.estadoInduccion }}
+                </span>
+              </td>
+              <td class="px-4 py-2">
+                @if (item.numeroCarnet) {
+                  <span class="text-xs font-medium text-slate-900">{{ item.numeroCarnet }}</span>
+                } @else {
+                  <span class="text-xs text-slate-500 italic">Sin carnet</span>
+                }
               </td>
               <td class="px-4 py-2">
                 <span
@@ -137,7 +159,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="10" class="px-6 py-12 text-center text-gray-500">
                 No hay estudiantes disponibles.
               </td>
             </tr>
