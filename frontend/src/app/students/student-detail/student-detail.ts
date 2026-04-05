@@ -6,6 +6,7 @@ import { StudentsService, Student } from '../students.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { dateOnlyToUtcDate, toDateOnly } from '../../shared/utils/date.util';
+import { getEstadoCarnet, getEstadoCarnetBadgeClass } from '../../shared/utils/student-induction.util';
 
 @Component({
   selector: 'app-student-detail',
@@ -21,6 +22,7 @@ export class StudentDetail implements OnInit {
   // Map to store a form for each requirement based on its requirementValue ID
   reqForms = new Map<string, FormGroup>();
   editingReqs = new Set<string>();
+  readonly getEstadoCarnetBadgeClass = getEstadoCarnetBadgeClass;
 
   constructor(
     private route: ActivatedRoute,
@@ -121,6 +123,10 @@ export class StudentDetail implements OnInit {
 
   downloadFile(req: any) {
     this.ns.info(`Descargando archivo: ${req.value}`);
+  }
+
+  getCarnetStatus(): 'Activo' | 'Devuelto' | 'Sin carnet' {
+    return getEstadoCarnet(this.student?.numeroCarnet, this.student?.fechaDevolucionCarnet);
   }
 
   getChecklistStatus(req: any): 'PENDIENTE' | 'CRÍTICO' | 'PRÓXIMO A VENCER' | 'COMPLETADO' {

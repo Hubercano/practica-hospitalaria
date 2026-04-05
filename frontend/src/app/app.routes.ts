@@ -17,6 +17,10 @@ import { InductionListComponent } from './inductions/pages/induction-list/induct
 import { InductionFormComponent } from './inductions/pages/induction-form/induction-form.component';
 import { InductionDetailComponent } from './inductions/pages/induction-detail/induction-detail.component';
 import { PublicInductionCheckinComponent } from './inductions/pages/public-induction-checkin/public-induction-checkin.component';
+import { SurveyListComponent } from './surveys/pages/survey-list/survey-list.component';
+import { SurveyBuilderComponent } from './surveys/pages/survey-builder/survey-builder.component';
+import { PublicSurveyFormComponent } from './surveys/pages/public-survey-form/public-survey-form.component';
+import { SurveyResultsComponent } from './surveys/pages/survey-results/survey-results.component';
 
 import { StudentList } from './students/student-list/student-list';
 import { StudentTypeList } from './student-types/student-type-list/student-type-list';
@@ -59,6 +63,14 @@ export const routes: Routes = [
   { path: 'inductions/:id/edit', component: InductionFormComponent },
   { path: 'inductions/:id', component: InductionDetailComponent },
   { path: 'public/inductions/access/:token', component: PublicInductionCheckinComponent },
+
+  // Surveys Module
+  { path: 'surveys', component: SurveyListComponent },
+  { path: 'surveys/new', component: SurveyBuilderComponent },
+  { path: 'surveys/:id/edit', component: SurveyBuilderComponent },
+  { path: 'surveys/:id/results', component: SurveyResultsComponent },
+  { path: 'public/surveys/:token', component: PublicSurveyFormComponent },
+  { path: 'public/surveys/open/:id', component: PublicSurveyFormComponent },
 
   // Students Modules
   { path: 'students', component: StudentList },

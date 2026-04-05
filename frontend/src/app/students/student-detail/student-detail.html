@@ -29,6 +29,25 @@
           <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Contacto</span>
           <a href="mailto:{{ student.email }}" class="text-blue-600 hover:text-blue-700 hover:underline font-medium">{{ student.email }}</a>
         </div>
+        <div class="flex flex-col">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Carnet</span>
+          @if (student.numeroCarnet) {
+            <span class="text-slate-900 font-medium">{{ student.numeroCarnet }}</span>
+          } @else {
+            <span class="text-slate-500">Sin carnet</span>
+          }
+          <div class="mt-2 flex items-center gap-2 flex-wrap">
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border"
+              [ngClass]="getEstadoCarnetBadgeClass(getCarnetStatus())"
+            >
+              {{ getCarnetStatus() }}
+            </span>
+            @if (student.fechaDevolucionCarnet) {
+              <span class="text-xs text-slate-500">Devuelto: {{ student.fechaDevolucionCarnet | date:'yyyy-MM-dd' }}</span>
+            }
+          </div>
+        </div>
       </div>
     </div>
 

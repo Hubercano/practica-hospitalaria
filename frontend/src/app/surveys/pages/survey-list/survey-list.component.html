@@ -1,0 +1,87 @@
+<div class="p-4">
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Parametrización de Encuestas</h1>
+      <p class="mt-2 text-sm text-gray-700">Gestiona formularios dinámicos de satisfacción para rotaciones.</p>
+    </div>
+    <div class="mt-4 sm:mt-0">
+      <app-button variant="primary" (click)="createSurvey()">Nueva Encuesta</app-button>
+    </div>
+  </div>
+
+  <div class="mb-4 rounded-xl border border-slate-200 bg-white p-4">
+    <form [formGroup]="filterForm" (ngSubmit)="loadSurveys()" class="flex items-end gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Estado</label>
+        <select formControlName="status" class="rounded-lg border-slate-300 text-sm">
+          <option value="">Todos</option>
+          <option value="ACTIVE">Activa</option>
+          <option value="INACTIVE">Inactiva</option>
+        </select>
+      </div>
+      <app-button type="submit" variant="secondary">Filtrar</app-button>
+    </form>
+  </div>
+
+  <div class="overflow-x-auto w-full bg-white rounded-card shadow-card border border-gray-100">
+    <table class="w-full text-left text-sm text-gray-600">
+      <thead class="text-xs uppercase bg-white text-gray-900 border-b border-gray-200 font-bold">
+        <tr>
+          <th class="px-4 py-2 font-bold tracking-wider">Nombre</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Descripción</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Estado</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Publicada</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Link Público</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Preguntas</th>
+          <th class="px-4 py-2 font-bold tracking-wider text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        @for (item of surveys(); track item.id) {
+          <tr>
+            <td class="px-4 py-2 font-medium text-gray-900">{{ item.name }}</td>
+            <td class="px-4 py-2">{{ item.description || '-' }}</td>
+            <td class="px-4 py-2">
+              <span class="px-3 py-1 text-xs font-medium rounded-badge border"
+                [ngClass]="item.status === 'ACTIVE' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' : 'border-slate-200 text-slate-600 bg-slate-50'">
+                {{ item.status === 'ACTIVE' ? 'Activa' : 'Inactiva' }}
+              </span>
+            </td>
+            <td class="px-4 py-2">{{ item.isPublished ? 'Sí' : 'No' }}</td>
+            <td class="px-4 py-2 text-sm">
+              @if (item.isOpenAccess && item.isPublished) {
+                <div class="flex items-center gap-3">
+                  <a [href]="getOpenAccessLink(item)" target="_blank" rel="noopener noreferrer" class="text-sky-700 underline break-all">
+                    Abrir enlace
+                  </a>
+                  <button type="button" class="text-xs px-2 py-1 rounded border border-sky-300 text-sky-700 hover:bg-sky-50" (click)="copyOpenAccessLink(item)">
+                    Copiar
+                  </button>
+                </div>
+              } @else {
+                <span class="text-slate-400">-</span>
+              }
+            </td>
+            <td class="px-4 py-2">{{ item.questions?.length || 0 }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center justify-end gap-3 text-sm">
+                <button class="text-indigo-600 hover:text-indigo-700" (click)="editSurvey(item)">Editar</button>
+                <button class="text-sky-600 hover:text-sky-700" (click)="openResults(item)">Resultados</button>
+                @if (!item.isPublished) {
+                  <button class="text-emerald-600 hover:text-emerald-700" (click)="publishSurvey(item)">Publicar</button>
+                }
+                <button class="text-rose-600 hover:text-rose-700" (click)="removeSurvey(item)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+              No hay encuestas registradas.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

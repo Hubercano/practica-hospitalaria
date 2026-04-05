@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ScheduleModule } from '@nestjs/schedule';
 import { InstitutionsModule } from './institutions/institutions.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AcademicProgramsModule } from './academic-programs/academic-programs.module';
@@ -12,9 +13,11 @@ import { StudentsModule } from './students/students.module';
 import { TeachersModule } from './teachers/teachers.module';
 import { RotationSchedulesModule } from './rotation-schedules/rotation-schedules.module';
 import { InductionsModule } from './inductions/inductions.module';
+import { SurveysModule } from './surveys/surveys.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     PrismaModule, 
     InstitutionsModule,
     AcademicProgramsModule,
@@ -25,7 +28,8 @@ import { InductionsModule } from './inductions/inductions.module';
     StudentsModule,
     TeachersModule
     ,RotationSchedulesModule,
-    InductionsModule
+    InductionsModule,
+    SurveysModule
   ],
   controllers: [AppController],
   providers: [AppService],

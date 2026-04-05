@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { RotationSchedulesService } from '../../../core/services/rotation-schedules.service';
+import { SurveysService } from '../../../surveys/services/surveys.service';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -36,6 +37,7 @@ export class RotationScheduleFormComponent implements OnInit {
   areas: any[] = [];
   teachers: any[] = [];
   students: any[] = [];
+  surveys: any[] = [];
 
   private allPrograms: any[] = [];
   private allAreas: any[] = [];
@@ -43,6 +45,7 @@ export class RotationScheduleFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private svc: RotationSchedulesService,
+    private surveysService: SurveysService,
     private ns: NotificationService,
     private router: Router,
     private route: ActivatedRoute
@@ -53,6 +56,8 @@ export class RotationScheduleFormComponent implements OnInit {
       areaId: ['', Validators.required],
       teacherIds: [[]],
       studentIds: [[]],
+      surveyId: [''],
+      sendAfterRotationEnd: [true],
       startDate: ['', Validators.required],
       endDate: ['', Validators.required]
     });
@@ -88,6 +93,15 @@ export class RotationScheduleFormComponent implements OnInit {
       const arr = Array.isArray(data) ? data : [];
       this.students = arr.map((s: any) => ({ ...s, fullName: `${s.firstName || ''} ${s.lastName || ''}`.trim() }));
       this.tryLoadSchedule();
+    });
+
+    this.surveysService.getSurveys('ACTIVE').subscribe({
+      next: (data) => {
+        this.surveys = Array.isArray(data) ? data.filter((s: any) => s.isPublished) : [];
+      },
+      error: () => {
+        this.surveys = [];
+      }
     });
 
     this.form.get('institutionId')?.valueChanges.subscribe((val) => {
@@ -129,9 +143,23 @@ export class RotationScheduleFormComponent implements OnInit {
           areaId: schedule.areaId || '',
           teacherIds: Array.isArray(schedule.teacherIds) ? schedule.teacherIds : [],
           studentIds: Array.isArray(schedule.studentIds) ? schedule.studentIds : [],
+          surveyId: '',
+          sendAfterRotationEnd: true,
           startDate: toDateOnly(schedule.startDate),
           endDate: toDateOnly(schedule.endDate)
         }, { emitEvent: false });
+
+        this.surveysService.getRotationAssignment(schedule.id).subscribe({
+          next: (assignment: any) => {
+            this.form.patchValue({
+              surveyId: assignment?.survey?.id || '',
+              sendAfterRotationEnd: assignment?.sendAfterRotationEnd ?? true,
+            }, { emitEvent: false });
+          },
+          error: () => {
+            // Rotación sin encuesta asignada.
+          },
+        });
       },
       error: (err) => {
         this.ns.error(err?.error?.message || 'No se pudo cargar la programación');
@@ -154,14 +182,49 @@ export class RotationScheduleFormComponent implements OnInit {
 
     this.isSubmitting = true;
     const request$ = this.isEditMode && this.scheduleId
-      ? this.svc.update(this.scheduleId, payload)
-      : this.svc.create(payload);
+      ? this.svc.update(this.scheduleId, {
+          institutionId: payload.institutionId,
+          programId: payload.programId,
+          areaId: payload.areaId,
+          teacherIds: payload.teacherIds,
+          studentIds: payload.studentIds,
+          startDate: payload.startDate,
+          endDate: payload.endDate,
+        })
+      : this.svc.create({
+          institutionId: payload.institutionId,
+          programId: payload.programId,
+          areaId: payload.areaId,
+          teacherIds: payload.teacherIds,
+          studentIds: payload.studentIds,
+          startDate: payload.startDate,
+          endDate: payload.endDate,
+        });
 
     request$.subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.ns.success(this.isEditMode ? 'Programación actualizada correctamente' : 'Programación creada correctamente');
-        this.router.navigate(['/rotation-schedules']);
+      next: (result: any) => {
+        const rotationScheduleId = this.isEditMode ? this.scheduleId : result?.id;
+        const surveyId = payload.surveyId as string;
+
+        if (!rotationScheduleId || !surveyId) {
+          this.isSubmitting = false;
+          this.ns.success(this.isEditMode ? 'Programación actualizada correctamente' : 'Programación creada correctamente');
+          this.router.navigate(['/rotation-schedules']);
+          return;
+        }
+
+        this.surveysService.assignSurveyToRotation(rotationScheduleId, surveyId, !!payload.sendAfterRotationEnd).subscribe({
+          next: () => {
+            this.isSubmitting = false;
+            this.ns.success(this.isEditMode ? 'Programación y encuesta actualizadas correctamente' : 'Programación y encuesta asignadas correctamente');
+            this.router.navigate(['/rotation-schedules']);
+          },
+          error: (assignmentErr) => {
+            this.isSubmitting = false;
+            this.ns.error('La rotación se guardó, pero no se pudo asignar la encuesta: ' + (assignmentErr?.error?.message || assignmentErr?.message || 'Error desconocido'));
+            this.router.navigate(['/rotation-schedules']);
+          }
+        });
       },
       error: (err) => {
         this.isSubmitting = false;

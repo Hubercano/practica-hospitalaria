@@ -11,7 +11,7 @@ import { FileUploadComponent } from '../../shared/ui/file-upload/file-upload.com
 import { exportToExcel } from '../../shared/utils/excel-export.util';
 import { FilterChipsComponent, FilterChip } from '../../shared/ui/filter-chips/filter-chips.component';
 import { toDateOnly } from '../../shared/utils/date.util';
-import { getEstadoInduccion, getEstadoCarnet, tieneCarnetEntregado } from '../../shared/utils/student-induction.util';
+import { getEstadoInduccion, getEstadoCarnet, getEstadoCarnetBadgeClass, tieneCarnetEntregado } from '../../shared/utils/student-induction.util';
 
 @Component({
   selector: 'app-student-list',
@@ -44,6 +44,7 @@ export class StudentList implements OnInit {
   isUploading = false;
   uploadResult: any = null;
   selectedFile: File | null = null;
+  readonly getEstadoCarnetBadgeClass = getEstadoCarnetBadgeClass;
 
   constructor() {
     this.filtersForm = this.fb.group({

@@ -1,0 +1,71 @@
+<div class="p-4">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Resultados de Encuesta</h1>
+      <p class="text-sm text-slate-600 mt-1">Participación y resultados por pregunta.</p>
+    </div>
+    <app-button variant="secondary" routerLink="/surveys">Volver</app-button>
+  </div>
+
+  @if (loading()) {
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 text-slate-600">Cargando resultados...</div>
+  } @else if (error()) {
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">{{ error() }}</div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="rounded-xl border border-slate-200 bg-white p-4">
+        <div class="text-xs uppercase text-slate-500">Asignados</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1">{{ stats()?.totalAssignments || 0 }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4">
+        <div class="text-xs uppercase text-slate-500">Respondidos</div>
+        <div class="text-2xl font-bold text-emerald-700 mt-1">{{ stats()?.respondedAssignments || 0 }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4">
+        <div class="text-xs uppercase text-slate-500">Pendientes</div>
+        <div class="text-2xl font-bold text-amber-700 mt-1">{{ stats()?.pendingAssignments || 0 }}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4">
+        <div class="text-xs uppercase text-slate-500">Participación</div>
+        <div class="text-2xl font-bold text-indigo-700 mt-1">{{ stats()?.participation || 0 }}%</div>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      @for (q of stats()?.questionResults || []; track q.questionId) {
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+          <div class="font-semibold text-slate-900">{{ q.title }}</div>
+          <div class="text-xs text-slate-500 mb-3">Tipo: {{ q.type }} | Respuestas: {{ q.totalAnswers }}</div>
+
+          @if (q.type === 'SCALE') {
+            <div class="text-sm text-slate-700">Promedio: <span class="font-semibold">{{ q.average }}</span></div>
+          }
+
+          @if (q.options?.length) {
+            <div class="space-y-2">
+              @for (opt of q.options; track opt.value) {
+                <div>
+                  <div class="flex justify-between text-sm text-slate-700 mb-1">
+                    <span>{{ opt.label }}</span>
+                    <span>{{ opt.count }}</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-2 bg-indigo-500" [style.width.%]="q.totalAnswers ? (opt.count / q.totalAnswers) * 100 : 0"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (q.texts?.length) {
+            <div class="space-y-2 max-h-48 overflow-auto">
+              @for (t of q.texts; track $index) {
+                <div class="text-sm text-slate-700 border border-slate-200 rounded-lg p-2">{{ t }}</div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

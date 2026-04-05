@@ -17,6 +17,8 @@ export interface Student {
   requirements?: any[];
   state: string;
   status?: string;
+  numeroCarnet?: string | null;
+  fechaDevolucionCarnet?: string | null;
   inductionStatus?: 'VIGENTE' | 'VENCIDA' | 'NO_REALIZADA';
   inductionCompletedAt?: string | null;
   inductionExpiresAt?: string | null;

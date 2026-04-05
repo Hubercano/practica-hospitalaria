@@ -117,9 +117,22 @@
               </td>
               <td class="px-4 py-2">
                 @if (item.numeroCarnet) {
-                  <span class="text-xs font-medium text-slate-900">{{ item.numeroCarnet }}</span>
+                  <div class="flex flex-col gap-1">
+                    <span class="text-xs font-medium text-slate-900">{{ item.numeroCarnet }}</span>
+                    <span
+                      class="px-2 py-0.5 text-[11px] font-medium rounded-badge border inline-flex items-center gap-1.5 w-fit"
+                      [ngClass]="getEstadoCarnetBadgeClass(item.estadoCarnet)"
+                    >
+                      {{ item.estadoCarnet }}
+                    </span>
+                  </div>
                 } @else {
-                  <span class="text-xs text-slate-500 italic">Sin carnet</span>
+                  <span
+                    class="px-2 py-0.5 text-[11px] font-medium rounded-badge border inline-flex items-center gap-1.5"
+                    [ngClass]="getEstadoCarnetBadgeClass(item.estadoCarnet)"
+                  >
+                    {{ item.estadoCarnet }}
+                  </span>
                 }
               </td>
               <td class="px-4 py-2">

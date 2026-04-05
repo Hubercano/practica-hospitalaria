@@ -86,6 +86,27 @@
         </app-form-field>
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-form-field label="Encuesta de satisfacción asociada">
+          <ng-select
+            class="rotation-select"
+            [items]="surveys"
+            bindLabel="name"
+            bindValue="id"
+            formControlName="surveyId"
+            placeholder="Sin encuesta asociada"
+            [clearable]="true">
+          </ng-select>
+        </app-form-field>
+
+        <app-form-field label="Envío automático al finalizar">
+          <label class="inline-flex items-center gap-2 mt-2 text-sm text-slate-700">
+            <input type="checkbox" formControlName="sendAfterRotationEnd" class="rounded border-slate-300" />
+            Enviar encuesta automáticamente cuando termine la rotación
+          </label>
+        </app-form-field>
+      </div>
+
       <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
         <app-button variant="secondary" routerLink="/rotation-schedules">Cancelar</app-button>
         <app-button variant="primary" type="submit">

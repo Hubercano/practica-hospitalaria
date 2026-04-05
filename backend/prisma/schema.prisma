@@ -56,6 +56,34 @@ enum InductionChannel {
   ADMIN_MANUAL
 }
 
+enum SurveyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SurveyQuestionType {
+  SHORT_TEXT
+  LONG_TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SCALE
+  DROPDOWN
+}
+
+enum SurveyAssignmentStatus {
+  PENDING
+  RESPONDED
+}
+
+enum SurveyDispatchChannel {
+  EMAIL
+}
+
+enum SurveyDispatchStatus {
+  SENT
+  FAILED
+}
+
 // -----------------------------------------------------------------------------
 // 🏗️ MÓDULO DE PARAMETRIZACIÓN (Configuracion del sistema)
 // -----------------------------------------------------------------------------
@@ -265,6 +293,9 @@ model RotationSchedule {
   startDate DateTime
   endDate   DateTime
 
+  surveyLinks RotationSurvey[]
+  responses   SurveyResponse[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -360,6 +391,9 @@ model Student {
   // Relación: Historial de inducciones realizadas
   inductionAttendances InductionAttendance[]     @relation("StudentInductionAttendances")
   allowedInductions    InductionAllowedStudent[] @relation("StudentAllowedInductions")
+
+  surveyAssignments SurveyAssignment[]
+  surveyResponses   SurveyResponse[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -528,4 +562,181 @@ model InductionAuditEvent {
   createdAt DateTime @default(now())
 
   @@index([inductionId, eventType])
+}
+
+// -----------------------------------------------------------------------------
+// 📊 MÓDULO DE ENCUESTAS DE SATISFACCIÓN
+// -----------------------------------------------------------------------------
+
+model Survey {
+  id String @id @default(uuid())
+
+  name        String
+  description String?
+  status      SurveyStatus @default(INACTIVE)
+  isPublished Boolean      @default(false)
+  isOpenAccess Boolean     @default(false)
+
+  questions SurveyQuestion[]
+  rotations RotationSurvey[]
+  responses SurveyResponse[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model SurveyQuestion {
+  id String @id @default(uuid())
+
+  surveyId String
+  survey   Survey @relation(fields: [surveyId], references: [id])
+
+  title       String
+  description String?
+  type        SurveyQuestionType
+  isRequired  Boolean @default(false)
+  orderIndex  Int     @default(0)
+
+  // Para tipo SCALE
+  scaleMin  Int?
+  scaleMax  Int?
+  scaleStep Int?
+
+  options SurveyQuestionOption[]
+  answerDetails SurveyResponseDetail[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([surveyId, orderIndex])
+}
+
+model SurveyQuestionOption {
+  id String @id @default(uuid())
+
+  questionId String
+  question   SurveyQuestion @relation(fields: [questionId], references: [id])
+
+  label      String
+  value      String
+  orderIndex Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([questionId, orderIndex])
+}
+
+model RotationSurvey {
+  id String @id @default(uuid())
+
+  rotationScheduleId String
+  rotationSchedule   RotationSchedule @relation(fields: [rotationScheduleId], references: [id])
+
+  surveyId String
+  survey   Survey @relation(fields: [surveyId], references: [id])
+
+  status               EntityState @default(ACTIVE)
+  assignedAt           DateTime    @default(now())
+  sendAfterRotationEnd Boolean     @default(true)
+
+  assignments SurveyAssignment[]
+  responses   SurveyResponse[]
+
+  @@unique([rotationScheduleId])
+  @@index([surveyId])
+}
+
+model SurveyAssignment {
+  id String @id @default(uuid())
+
+  rotationSurveyId String
+  rotationSurvey   RotationSurvey @relation(fields: [rotationSurveyId], references: [id])
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  status         SurveyAssignmentStatus @default(PENDING)
+  tokenHash      String
+  tokenExpiresAt DateTime?
+
+  firstSentAt DateTime?
+  lastSentAt  DateTime?
+  sentCount   Int       @default(0)
+
+  respondedAt DateTime?
+
+  dispatchLogs SurveyDispatchLog[]
+  response     SurveyResponse?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([rotationSurveyId, studentId])
+  @@unique([tokenHash])
+  @@index([status, respondedAt])
+}
+
+model SurveyDispatchLog {
+  id String @id @default(uuid())
+
+  assignmentId String
+  assignment   SurveyAssignment @relation(fields: [assignmentId], references: [id])
+
+  channel           SurveyDispatchChannel @default(EMAIL)
+  status            SurveyDispatchStatus
+  providerMessageId String?
+  errorMessage      String?
+
+  dispatchedAt DateTime @default(now())
+
+  @@index([assignmentId, dispatchedAt])
+}
+
+model SurveyResponse {
+  id String @id @default(uuid())
+
+  assignmentId String? @unique
+  assignment   SurveyAssignment? @relation(fields: [assignmentId], references: [id])
+
+  rotationSurveyId String?
+  rotationSurvey   RotationSurvey? @relation(fields: [rotationSurveyId], references: [id])
+
+  surveyId String
+  survey   Survey @relation(fields: [surveyId], references: [id])
+
+  studentId String?
+  student   Student? @relation(fields: [studentId], references: [id])
+
+  rotationScheduleId String?
+  rotationSchedule   RotationSchedule? @relation(fields: [rotationScheduleId], references: [id])
+
+  submittedAt DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+
+  details SurveyResponseDetail[]
+
+  @@index([surveyId, submittedAt])
+  @@index([rotationScheduleId, submittedAt])
+}
+
+model SurveyResponseDetail {
+  id String @id @default(uuid())
+
+  responseId String
+  response   SurveyResponse @relation(fields: [responseId], references: [id])
+
+  questionId String
+  question   SurveyQuestion @relation(fields: [questionId], references: [id])
+
+  answerText        String?
+  answerNumber      Float?
+  answerOptionsJson Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([questionId])
+  @@index([responseId])
 }

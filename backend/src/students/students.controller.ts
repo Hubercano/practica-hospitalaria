@@ -22,6 +22,8 @@ export class StudentsController {
       document: body.document,
       email: body.email,
       phone: body.phone,
+      numeroCarnet: body.numeroCarnet ? String(body.numeroCarnet).trim() : null,
+      fechaDevolucionCarnet: body.fechaDevolucionCarnet ? new Date(body.fechaDevolucionCarnet) : null,
       institution: {
         connect: { id: body.institutionId }
       },
@@ -74,6 +76,10 @@ export class StudentsController {
       ...(body.document !== undefined ? { document: body.document } : {}),
       ...(body.email !== undefined ? { email: body.email } : {}),
       ...(body.phone !== undefined ? { phone: body.phone } : {}),
+      ...(body.numeroCarnet !== undefined ? { numeroCarnet: body.numeroCarnet ? String(body.numeroCarnet).trim() : null } : {}),
+      ...(body.fechaDevolucionCarnet !== undefined
+        ? { fechaDevolucionCarnet: body.fechaDevolucionCarnet ? new Date(body.fechaDevolucionCarnet) : null }
+        : {}),
       ...(body.state !== undefined ? { state: body.state } : {}),
       ...(body.institutionId ? { institution: { connect: { id: body.institutionId } } } : {}),
       ...(body.typeId ? { type: { connect: { id: body.typeId } } } : {}),

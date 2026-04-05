@@ -1,0 +1,86 @@
+<div class="min-h-screen bg-slate-100 py-10 px-4">
+  <div class="max-w-3xl mx-auto">
+    @if (loading()) {
+      <div class="rounded-2xl bg-white border border-slate-200 p-8 text-center text-slate-600">Cargando encuesta...</div>
+    } @else if (error()) {
+      <div class="rounded-2xl bg-rose-50 border border-rose-200 p-8 text-center text-rose-700">{{ error() }}</div>
+    } @else if (completed()) {
+      <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-8 text-center text-emerald-700">
+        ¡Gracias! Tu encuesta fue enviada correctamente.
+      </div>
+    } @else {
+      <div class="rounded-2xl bg-white border border-slate-200 p-6">
+        <h1 class="text-2xl font-bold text-slate-900">{{ surveyData()?.survey?.name }}</h1>
+        <p class="text-sm text-slate-600 mt-1">{{ surveyData()?.survey?.description || '' }}</p>
+
+        <div class="mt-3 text-xs text-slate-500">
+          Estudiante: {{ surveyData()?.student?.name }}
+        </div>
+
+        <form class="space-y-5 mt-6" [formGroup]="form" (ngSubmit)="submit()">
+          @for (question of surveyData()?.survey?.questions || []; track question.id) {
+            <div class="border border-slate-200 rounded-xl p-4">
+              <div class="font-semibold text-slate-900">{{ question.title }} @if (question.isRequired) {<span class="text-rose-600">*</span>}</div>
+              @if (question.description) {
+                <div class="text-xs text-slate-500 mt-1">{{ question.description }}</div>
+              }
+
+              <div class="mt-3">
+                @if (question.type === 'SHORT_TEXT') {
+                  <input class="w-full rounded-lg border-slate-300" [formControlName]="question.id" />
+                }
+
+                @if (question.type === 'LONG_TEXT') {
+                  <textarea rows="3" class="w-full rounded-lg border-slate-300" [formControlName]="question.id"></textarea>
+                }
+
+                @if (question.type === 'SCALE') {
+                  <input type="number" class="w-full rounded-lg border-slate-300" [min]="question.scaleMin || 1" [max]="question.scaleMax || 5" [formControlName]="question.id" />
+                }
+
+                @if (question.type === 'SINGLE_CHOICE') {
+                  <div class="space-y-2">
+                    @for (opt of question.options || []; track opt.value) {
+                      <label class="flex items-center gap-2 text-sm">
+                        <input type="radio" [name]="question.id" [value]="opt.value" [formControlName]="question.id" />
+                        {{ opt.label }}
+                      </label>
+                    }
+                  </div>
+                }
+
+                @if (question.type === 'DROPDOWN') {
+                  <select class="w-full rounded-lg border-slate-300" [formControlName]="question.id">
+                    <option value="">Seleccione...</option>
+                    @for (opt of question.options || []; track opt.value) {
+                      <option [value]="opt.value">{{ opt.label }}</option>
+                    }
+                  </select>
+                }
+
+                @if (question.type === 'MULTIPLE_CHOICE') {
+                  <div class="space-y-2">
+                    @for (opt of question.options || []; track opt.value) {
+                      <label class="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          [checked]="(form.get(question.id)?.value || []).includes(opt.value)"
+                          (change)="toggleMultiOption(question.id, opt.value, $any($event.target).checked)"
+                        />
+                        {{ opt.label }}
+                      </label>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <button class="w-full bg-brand-button text-white py-2.5 rounded-lg font-medium hover:bg-brand-hover disabled:opacity-60" [disabled]="sending()">
+            {{ sending() ? 'Enviando...' : 'Enviar Encuesta' }}
+          </button>
+        </form>
+      </div>
+    }
+  </div>
+</div>
