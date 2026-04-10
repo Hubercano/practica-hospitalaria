@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import { InstitutionsModule } from './institutions/institutions.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AcademicProgramsModule } from './academic-programs/academic-programs.module';
@@ -18,6 +20,8 @@ import { SurveysModule } from './surveys/surveys.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    AuthModule,
+    UsersModule,
     PrismaModule, 
     InstitutionsModule,
     AcademicProgramsModule,

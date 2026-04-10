@@ -1,7 +1,8 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { CreateInstitutionDto, CreateInstitutionTypeDto, AddRequirementDto } from './dto';
-import { EntityState, ValidationStatus } from '@prisma/client';
+import { EntityState, UserRole, ValidationStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
 
 @Injectable()
@@ -198,10 +199,11 @@ export class InstitutionsService {
     });
   }
 
-  async findAll(includeInactive = false): Promise<any[]> {
+  async findAll(includeInactive = false, user?: AuthenticatedUser): Promise<any[]> {
     const institutions = await this.prisma.institution.findMany({
       where: {
         deletedAt: null,
+        ...(user?.role === UserRole.INSTITUCION ? { id: this.requireInstitutionId(user) } : {}),
         ...(includeInactive ? {} : { state: EntityState.ACTIVE }),
       },
       include: {
@@ -273,9 +275,16 @@ export class InstitutionsService {
     });
   }
 
-  async findOne(id: string): Promise<any> {
-    const institution = await this.prisma.institution.findUnique({
-      where: { id },
+  async findOne(id: string, user?: AuthenticatedUser): Promise<any> {
+    if (user?.role === UserRole.INSTITUCION && id !== this.requireInstitutionId(user)) {
+      throw new NotFoundException('Institución no encontrada');
+    }
+
+    const institution = await this.prisma.institution.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
       include: {
         type: {
           include: { requirements: true }
@@ -313,7 +322,21 @@ export class InstitutionsService {
     return institution;
   }
 
-  async submitRequirement(reqValueId: string, value: string, expiryDate?: string) {
+  async submitRequirement(reqValueId: string, value: string, expiryDate?: string, user?: AuthenticatedUser) {
+    if (user?.role === UserRole.INSTITUCION) {
+      const requirement = await this.prisma.institutionRequirementValue.findFirst({
+        where: {
+          id: reqValueId,
+          institutionId: this.requireInstitutionId(user),
+        },
+        select: { id: true },
+      });
+
+      if (!requirement) {
+        throw new NotFoundException('Requisito no encontrado');
+      }
+    }
+
     return this.prisma.institutionRequirementValue.update({
       where: { id: reqValueId },
       data: {
@@ -434,5 +457,13 @@ export class InstitutionsService {
     }
 
     return results;
+  }
+
+  private requireInstitutionId(user: AuthenticatedUser) {
+    if (!user.institutionId) {
+      throw new NotFoundException('El usuario no tiene una institución asociada.');
+    }
+
+    return user.institutionId;
   }
 }

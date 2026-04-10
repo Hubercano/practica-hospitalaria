@@ -2,7 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, Upl
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ServiceCapacityService } from './service-capacity.service';
 import { CreateServiceCapacityDto } from './dto/create-capacity.dto';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('service-capacities')
 export class ServiceCapacityController {
   constructor(private readonly service: ServiceCapacityService) {}

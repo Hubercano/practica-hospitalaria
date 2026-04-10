@@ -18,6 +18,12 @@ html {
   --ui-field-radius: 0.65rem;
   --ui-field-height: 2.4rem;
   --ui-field-px: 0.75rem;
+  --ui-scroll-track: rgba(148, 163, 184, 0.14);
+  --ui-scroll-thumb: rgba(86, 62, 241, 0.28);
+  --ui-scroll-thumb-hover: rgba(86, 62, 241, 0.42);
+  --ui-scroll-sidebar-track: rgba(255, 255, 255, 0.04);
+  --ui-scroll-sidebar-thumb: rgba(160, 162, 184, 0.28);
+  --ui-scroll-sidebar-thumb-hover: rgba(160, 162, 184, 0.42);
 }
 
 /* Custom Base Styles */
@@ -152,5 +158,59 @@ input[type='radio'] {
 }
 .filter-ng-select .ng-placeholder {
   display: block !important;
+}
+
+/* Scrollbars: subtle, compact, and aligned with app surfaces */
+.app-scrollbar,
+.app-scrollbar-sidebar {
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+.app-scrollbar {
+  scrollbar-color: var(--ui-scroll-thumb) var(--ui-scroll-track);
+}
+
+.app-scrollbar-sidebar {
+  scrollbar-color: var(--ui-scroll-sidebar-thumb) var(--ui-scroll-sidebar-track);
+}
+
+.app-scrollbar::-webkit-scrollbar,
+.app-scrollbar-sidebar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.app-scrollbar::-webkit-scrollbar-track,
+.app-scrollbar-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb,
+.app-scrollbar-sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--ui-scroll-thumb);
+}
+
+.app-scrollbar-sidebar::-webkit-scrollbar-thumb {
+  background-color: var(--ui-scroll-sidebar-thumb);
+}
+
+.app-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: var(--ui-scroll-thumb-hover);
+}
+
+.app-scrollbar-sidebar:hover::-webkit-scrollbar-thumb {
+  background-color: var(--ui-scroll-sidebar-thumb-hover);
+}
+
+.app-scrollbar::-webkit-scrollbar-corner,
+.app-scrollbar-sidebar::-webkit-scrollbar-corner {
+  background: transparent;
 }
 

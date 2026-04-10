@@ -4,7 +4,12 @@
       <h1 class="text-2xl font-bold text-slate-900">Resultados de Encuesta</h1>
       <p class="text-sm text-slate-600 mt-1">Participación y resultados por pregunta.</p>
     </div>
-    <app-button variant="secondary" routerLink="/surveys">Volver</app-button>
+    <div class="flex items-center gap-3">
+      <app-button variant="secondary" (click)="downloadResults()" [disabled]="loading() || downloading()">
+        {{ downloading() ? 'Descargando...' : 'Descargar resultados' }}
+      </app-button>
+      <app-button variant="secondary" routerLink="/surveys">Volver</app-button>
+    </div>
   </div>
 
   @if (loading()) {

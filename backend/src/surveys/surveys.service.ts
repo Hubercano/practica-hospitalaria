@@ -8,6 +8,7 @@ import { AssignSurveyToRotationDto } from './dto/assign-survey-to-rotation.dto';
 import { ReorderSurveyQuestionsDto } from './dto/reorder-survey-questions.dto';
 import { SubmitSurveyResponseDto } from './dto/submit-survey-response.dto';
 import { createHash, randomBytes } from 'crypto';
+import * as ExcelJS from 'exceljs';
 import {
   EntityState,
   SurveyAssignmentStatus,
@@ -687,6 +688,132 @@ export class SurveysService {
       totalResponses: responses.length,
       questionResults,
     };
+  }
+
+  async exportSurveyResponsesXlsx(surveyId: string) {
+    const survey = await this.prisma.survey.findFirst({
+      where: { id: surveyId, deletedAt: null },
+      include: {
+        questions: {
+          orderBy: { orderIndex: 'asc' },
+          include: {
+            options: { orderBy: { orderIndex: 'asc' } },
+          },
+        },
+        responses: {
+          orderBy: { submittedAt: 'asc' },
+          include: {
+            student: {
+              include: {
+                institution: {
+                  select: { name: true },
+                },
+              },
+            },
+            rotationSchedule: {
+              select: {
+                startDate: true,
+                endDate: true,
+              },
+            },
+            details: true,
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException('Encuesta no encontrada.');
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Resultados');
+
+    const questionColumns = survey.questions.map((question) => ({
+      header: question.title,
+      key: question.id,
+      width: Math.min(Math.max(question.title.length + 8, 24), 48),
+    }));
+
+    worksheet.columns = [
+      { header: 'Fecha de respuesta', key: 'submittedAt', width: 22 },
+      { header: 'Estudiante', key: 'studentName', width: 28 },
+      { header: 'Documento', key: 'studentDocument', width: 18 },
+      { header: 'Correo', key: 'studentEmail', width: 30 },
+      { header: 'Institución', key: 'institutionName', width: 28 },
+      { header: 'Inicio rotación', key: 'rotationStartDate', width: 18 },
+      { header: 'Fin rotación', key: 'rotationEndDate', width: 18 },
+      ...questionColumns,
+    ];
+
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).alignment = { vertical: 'middle', wrapText: true };
+
+    for (const response of survey.responses) {
+      const answerMap = new Map(response.details.map((detail) => [detail.questionId, detail]));
+
+      const rowData: Record<string, string | number | null> = {
+        submittedAt: this.formatDateTime(response.submittedAt),
+        studentName: response.student ? `${response.student.firstName} ${response.student.lastName}`.trim() : 'Acceso abierto',
+        studentDocument: response.student?.document || null,
+        studentEmail: response.student?.email || null,
+        institutionName: response.student?.institution?.name || null,
+        rotationStartDate: response.rotationSchedule?.startDate ? this.formatDate(response.rotationSchedule.startDate) : null,
+        rotationEndDate: response.rotationSchedule?.endDate ? this.formatDate(response.rotationSchedule.endDate) : null,
+      };
+
+      for (const question of survey.questions) {
+        rowData[question.id] = this.formatSurveyAnswer(answerMap.get(question.id));
+      }
+
+      worksheet.addRow(rowData);
+    }
+
+    worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    return {
+      filename: this.buildSurveyResultsFilename(survey.name),
+      buffer: (await workbook.xlsx.writeBuffer()) as unknown as Buffer,
+    };
+  }
+
+  private formatSurveyAnswer(detail?: {
+    answerText: string | null;
+    answerNumber: number | null;
+    answerOptionsJson: unknown;
+  }) {
+    if (!detail) {
+      return '';
+    }
+
+    if (Array.isArray(detail.answerOptionsJson)) {
+      return detail.answerOptionsJson.map((value) => String(value)).join(', ');
+    }
+
+    if (typeof detail.answerNumber === 'number') {
+      return detail.answerNumber;
+    }
+
+    return detail.answerText || '';
+  }
+
+  private formatDateTime(value: Date) {
+    return value.toLocaleString('es-CO');
+  }
+
+  private formatDate(value: Date) {
+    return value.toLocaleDateString('es-CO');
+  }
+
+  private buildSurveyResultsFilename(name: string) {
+    const slug = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || 'encuesta';
+
+    return `resultados-${slug}.xlsx`;
   }
 
   async dispatchDueAssignments() {

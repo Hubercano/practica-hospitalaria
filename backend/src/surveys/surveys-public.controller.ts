@@ -1,8 +1,10 @@
 import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { Public } from '../auth/public.decorator';
 import { SubmitSurveyResponseDto } from './dto/submit-survey-response.dto';
 import { SurveysService } from './surveys.service';
 
+@Public()
 @Controller('public-surveys')
 export class SurveysPublicController {
   constructor(private readonly surveysService: SurveysService) {}

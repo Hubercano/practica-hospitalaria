@@ -1,8 +1,9 @@
-﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { AuthService } from '../../../auth/auth.service';
 import { InstitutionService } from '../../services/institution.service';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { exportToExcel } from '../../../shared/utils/excel-export.util';
@@ -38,6 +39,10 @@ export class InstitutionsListComponent implements OnInit {
   isUploading = false;
   uploadResult: any = null;
   selectedFile: File | null = null;
+
+  private authService = inject(AuthService);
+  readonly currentUser = this.authService.currentUser;
+  readonly isInstitutionUser = computed(() => this.currentUser()?.role === 'INSTITUCION');
 
   constructor(
     private fb: FormBuilder,

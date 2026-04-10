@@ -1,8 +1,9 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { StudentsService } from '../students.service';
+import { AuthService } from '../../auth/auth.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { HttpClient } from '@angular/common/http';
 import { InstitutionService } from '../../institutions/services/institution.service';
@@ -53,6 +54,9 @@ export class StudentForm implements OnInit {
   private http = inject(HttpClient);
   private institutionService = inject(InstitutionService);
   private ns = inject(NotificationService);
+  readonly authService = inject(AuthService);
+  readonly currentUser = this.authService.currentUser;
+  readonly isInstitutionUser = computed(() => this.currentUser()?.role === 'INSTITUCION');
 
   constructor() {
     this.form = this.fb.group({
@@ -116,6 +120,10 @@ export class StudentForm implements OnInit {
         if (this.institutionOptions.length > 0) {
           this.form.patchValue({ institutionId: this.institutionOptions[0].value });
         }
+
+        if (this.isInstitutionUser()) {
+          this.form.get('institutionId')?.disable({ emitEvent: false });
+        }
       },
       error: (err) => {
         this.ns.error('Error cargando instituciones activas: ' + (err.error?.message || err.message));
@@ -156,8 +164,8 @@ export class StudentForm implements OnInit {
 
     this.isSubmitting = true;
     const request$ = this.isEditMode && this.studentId
-      ? this.studentsService.updateStudent(this.studentId, this.form.value)
-      : this.studentsService.createStudent(this.form.value);
+      ? this.studentsService.updateStudent(this.studentId, this.form.getRawValue())
+      : this.studentsService.createStudent(this.form.getRawValue());
 
     request$.subscribe({
       next: (res) => {

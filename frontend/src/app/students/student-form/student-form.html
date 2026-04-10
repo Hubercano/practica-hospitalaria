@@ -45,9 +45,20 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <app-form-field label="Institución" [required]="true" [error]="controlErrors.institutionId">
-          <app-select formControlName="institutionId" [options]="institutionOptions" placeholder="Seleccionar institución activa"></app-select>
-        </app-form-field>
+        @if (!isInstitutionUser()) {
+          <app-form-field label="Institución" [required]="true" [error]="controlErrors.institutionId">
+            <app-select formControlName="institutionId" [options]="institutionOptions" placeholder="Seleccionar institución activa"></app-select>
+          </app-form-field>
+        } @else {
+          <app-form-field label="Institución" [required]="true">
+            <input
+              type="text"
+              [value]="currentUser()?.institutionName || 'Institución asignada'"
+              readonly
+              class="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 text-slate-700"
+            />
+          </app-form-field>
+        }
 
         <app-form-field label="Tipo de Estudiante" [required]="true">
           <app-select formControlName="typeId" [options]="typeOptions"></app-select>

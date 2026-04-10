@@ -2,7 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, BadRequestExc
 import { RotationSchedulesService } from './rotation-schedules.service';
 import { CreateRotationScheduleDto } from './dto/create-rotation-schedule.dto';
 import { UpdateRotationScheduleDto } from './dto/update-rotation-schedule.dto';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('rotation-schedules')
 export class RotationSchedulesController {
   constructor(private readonly service: RotationSchedulesService) {}

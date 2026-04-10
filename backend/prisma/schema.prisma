@@ -84,6 +84,17 @@ enum SurveyDispatchStatus {
   FAILED
 }
 
+enum UserRole {
+  HOSPITAL
+  INSTITUCION
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DISABLED
+}
+
 // -----------------------------------------------------------------------------
 // 🏗️ MÓDULO DE PARAMETRIZACIÓN (Configuracion del sistema)
 // -----------------------------------------------------------------------------
@@ -155,10 +166,59 @@ model Institution {
   // Relación: Estudiantes asociados
   students Student[]
 
+  users User[]
+
   // Auditoría básica
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+}
+
+model User {
+  id String @id @default(uuid())
+
+  email        String     @unique
+  passwordHash String
+  role         UserRole
+  status       UserStatus @default(ACTIVE)
+
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  passwordChangedAt   DateTime?
+
+  sessions UserSession[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([role, status])
+  @@index([institutionId])
+}
+
+model UserSession {
+  id String @id @default(uuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  refreshTokenHash String   @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  lastUsedAt       DateTime?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, expiresAt])
+  @@index([revokedAt])
 }
 
 // Paso 4: El valor/documento entregado para cumplir un requisito

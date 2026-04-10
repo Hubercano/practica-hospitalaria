@@ -1,8 +1,10 @@
 import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { Public } from '../auth/public.decorator';
 import { InductionsService } from './inductions.service';
 import { PublicDocumentDto } from './dto/public-document.dto';
 
+@Public()
 @Controller('public/inductions')
 export class InductionsPublicController {
   constructor(private readonly inductionsService: InductionsService) {}

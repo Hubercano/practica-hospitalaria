@@ -1,7 +1,10 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Patch } from '@nestjs/common';
 import { AcademicProgramsService } from './academic-programs.service';
 import { CreateAcademicProgramDto } from './dto/create-program.dto';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('academic-programs')
 export class AcademicProgramsController {
   constructor(private readonly service: AcademicProgramsService) {}

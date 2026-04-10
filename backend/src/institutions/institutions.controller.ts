@@ -1,9 +1,12 @@
 import { Controller, Get, Post, Body, Param, Delete, Patch, UseInterceptors, UploadedFile, Res, Query } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { Roles } from '../auth/roles.decorator';
 import { InstitutionsService } from './institutions.service';
 import { CreateInstitutionDto, CreateInstitutionTypeDto, AddRequirementDto, UpdateInstitutionDto } from './dto';
-import { EntityState } from '@prisma/client';
+import { EntityState, UserRole } from '@prisma/client';
 
 @Controller('institutions')
 export class InstitutionsController {
@@ -73,9 +76,10 @@ export class InstitutionsController {
   }
 
   @Get()
-  listAll(@Query('includeInactive') includeInactive?: string) {
+  @Roles(UserRole.HOSPITAL, UserRole.INSTITUCION)
+  listAll(@CurrentUser() user: AuthenticatedUser, @Query('includeInactive') includeInactive?: string) {
     const includeAll = includeInactive === 'true' || includeInactive === '1';
-    return this.institutionsService.findAll(includeAll);
+    return this.institutionsService.findAll(includeAll, user);
   }
 
   @Get('template')
@@ -90,16 +94,19 @@ export class InstitutionsController {
   }
 
   @Get(':id')
-  getInstitution(@Param('id') id: string) {
-    return this.institutionsService.findOne(id);
+  @Roles(UserRole.HOSPITAL, UserRole.INSTITUCION)
+  getInstitution(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.institutionsService.findOne(id, user);
   }
 
   @Patch('requirements/:id/submit')
+  @Roles(UserRole.HOSPITAL, UserRole.INSTITUCION)
   submitRequirement(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() body: { value: string, expiryDate?: string }
   ) {
-    return this.institutionsService.submitRequirement(id, body.value, body.expiryDate);
+    return this.institutionsService.submitRequirement(id, body.value, body.expiryDate, user);
   }
 
   @Post('bulk-upload')

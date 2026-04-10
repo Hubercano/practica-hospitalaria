@@ -3,7 +3,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ClinicalServicesService } from './clinical-services.service';
 import { CreateClinicalServiceDto } from './dto/create-clinical-service.dto';
 import type { Response } from 'express';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('clinical-services')
 export class ClinicalServicesController {
   constructor(private readonly clinicalServicesService: ClinicalServicesService) {}

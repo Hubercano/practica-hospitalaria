@@ -1,9 +1,10 @@
-﻿import { Component, OnInit, inject, signal, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, inject, signal, ChangeDetectorRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { StudentsService } from '../students.service';
+import { AuthService } from '../../auth/auth.service';
 import { NotificationService } from '../../shared/notification/notification.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
@@ -35,6 +36,7 @@ export class StudentList implements OnInit {
   ];
 
   private studentsService = inject(StudentsService);
+  private authService = inject(AuthService);
   private router = inject(Router);
   private ns = inject(NotificationService);
   private fb = inject(FormBuilder);
@@ -45,6 +47,8 @@ export class StudentList implements OnInit {
   uploadResult: any = null;
   selectedFile: File | null = null;
   readonly getEstadoCarnetBadgeClass = getEstadoCarnetBadgeClass;
+  readonly currentUser = this.authService.currentUser;
+  readonly isInstitutionUser = computed(() => this.currentUser()?.role === 'INSTITUCION');
 
   constructor() {
     this.filtersForm = this.fb.group({

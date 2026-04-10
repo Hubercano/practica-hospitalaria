@@ -1,0 +1,41 @@
+<div class="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(92,77,255,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.1),_transparent_26%)]"></div>
+
+  <div class="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+    <div class="px-8 pt-8 pb-6 border-b border-slate-200 bg-white/90">
+      <p class="text-xs uppercase tracking-[0.32em] text-brand-button/80">Práctica Hospitalaria</p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900">Acceso Seguro</h1>
+      <p class="mt-2 text-sm text-slate-600">Inicia sesión con tu cuenta autorizada para acceder a la plataforma.</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="px-8 py-8 space-y-5">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">Correo electrónico</label>
+        <input
+          type="email"
+          formControlName="email"
+          class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-button focus:outline-none"
+          placeholder="admin@hospital.com"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">Contraseña</label>
+        <input
+          type="password"
+          formControlName="password"
+          class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-button focus:outline-none"
+          placeholder="••••••••••••"
+        />
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="form.invalid || isSubmitting"
+        class="w-full rounded-2xl bg-brand-button text-white font-semibold py-3 transition hover:bg-brand-hover disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {{ isSubmitting ? 'Validando acceso...' : 'Ingresar' }}
+      </button>
+    </form>
+  </div>
+</div>

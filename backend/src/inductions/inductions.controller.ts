@@ -4,7 +4,10 @@ import { CreateInductionDto } from './dto/create-induction.dto';
 import { UpdateInductionDto } from './dto/update-induction.dto';
 import { BulkAllowedStudentsDto } from './dto/bulk-allowed-students.dto';
 import { AddAllowedStudentDto } from './dto/add-allowed-student.dto';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('inductions')
 export class InductionsController {
   constructor(private readonly inductionsService: InductionsService) {}

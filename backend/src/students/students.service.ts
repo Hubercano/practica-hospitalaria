@@ -1,6 +1,7 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EntityState, Prisma, ValidationStatus } from '@prisma/client';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { EntityState, Prisma, UserRole, ValidationStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
 
 @Injectable()
@@ -80,7 +81,14 @@ export class StudentsService {
     };
   }
 
-  async create(data: Prisma.StudentCreateInput) {
+  async create(data: Prisma.StudentCreateInput, user?: AuthenticatedUser) {
+    if (user?.role === UserRole.INSTITUCION) {
+      const institutionId = this.requireInstitutionId(user);
+      (data as { institution?: { connect?: { id?: string } } }).institution = {
+        connect: { id: institutionId },
+      };
+    }
+
     // 1. Check if student already exists by document
     const exists = await this.prisma.student.findUnique({
       where: { document: data.document },
@@ -120,10 +128,11 @@ export class StudentsService {
     return student;
   }
 
-  async findAll(includeInactive = false) {
+  async findAll(includeInactive = false, user?: AuthenticatedUser) {
     const students = await this.prisma.student.findMany({
       where: {
         deletedAt: null,
+        ...this.studentScope(user),
         ...(includeInactive ? {} : { state: EntityState.ACTIVE }),
       },
       include: {
@@ -152,9 +161,13 @@ export class StudentsService {
     });
   }
 
-  findOne(id: string) {
-    return this.prisma.student.findUnique({
-      where: { id },
+  async findOne(id: string, user?: AuthenticatedUser) {
+    const student = await this.prisma.student.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+        ...this.studentScope(user),
+      },
       include: {
         institution: true,
         type: true,
@@ -172,9 +185,16 @@ export class StudentsService {
         },
       },
     });
+
+    if (!student) {
+      throw new NotFoundException('Estudiante no encontrado');
+    }
+
+    return student;
   }
 
-  async getInductionHistory(studentId: string) {
+  async getInductionHistory(studentId: string, user?: AuthenticatedUser) {
+    await this.ensureStudentAccess(studentId, user);
     return this.prisma.inductionAttendance.findMany({
       where: { studentId },
       include: {
@@ -190,20 +210,40 @@ export class StudentsService {
     });
   }
 
-  update(id: string, data: Prisma.StudentUpdateInput) {
+  async update(id: string, data: Prisma.StudentUpdateInput, user?: AuthenticatedUser) {
+    await this.ensureStudentAccess(id, user);
+
     return this.prisma.student.update({
       where: { id },
       data,
     });
   }
 
-  remove(id: string) {
+  async remove(id: string, user?: AuthenticatedUser) {
+    await this.ensureStudentAccess(id, user);
+
     return this.prisma.student.delete({
       where: { id },
     });
   }
 
-  async submitRequirement(reqValueId: string, value: string, expiryDate?: string) {
+  async submitRequirement(reqValueId: string, value: string, expiryDate?: string, user?: AuthenticatedUser) {
+    if (user?.role === UserRole.INSTITUCION) {
+      const requirement = await this.prisma.studentRequirementValue.findFirst({
+        where: {
+          id: reqValueId,
+          student: {
+            institutionId: this.requireInstitutionId(user),
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!requirement) {
+        throw new NotFoundException('Requisito no encontrado');
+      }
+    }
+
     return this.prisma.studentRequirementValue.update({
       where: { id: reqValueId },
       data: {
@@ -335,6 +375,39 @@ export class StudentsService {
     }
 
     return results;
+  }
+
+  private async ensureStudentAccess(studentId: string, user?: AuthenticatedUser) {
+    const student = await this.prisma.student.findFirst({
+      where: {
+        id: studentId,
+        deletedAt: null,
+        ...this.studentScope(user),
+      },
+      select: { id: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Estudiante no encontrado');
+    }
+  }
+
+  private studentScope(user?: AuthenticatedUser): Prisma.StudentWhereInput {
+    if (user?.role === UserRole.INSTITUCION) {
+      return {
+        institutionId: this.requireInstitutionId(user),
+      };
+    }
+
+    return {};
+  }
+
+  private requireInstitutionId(user: AuthenticatedUser) {
+    if (!user.institutionId) {
+      throw new NotFoundException('El usuario no tiene una institución asociada.');
+    }
+
+    return user.institutionId;
   }
 }
 

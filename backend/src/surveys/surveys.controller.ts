@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res } from '@nestjs/common';
 import { SurveysService } from './surveys.service';
 import { CreateSurveyDto } from './dto/create-survey.dto';
 import { UpdateSurveyDto } from './dto/update-survey.dto';
@@ -6,7 +6,11 @@ import { CreateSurveyQuestionDto } from './dto/create-survey-question.dto';
 import { UpdateSurveyQuestionDto } from './dto/update-survey-question.dto';
 import { AssignSurveyToRotationDto } from './dto/assign-survey-to-rotation.dto';
 import { ReorderSurveyQuestionsDto } from './dto/reorder-survey-questions.dto';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
+import type { Response } from 'express';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('surveys')
 export class SurveysController {
   constructor(private readonly surveysService: SurveysService) {}
@@ -78,6 +82,18 @@ export class SurveysController {
   @Get(':id/stats')
   getSurveyStats(@Param('id') surveyId: string) {
     return this.surveysService.getSurveyStats(surveyId);
+  }
+
+  @Get(':id/results-export')
+  async exportSurveyResults(@Param('id') surveyId: string, @Res() res: Response) {
+    const { filename, buffer } = await this.surveysService.exportSurveyResponsesXlsx(surveyId);
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename=${filename}`,
+      'Content-Length': buffer.length,
+    });
+
+    res.end(buffer);
   }
 
   @Post('dispatch/run')

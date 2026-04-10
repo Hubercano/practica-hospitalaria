@@ -1,0 +1,63 @@
+<div class="p-4 mx-auto max-w-full">
+  <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Usuarios</h1>
+      <p class="text-slate-500 mt-1 text-sm">Administra las cuentas con acceso al sistema.</p>
+    </div>
+    <app-button variant="primary" routerLink="/users/new" customClass="!rounded-xl">
+      + Nuevo Usuario
+    </app-button>
+  </div>
+
+  <div class="overflow-x-auto w-full bg-white rounded-card shadow-card border border-gray-100">
+    <table class="w-full text-left text-sm text-gray-600">
+      <thead class="text-xs uppercase bg-white text-gray-900 border-b border-gray-200 font-bold">
+        <tr>
+          <th class="px-4 py-2 font-bold tracking-wider">Correo</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Rol</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Institución</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Estado</th>
+          <th class="px-4 py-2 font-bold tracking-wider">Último acceso</th>
+          <th class="px-4 py-2 font-bold tracking-wider text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        @for (user of users(); track user.id) {
+          <tr class="hover:bg-gray-50/50 transition-colors duration-200">
+            <td class="px-4 py-2 font-medium text-gray-900">{{ user.email }}</td>
+            <td class="px-4 py-2">
+              <span class="px-3 py-1 text-xs font-semibold rounded-badge" [ngClass]="user.role === 'HOSPITAL' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'">
+                {{ user.role }}
+              </span>
+            </td>
+            <td class="px-4 py-2">{{ user.institution?.name || 'Global' }}</td>
+            <td class="px-4 py-2">
+              <span class="px-3 py-1 text-xs font-medium rounded-badge border inline-flex items-center gap-1.5"
+                [ngClass]="user.status === 'ACTIVE' ? 'border-emerald-200 text-emerald-600 bg-emerald-50' : user.status === 'BLOCKED' ? 'border-amber-200 text-amber-600 bg-amber-50' : 'border-rose-200 text-rose-600 bg-rose-50'">
+                {{ user.status }}
+              </span>
+            </td>
+            <td class="px-4 py-2">{{ user.lastLoginAt ? (user.lastLoginAt | date:'short') : 'Sin acceso' }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center justify-end gap-4">
+                <button (click)="editUser(user)" class="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors">
+                  Editar
+                </button>
+                <button (click)="resetPassword(user)" class="flex items-center gap-1.5 text-sky-600 hover:text-sky-700 font-medium text-sm transition-colors">
+                  Resetear clave
+                </button>
+                <button (click)="toggleStatus(user)" class="flex items-center gap-1.5 font-medium text-sm transition-colors" [ngClass]="user.status === 'ACTIVE' ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'">
+                  {{ user.status === 'ACTIVE' ? 'Bloquear' : 'Activar' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-gray-500">No hay usuarios registrados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

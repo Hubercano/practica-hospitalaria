@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export type SurveyStatus = 'ACTIVE' | 'INACTIVE';
@@ -92,6 +92,13 @@ export class SurveysService {
 
   getSurveyStats(surveyId: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${surveyId}/stats`);
+  }
+
+  downloadSurveyResults(surveyId: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.apiUrl}/${surveyId}/results-export`, {
+      observe: 'response',
+      responseType: 'blob',
+    });
   }
 
   getPublicSurvey(token: string): Observable<any> {

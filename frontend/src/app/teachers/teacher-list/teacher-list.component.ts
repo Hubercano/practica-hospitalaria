@@ -33,7 +33,7 @@ export class TeacherListComponent implements OnInit {
 
   showUploadModal = false;
   isUploading = false;
-  uploadResult: any = null;
+  uploadResult: { total: number; success: number; failed: number; errors: { row: number; message: string }[] } | null = null;
   selectedFile: File | null = null;
 
   constructor(private teacherService: TeacherService, private fb: FormBuilder, private router: Router, private cdr: ChangeDetectorRef, private ns: NotificationService) {
@@ -213,13 +213,40 @@ export class TeacherListComponent implements OnInit {
       next: (res) => {
         this.isUploading = false;
         this.uploadResult = res;
-        this.ns.success('Carga masiva de docentes exitosa.');
-        this.closeUploadModal();
+
+        if (res.failed > 0) {
+          this.ns.error(`La carga terminó con ${res.failed} fila(s) con error. Revisa el detalle en el modal.`);
+        } else {
+          this.ns.success('Carga masiva de docentes exitosa.');
+        }
+
+        this.loadTeachers();
       },
       error: (err) => {
         this.isUploading = false;
-        this.ns.error('Error en la carga: ' + (err.error?.message || err.message));
+        const message = this.getErrorMessage(err);
+        this.uploadResult = {
+          total: 0,
+          success: 0,
+          failed: 1,
+          errors: [{ row: 0, message }],
+        };
+        this.ns.error('Error en la carga: ' + message);
       }
     });
+  }
+
+  private getErrorMessage(err: any) {
+    const message = err?.error?.message;
+
+    if (Array.isArray(message)) {
+      return message.join(', ');
+    }
+
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+
+    return err?.message || 'Error en servidor';
   }
 }

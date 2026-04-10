@@ -1,7 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { StudentTypesService } from './student-types.service';
 import { Prisma } from '@prisma/client';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('student-types')
 export class StudentTypesController {
   constructor(private readonly studentTypesService: StudentTypesService) {}

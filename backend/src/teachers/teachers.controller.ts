@@ -6,7 +6,10 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
 import type { Response } from 'express';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
 
+@Roles(UserRole.HOSPITAL)
 @Controller('teachers')
 export class TeachersController {
   constructor(private readonly teachersService: TeachersService) {
