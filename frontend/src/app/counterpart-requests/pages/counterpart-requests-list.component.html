@@ -1,0 +1,106 @@
+<div class="mx-auto p-4">
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Contraprestaciones</h1>
+      <p class="mt-1 text-[13px] text-slate-500">
+        @if (isHospital()) {
+          Administra las solicitudes de contraprestación enviadas a instituciones.
+        } @else {
+          Revisa y responde las solicitudes de contraprestación dirigidas a tu institución.
+        }
+      </p>
+    </div>
+    @if (isHospital()) {
+      <app-button variant="primary" routerLink="/counterpart-requests/new">+ Nueva Solicitud</app-button>
+    }
+  </div>
+
+  <app-card [padding]="false">
+    @if (loading()) {
+      <div class="p-6 text-sm text-slate-600">Cargando contraprestaciones...</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200">
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Solicitud</th>
+              @if (isHospital()) {
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Institución</th>
+              }
+              @if (isInstitution()) {
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Descripción</th>
+              }
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Estado</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Fecha</th>
+              @if (isHospital()) {
+                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Valores</th>
+              }
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            @for (item of items(); track item.id) {
+              <tr class="hover:bg-slate-50 transition-colors align-top">
+                <td class="px-4 py-3 text-sm text-slate-900 font-medium">
+                  <div>{{ item.name }}</div>
+                  <div class="text-xs text-slate-500 mt-1">{{ item.originalFileName }}</div>
+                </td>
+
+                @if (isHospital()) {
+                  <td class="px-4 py-3 text-sm text-slate-600">{{ item.institution.name }}</td>
+                }
+
+                @if (isInstitution()) {
+                  <td class="px-4 py-3 text-sm text-slate-600 max-w-md whitespace-pre-line">{{ item.description || '-' }}</td>
+                }
+
+                <td class="px-4 py-3 text-sm">
+                  <span class="px-2 py-1 text-xs font-semibold rounded-full" [ngClass]="statusClasses(item.status)">
+                    {{ statusLabel(item.status) }}
+                  </span>
+                </td>
+
+                <td class="px-4 py-3 text-sm text-slate-600">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+
+                @if (isHospital()) {
+                  <td class="px-4 py-3 text-sm text-slate-600">
+                    @if (item.status === 'APPROVED' && item.values) {
+                      <div>Sin descuento: {{ item.values.valueWithoutDiscount | number: '1.0-2' }}</div>
+                      <div>% descuento: {{ item.values.discountPercentage | number: '1.0-2' }}</div>
+                      <div>Con descuento: {{ item.values.valueWithDiscount | number: '1.0-2' }}</div>
+                    } @else {
+                      <span>-</span>
+                    }
+                  </td>
+                }
+
+                <td class="px-4 py-3 text-sm">
+                  <div class="flex items-center justify-end gap-2 flex-wrap">
+                    <button class="text-brand-button hover:text-brand-hover font-medium" (click)="downloadFile(item)">Descargar archivo</button>
+
+                    @if (isInstitution() && item.status === 'PENDING') {
+                      <button class="text-emerald-600 hover:text-emerald-700 font-medium" (click)="openApproveModal(item)">Aprobar</button>
+                      <button class="text-rose-600 hover:text-rose-700 font-medium" (click)="rejectRequest(item)">Rechazar</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (items().length === 0) {
+          <div class="px-6 py-12 text-center text-slate-500">No hay contraprestaciones registradas.</div>
+        }
+      </div>
+    }
+  </app-card>
+
+  <app-approve-counterpart-modal
+    [isOpen]="showApproveModal()"
+    [isSubmitting]="approving()"
+    [requestName]="selectedItem()?.name || ''"
+    (closeEvent)="closeApproveModal()"
+    (approveEvent)="approveRequest($event)"
+  ></app-approve-counterpart-modal>
+</div>

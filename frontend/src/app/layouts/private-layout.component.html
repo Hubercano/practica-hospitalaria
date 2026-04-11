@@ -21,10 +21,17 @@
                     [routerLink]="item.route"
                     routerLinkActive="bg-brand-active text-white rounded-lg shadow-sm font-medium"
                     [routerLinkActiveOptions]="{ exact: false }"
-                    class="flex items-center px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group"
+                    class="flex items-center justify-between px-3 py-2.5 text-sm text-sidebar-text hover:bg-sidebar-hover hover:text-gray-100 rounded-lg transition-colors group"
                   >
-                    <svg class="mr-3 shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="item.iconPath"></path></svg>
-                    {{ item.label }}
+                    <span class="flex items-center min-w-0">
+                      <svg class="mr-3 shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="item.iconPath"></path></svg>
+                      <span class="truncate">{{ item.label }}</span>
+                    </span>
+                    @if (item.badgeCount && item.badgeCount > 0) {
+                      <span class="ml-3 inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold text-white">
+                        {{ item.badgeCount > 9 ? '9+' : item.badgeCount }}
+                      </span>
+                    }
                   </a>
                 </li>
               }

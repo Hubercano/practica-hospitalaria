@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService, type AppUserRole } from '../auth/auth.service';
+import { CounterpartRequestsService } from '../counterpart-requests/counterpart-requests.service';
 
 type MenuItem = {
   label: string;
   route: string;
   roles: AppUserRole[];
   iconPath: string;
+  badgeCount?: number;
 };
 
 type MenuGroup = {
@@ -21,9 +23,10 @@ type MenuGroup = {
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './private-layout.component.html',
 })
-export class PrivateLayoutComponent {
+export class PrivateLayoutComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly counterpartRequestsService = inject(CounterpartRequestsService);
 
   readonly currentUser = this.authService.currentUser;
   readonly roleLabel = computed(() => (this.currentUser()?.role === 'INSTITUCION' ? 'Institución' : 'Hospital'));
@@ -59,6 +62,13 @@ export class PrivateLayoutComponent {
         items: [
           { label: 'Inducciones', route: '/inductions', roles: ['HOSPITAL'], iconPath: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9m-6-4h6m0 0v6m0-6L10 14' },
           { label: 'Encuestas', route: '/surveys', roles: ['HOSPITAL'], iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+          {
+            label: 'Contraprestaciones',
+            route: '/counterpart-requests',
+            roles: ['HOSPITAL', 'INSTITUCION'],
+            iconPath: 'M7 8h10M7 12h10m-7 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z',
+            badgeCount: this.counterpartRequestsService.unreadCount(),
+          },
         ],
       },
     ];
@@ -71,7 +81,17 @@ export class PrivateLayoutComponent {
       .filter((group) => group.items.length > 0);
   });
 
+  ngOnInit() {
+    this.counterpartRequestsService.startPolling();
+  }
+
+  ngOnDestroy() {
+    this.counterpartRequestsService.stopPolling();
+  }
+
   logout() {
+    this.counterpartRequestsService.stopPolling();
+    this.counterpartRequestsService.clearUnreadCount();
     this.authService.logout().subscribe(() => {
       void this.router.navigate(['/login']);
     });

@@ -1,0 +1,28 @@
+<app-modal [isOpen]="isOpen" title="Aprobar contraprestación" (closeEvent)="close()">
+  <div class="space-y-4">
+    <p class="text-sm text-slate-600">
+      Completa los valores para aprobar la solicitud <span class="font-semibold text-slate-900">{{ requestName }}</span>.
+    </p>
+
+    <form [formGroup]="form" class="space-y-4">
+      <app-form-field label="Valor sin descuento" [required]="true">
+        <app-input type="number" formControlName="valueWithoutDiscount" placeholder="Ej: 150000"></app-input>
+      </app-form-field>
+
+      <app-form-field label="Porcentaje de descuento" [required]="true">
+        <app-input type="number" formControlName="discountPercentage" placeholder="Ej: 10"></app-input>
+      </app-form-field>
+
+      <app-form-field label="Valor con descuento" [required]="true">
+        <app-input type="number" formControlName="valueWithDiscount" placeholder="Ej: 135000"></app-input>
+      </app-form-field>
+    </form>
+  </div>
+
+  <div footer class="flex justify-end gap-3 w-full">
+    <app-button type="button" variant="secondary" (click)="close()">Cancelar</app-button>
+    <app-button type="button" variant="primary" (click)="submit()" [disabled]="form.invalid || isSubmitting">
+      {{ isSubmitting ? 'Guardando...' : 'Aprobar' }}
+    </app-button>
+  </div>
+</app-modal>

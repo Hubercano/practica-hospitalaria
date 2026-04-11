@@ -16,6 +16,7 @@ import { TeachersModule } from './teachers/teachers.module';
 import { RotationSchedulesModule } from './rotation-schedules/rotation-schedules.module';
 import { InductionsModule } from './inductions/inductions.module';
 import { SurveysModule } from './surveys/surveys.module';
+import { CounterpartRequestsModule } from './counterpart-requests/counterpart-requests.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { SurveysModule } from './surveys/surveys.module';
     TeachersModule
     ,RotationSchedulesModule,
     InductionsModule,
-    SurveysModule
+    SurveysModule,
+    CounterpartRequestsModule
   ],
   controllers: [AppController],
   providers: [AppService],

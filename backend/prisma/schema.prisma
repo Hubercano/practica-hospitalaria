@@ -95,6 +95,12 @@ enum UserStatus {
   DISABLED
 }
 
+enum CounterpartStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // -----------------------------------------------------------------------------
 // 🏗️ MÓDULO DE PARAMETRIZACIÓN (Configuracion del sistema)
 // -----------------------------------------------------------------------------
@@ -167,6 +173,7 @@ model Institution {
   students Student[]
 
   users User[]
+  counterpartRequests CounterpartRequest[]
 
   // Auditoría básica
   createdAt DateTime  @default(now())
@@ -219,6 +226,59 @@ model UserSession {
 
   @@index([userId, expiresAt])
   @@index([revokedAt])
+}
+
+model CounterpartRequest {
+  id String @id @default(uuid())
+
+  name        String
+  description String?
+
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  status CounterpartStatus @default(PENDING)
+
+  fileUrl          String
+  originalFileName String
+
+  createdByUserId String?
+  respondedByUserId String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  respondedAt DateTime?
+  deletedAt   DateTime?
+
+  institutionSeenAt DateTime?
+  hospitalSeenAt    DateTime?
+
+  response CounterpartResponse?
+
+  @@index([institutionId, status])
+  @@index([institutionSeenAt])
+  @@index([hospitalSeenAt])
+  @@index([createdAt])
+}
+
+model CounterpartResponse {
+  id String @id @default(uuid())
+
+  counterpartRequestId String            @unique
+  counterpartRequest   CounterpartRequest @relation(fields: [counterpartRequestId], references: [id])
+
+  status CounterpartStatus
+
+  valueWithoutDiscount Float?
+  discountPercentage   Float?
+  valueWithDiscount    Float?
+
+  respondedByUserId String?
+  responseDate      DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status, responseDate])
 }
 
 // Paso 4: El valor/documento entregado para cumplir un requisito
