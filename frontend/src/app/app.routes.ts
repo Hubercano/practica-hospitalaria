@@ -30,6 +30,7 @@ import { PublicSurveyFormComponent } from './surveys/pages/public-survey-form/pu
 import { SurveyResultsComponent } from './surveys/pages/survey-results/survey-results.component';
 import { CounterpartRequestsListComponent } from './counterpart-requests/pages/counterpart-requests-list.component';
 import { CounterpartRequestFormComponent } from './counterpart-requests/pages/counterpart-request-form.component';
+import { TeachingServiceCommitteesPageComponent } from './teaching-service-committees/pages/teaching-service-committees-page.component';
 
 import { StudentList } from './students/student-list/student-list';
 import { StudentTypeList } from './student-types/student-type-list/student-type-list';
@@ -83,6 +84,7 @@ export const routes: Routes = [
       { path: 'surveys/:id/results', component: SurveyResultsComponent },
       { path: 'counterpart-requests', component: CounterpartRequestsListComponent, data: { roles: ['HOSPITAL', 'INSTITUCION'] } },
       { path: 'counterpart-requests/new', component: CounterpartRequestFormComponent, data: { roles: ['HOSPITAL'] } },
+      { path: 'teaching-service-committees', component: TeachingServiceCommitteesPageComponent, data: { roles: ['HOSPITAL', 'INSTITUCION'] } },
       { path: 'students', component: StudentList, data: { roles: ['HOSPITAL', 'INSTITUCION'] } },
       { path: 'students/new', component: StudentForm, data: { roles: ['HOSPITAL', 'INSTITUCION'] } },
       { path: 'students/:id/edit', component: StudentForm, data: { roles: ['HOSPITAL', 'INSTITUCION'] } },

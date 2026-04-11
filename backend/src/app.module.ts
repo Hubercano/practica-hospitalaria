@@ -17,6 +17,7 @@ import { RotationSchedulesModule } from './rotation-schedules/rotation-schedules
 import { InductionsModule } from './inductions/inductions.module';
 import { SurveysModule } from './surveys/surveys.module';
 import { CounterpartRequestsModule } from './counterpart-requests/counterpart-requests.module';
+import { TeachingServiceCommitteesModule } from './teaching-service-committees/teaching-service-committees.module';
 
 @Module({
   imports: [
@@ -35,7 +36,8 @@ import { CounterpartRequestsModule } from './counterpart-requests/counterpart-re
     ,RotationSchedulesModule,
     InductionsModule,
     SurveysModule,
-    CounterpartRequestsModule
+    CounterpartRequestsModule,
+    TeachingServiceCommitteesModule
   ],
   controllers: [AppController],
   providers: [AppService],

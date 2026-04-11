@@ -1,0 +1,98 @@
+<div class="mx-auto p-4">
+  <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Comités Docencia-Servicio</h1>
+      <p class="mt-1 text-sm text-slate-600">
+        Matriz anual por institución con control de información, archivos y campos preparados para futura ampliación.
+      </p>
+    </div>
+
+    <div class="flex items-end gap-3">
+      <label class="text-sm text-slate-600">
+        <span class="mb-1 block font-medium">Año</span>
+        <input
+          type="number"
+          min="2000"
+          max="2100"
+          [value]="selectedYear"
+          (change)="onYearChange(($any($event.target)).value)"
+          class="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        />
+      </label>
+      <app-button variant="secondary" (click)="loadMatrix()">Recargar</app-button>
+    </div>
+  </div>
+
+  <app-card [padding]="false">
+    @if (loading()) {
+      <div class="p-6 text-sm text-slate-600">Cargando matriz de comités...</div>
+    } @else if (matrix(); as currentMatrix) {
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-0">
+          <thead>
+            <tr>
+              <th class="sticky left-0 z-10 min-w-[220px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Institución
+              </th>
+              @for (committeeNumber of committeeNumbers; track committeeNumber) {
+                <th class="min-w-[220px] border-b border-slate-200 bg-slate-100 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Comité {{ committeeNumber }}
+                </th>
+              }
+              <th class="min-w-[140px] border-b border-slate-200 bg-slate-100 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of currentMatrix.institutions; track row.institutionId) {
+              <tr class="align-top">
+                <td class="sticky left-0 z-10 border-b border-r border-slate-200 bg-white px-4 py-4">
+                  <div class="font-semibold text-slate-900">{{ row.institutionName }}</div>
+                  <div class="mt-1 text-xs text-slate-500">
+                    {{ isEditable() ? 'Edición habilitada para hospital.' : 'Consulta restringida a tu institución.' }}
+                  </div>
+                </td>
+
+                @for (cell of row.committees; track cell.committeeNumber) {
+                  <td class="border-b border-slate-200 px-3 py-3 align-middle">
+                    <app-committee-cell
+                      [cell]="cell"
+                      [isEditing]="isEditingRow(row)"
+                      [canEdit]="isEditable()"
+                      [isBusy]="isSavingRow(row)"
+                      [datetimeValue]="getDateTimeValue(row, cell.committeeNumber)"
+                      [selectedFileName]="getSelectedFileName(row, cell.committeeNumber)"
+                      (datetimeChange)="onDateTimeChange(row, cell.committeeNumber, $event)"
+                      (fileSelected)="onFileSelected(row, cell.committeeNumber, $event)"
+                      (downloadRequested)="downloadFile($event)"
+                    ></app-committee-cell>
+                  </td>
+                }
+
+                <td class="border-b border-slate-200 px-4 py-3 align-middle">
+                  @if (isEditable()) {
+                    <app-button
+                      [variant]="isEditingRow(row) ? 'primary' : 'secondary'"
+                      size="sm"
+                      [disabled]="isSavingRow(row)"
+                      (click)="isEditingRow(row) ? saveRow(row) : startEditing(row)"
+                    >
+                      {{ isSavingRow(row) ? 'Guardando...' : isEditingRow(row) ? 'Guardar' : 'Editar' }}
+                    </app-button>
+                  } @else {
+                    <span class="text-sm text-slate-400">Solo lectura</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (currentMatrix.institutions.length === 0) {
+          <div class="px-6 py-12 text-center text-slate-500">No hay instituciones disponibles para este usuario.</div>
+        }
+      </div>
+    }
+  </app-card>
+</div>

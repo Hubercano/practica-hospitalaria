@@ -69,6 +69,12 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
             iconPath: 'M7 8h10M7 12h10m-7 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z',
             badgeCount: this.counterpartRequestsService.unreadCount(),
           },
+          {
+            label: 'Comités Docencia-Servicio',
+            route: '/teaching-service-committees',
+            roles: ['HOSPITAL', 'INSTITUCION'],
+            iconPath: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+          },
         ],
       },
     ];

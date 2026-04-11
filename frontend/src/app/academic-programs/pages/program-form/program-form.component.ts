@@ -27,7 +27,9 @@ export class ProgramFormComponent implements OnInit {
     { label: 'Técnico', value: 'Técnico' },
     { label: 'Tecnólogo', value: 'Tecnólogo' },
     { label: 'Pregrado', value: 'Pregrado' },
-    { label: 'Posgrado', value: 'Posgrado' }
+    { label: 'Posgrado', value: 'Posgrado' },
+    { label: 'Especialización', value: 'Especialización' },
+    { label: 'Maestria', value: 'Maestria' }
   ];
 
   institutionOptions = computed(() => {

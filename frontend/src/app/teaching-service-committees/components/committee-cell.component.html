@@ -1,0 +1,57 @@
+<div class="min-w-[190px] rounded-lg border border-slate-200 bg-white px-3 py-2">
+  <div class="flex items-center gap-2">
+    <div class="min-w-0 flex-1">
+      @if (isEditing) {
+        <input
+          type="datetime-local"
+          [value]="datetimeValue"
+          (input)="onDateTimeInput($event)"
+          class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+        />
+      } @else {
+        <div class="truncate text-sm" [ngClass]="cell.date || cell.time ? 'text-slate-800' : 'text-slate-400'">
+          {{ formatDateTime() }}
+        </div>
+      }
+
+      @if (isEditing && selectedFileName) {
+        <div class="mt-1 truncate text-[11px] text-slate-500">{{ selectedFileName }}</div>
+      } @else if (!isEditing && cell.originalFileName) {
+        <div class="mt-1 truncate text-[11px] text-slate-500">{{ cell.originalFileName }}</div>
+      }
+    </div>
+
+    <div class="shrink-0">
+      @if (!isEditing && cell.fileUrl) {
+        <button
+          type="button"
+          title="Descargar"
+          class="rounded-md p-2 text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700"
+          (click)="downloadFile()"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0l4-4m-4 4l-4-4m-5 8h18" />
+          </svg>
+        </button>
+      } @else if (isEditing) {
+        <label
+          title="Adjuntar documento"
+          class="block cursor-pointer rounded-md p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          [class.pointer-events-none]="isBusy"
+          [class.opacity-50]="isBusy"
+        >
+          <input type="file" class="hidden" (change)="onFileSelected($event)" />
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 10-5.657-5.657L5.757 10.757a6 6 0 108.486 8.486L20 13" />
+          </svg>
+        </label>
+      } @else {
+        <span title="Adjuntar documento" class="block rounded-md p-2 text-slate-300">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 10-5.657-5.657L5.757 10.757a6 6 0 108.486 8.486L20 13" />
+          </svg>
+        </span>
+      }
+    </div>
+  </div>
+</div>
