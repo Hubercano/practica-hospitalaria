@@ -1,0 +1,41 @@
+<app-modal [isOpen]="isOpen" [title]="title" (closeEvent)="close()">
+  @if (loading) {
+    <div class="py-6 text-sm text-slate-500">Cargando historial...</div>
+  } @else if (!versions?.length) {
+    <div class="py-6 text-sm text-slate-500">No hay versiones registradas.</div>
+  } @else {
+    <div class="max-h-[24rem] overflow-y-auto space-y-3">
+      @for (version of versions; track version.id) {
+        <div class="rounded-lg border border-slate-200 p-3">
+          <div class="flex items-center justify-between gap-4">
+            <div class="text-sm font-semibold text-slate-900">Versión {{ version.versionNumber }}</div>
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+              [ngClass]="version.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : version.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'"
+            >
+              {{ version.status }}
+            </span>
+          </div>
+          <div class="mt-2 text-xs text-slate-500">Cargado: {{ version.uploadedAt | date:'medium' }}</div>
+          @if (version.originalFileName) {
+            <div class="mt-2 text-sm text-slate-800">Archivo: {{ version.originalFileName }}</div>
+          }
+          @if (version.textValue) {
+            <div class="mt-2 text-sm text-slate-800">Valor: {{ version.textValue }}</div>
+          }
+          @if (version.dateValue) {
+            <div class="mt-2 text-sm text-slate-800">Fecha: {{ version.dateValue | date:'yyyy-MM-dd' }}</div>
+          }
+          @if (version.expiryDate) {
+            <div class="mt-2 text-sm text-slate-800">Vence: {{ version.expiryDate | date:'mediumDate' }}</div>
+          }
+          @if (version.rejectionReason) {
+            <div class="mt-2 rounded bg-rose-50 border border-rose-100 px-2 py-1 text-xs text-rose-700">
+              {{ version.rejectionReason }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</app-modal>

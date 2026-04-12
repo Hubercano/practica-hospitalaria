@@ -2,6 +2,8 @@ import { Injectable, ConflictException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
+import { DocumentsService } from '../documents/documents.service';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 
 type BulkUploadError = {
   row: number;
@@ -10,7 +12,10 @@ type BulkUploadError = {
 
 @Injectable()
 export class TeachersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly documentsService: DocumentsService,
+  ) {}
 
   private readonly teacherTemplateColumns = [
     'Nombres',
@@ -34,17 +39,33 @@ export class TeachersService {
     });
     if (existsEmail) throw new ConflictException('Ya existe un docente con este correo');
 
-    return this.prisma.teacher.create({ data });
+    const teacher = await this.prisma.teacher.create({ data });
+    await this.documentsService.ensureTeacherSlots([teacher.id]);
+    return teacher;
   }
 
-  findAll() {
-    return this.prisma.teacher.findMany({
+  async findAll() {
+    const teachers = await this.prisma.teacher.findMany({
       orderBy: { lastName: 'asc' }
     });
+
+    await this.documentsService.ensureTeacherSlots(teachers.map((teacher) => teacher.id));
+    return teachers;
   }
 
-  findOne(id: string) {
-    return this.prisma.teacher.findUnique({ where: { id } });
+  async findOne(id: string) {
+    const teacher = await this.prisma.teacher.findUnique({ where: { id } });
+    if (!teacher) {
+      return teacher;
+    }
+
+    await this.documentsService.ensureTeacherSlots([teacher.id]);
+    const slotMap = await this.documentsService.getTeacherSlotMap([teacher.id]);
+
+    return {
+      ...teacher,
+      documentSlots: this.buildTeacherDocumentSlots(teacher.id, slotMap),
+    };
   }
 
   update(id: string, data: Prisma.TeacherUpdateInput) {
@@ -65,32 +86,22 @@ export class TeachersService {
     });
   }
 
-  async uploadDocument(id: string, fileField: 'cvFile' | 'dataAuthorizationFile' | 'conflictOfInterestFile', filePath: string) {
-    const data: any = {};
-    data[fileField] = filePath;
-    return this.prisma.teacher.update({
-      where: { id },
-      data
-    });
+  async uploadDocument(
+    id: string,
+    fileField: 'cvFile' | 'dataAuthorizationFile' | 'conflictOfInterestFile',
+    file: Express.Multer.File,
+    user: AuthenticatedUser,
+  ) {
+    return this.documentsService.uploadTeacherDocument(id, fileField, [file], user);
   }
 
   async uploadMultipleDocuments(
     id: string,
     fileField: 'teacherTrainingFiles' | 'teacherRecognitionFiles',
-    filePaths: string[]
+    files: Express.Multer.File[],
+    user: AuthenticatedUser,
   ) {
-    const teacher = await this.prisma.teacher.findUnique({ where: { id } });
-    if (!teacher) throw new ConflictException('Docente no encontrado');
-
-    const currentFiles = (teacher as any)[fileField] || [];
-    const mergedFiles = [...currentFiles, ...filePaths];
-
-    return this.prisma.teacher.update({
-      where: { id },
-      data: {
-        [fileField]: mergedFiles
-      }
-    });
+    return this.documentsService.uploadTeacherDocument(id, fileField, files, user);
   }
 
   async deleteMultipleDocument(
@@ -98,18 +109,11 @@ export class TeachersService {
     fileField: 'teacherTrainingFiles' | 'teacherRecognitionFiles',
     filePath: string
   ) {
-    const teacher = await this.prisma.teacher.findUnique({ where: { id } });
-    if (!teacher) throw new ConflictException('Docente no encontrado');
+    return this.documentsService.deleteTeacherDocument(id, fileField, filePath);
+  }
 
-    const currentFiles = (teacher as any)[fileField] || [];
-    const updatedFiles = currentFiles.filter((path: string) => path !== filePath);
-
-    return this.prisma.teacher.update({
-      where: { id },
-      data: {
-        [fileField]: updatedFiles
-      }
-    });
+  async deleteDocument(id: string, fileField: 'cvFile' | 'dataAuthorizationFile' | 'conflictOfInterestFile') {
+    return this.documentsService.deleteTeacherDocument(id, fileField, null);
   }
 
   async generateTemplate(): Promise<Buffer> {
@@ -339,5 +343,35 @@ export class TeachersService {
     }
 
     return 'Error desconocido al procesar la fila.';
+  }
+
+  private buildTeacherDocumentSlots(teacherId: string, slotMap: Map<string, any>) {
+    return {
+      cvFile: this.mapTeacherSlot(slotMap.get(`${teacherId}:teacher:cv-file`)),
+      dataAuthorizationFile: this.mapTeacherSlot(slotMap.get(`${teacherId}:teacher:data-authorization-file`)),
+      conflictOfInterestFile: this.mapTeacherSlot(slotMap.get(`${teacherId}:teacher:conflict-of-interest-file`)),
+      teacherTrainingFiles: this.mapTeacherSlot(slotMap.get(`${teacherId}:teacher:training-files`)),
+      teacherRecognitionFiles: this.mapTeacherSlot(slotMap.get(`${teacherId}:teacher:recognition-files`)),
+    };
+  }
+
+  private mapTeacherSlot(slot: any) {
+    if (!slot) {
+      return null;
+    }
+
+    const versions = Array.isArray(slot.versions)
+      ? slot.versions.map((version: any) => this.documentsService.serializeVersion(version))
+      : [];
+
+    return {
+      id: slot.id,
+      key: slot.key,
+      label: slot.label,
+      description: slot.description,
+      allowsMultipleFiles: slot.allowsMultipleFiles,
+      currentDocument: versions[0] ?? null,
+      currentDocuments: versions,
+    };
   }
 }

@@ -1,6 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import type { DocumentVersionSummary } from '../shared/services/documents.service';
+
+export interface TeacherDocumentSlot {
+  id: string;
+  key: string;
+  label: string;
+  description?: string | null;
+  allowsMultipleFiles: boolean;
+  currentDocument?: DocumentVersionSummary | null;
+  currentDocuments?: DocumentVersionSummary[];
+}
 
 export interface Teacher {
   id: string;
@@ -18,6 +29,13 @@ export interface Teacher {
   conflictOfInterestFile?: string;
   teacherTrainingFiles?: string[];
   teacherRecognitionFiles?: string[];
+  documentSlots?: {
+    cvFile?: TeacherDocumentSlot | null;
+    dataAuthorizationFile?: TeacherDocumentSlot | null;
+    conflictOfInterestFile?: TeacherDocumentSlot | null;
+    teacherTrainingFiles?: TeacherDocumentSlot | null;
+    teacherRecognitionFiles?: TeacherDocumentSlot | null;
+  };
 }
 
 @Injectable({ providedIn: 'root' })

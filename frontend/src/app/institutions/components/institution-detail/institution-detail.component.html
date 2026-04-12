@@ -1,7 +1,5 @@
-
 @if (institution) {
   <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
-    <!-- Page Header & Actions -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <h1 class="text-3xl font-bold text-slate-900">{{ institution.name }}</h1>
@@ -12,7 +10,6 @@
       </app-button>
     </div>
 
-    <!-- Institution Info Card -->
     <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
       <h3 class="text-lg font-semibold text-slate-900 mb-4">Información de la Institución</h3>
       <div class="flex flex-wrap gap-x-8 gap-y-4 text-sm text-slate-500">
@@ -31,13 +28,10 @@
       </div>
     </div>
 
-    <!-- Requirements List -->
     <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
       <div class="mb-6 border-b border-slate-100 pb-4">
         <h3 class="text-lg font-semibold text-slate-900">Lista de Chequeo de Documentos</h3>
-        <p class="text-sm text-slate-500 mt-1">
-          Gestione los documentos requeridos para su institución.
-        </p>
+        <p class="text-sm text-slate-500 mt-1">Gestione los documentos requeridos para su institución.</p>
       </div>
 
       @if (!institution.requirements || institution.requirements.length === 0) {
@@ -61,20 +55,20 @@
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-2 align-top">
                   <div class="text-sm font-medium text-slate-900">
-                    {{ req.definition?.name || 'Requisito sin nombre' }}
-                    @if (req.definition?.isRequired) {
+                    {{ req.definition.name || 'Requisito sin nombre' }}
+                    @if (req.definition.isRequired) {
                       <span class="text-rose-500 font-bold ml-1" title="Obligatorio">*</span>
                     }
                   </div>
-                  <div class="text-xs text-slate-500 mt-1">{{ req.definition?.description || 'Sin descripción' }}</div>
-                  @if (req.definition?.requiresExpiryDate) {
+                  <div class="text-xs text-slate-500 mt-1">{{ req.definition.description || 'Sin descripción' }}</div>
+                  @if (req.definition.requiresExpiryDate) {
                     <div class="text-xs text-slate-500 mt-1">Requiere vigencia</div>
                   }
                 </td>
 
                 <td class="px-4 py-2 align-top">
                   @if (req.value && !editingReqs.has(req.id)) {
-                    <div class="text-sm text-slate-900" [title]="req.value">{{ req.value }}</div>
+                    <div class="text-sm text-slate-900" [title]="req.displayValue || req.value">{{ req.displayValue || req.value }}</div>
                     @if(req.expiryDate) {
                       <div class="text-xs text-slate-500 mt-1">Vence: {{ req.expiryDate | date:'mediumDate' }}</div>
                     }
@@ -110,7 +104,7 @@
                             </app-button>
                           }
                           <app-button variant="primary" size="sm" type="submit"
-                            [disabled]="reqForms.get(req.id)!.invalid || reqForms.get(req.id)!.pristine">
+                            [disabled]="!canSaveRequirement(req)">
                             Guardar
                           </app-button>
                         </div>
@@ -120,33 +114,33 @@
                 </td>
 
                 <td class="px-4 py-2 align-top">
-                  <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                    [ngClass]="getChecklistStatusClass(getChecklistStatus(req))"
-                  >
-                    {{ getChecklistStatus(req) }}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" [ngClass]="getDocumentStatusClass(req)">
+                    {{ getDocumentStatusLabel(req) }}
                   </span>
-                  @if (req.status === 'REJECTED' && req.rejectionReason) {
+                  <div class="mt-2 text-xs text-slate-500">Checklist: {{ getChecklistStatus(req) }}</div>
+                  @if ((req.currentDocument?.rejectionReason || req.rejectionReason)) {
                     <div class="mt-2 text-xs text-rose-700 bg-rose-50 border border-rose-100 rounded px-2 py-1">
-                      {{ req.rejectionReason }}
+                      {{ req.currentDocument?.rejectionReason || req.rejectionReason }}
                     </div>
                   }
                 </td>
 
                 <td class="px-4 py-2 text-right align-top">
-                  @if (req.value && !editingReqs.has(req.id)) {
+                  @if (isInstitutionUser() && req.value && !editingReqs.has(req.id)) {
                     <div class="flex items-center justify-end gap-2">
-                      <button (click)="downloadFile(req)"
-                        class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                        title="Ver documento">
-                        <span class="sr-only">Ver</span>
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                      </button>
+                      @if (req.currentDocument?.fileUrl) {
+                        <button (click)="downloadFile(req)"
+                          class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                          title="Ver documento">
+                          <span class="sr-only">Ver</span>
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                          </svg>
+                        </button>
+                      }
 
-                      @if (req.status !== 'APPROVED') {
+                      @if (canInstitutionEdit(req)) {
                         <button (click)="toggleEdit(req.id)"
                           class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
                           title="Reemplazar">
@@ -155,16 +149,23 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                           </svg>
                         </button>
-                        <button (click)="deleteRequirementValue(req)"
-                          class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
-                          title="Eliminar">
-                          <span class="sr-only">Eliminar</span>
-                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                          </svg>
-                        </button>
                       }
                     </div>
+                  }
+
+                  @if (isHospitalUser()) {
+                    <app-document-review-actions
+                      [showDownload]="!!req.currentDocument?.fileUrl"
+                      [showHistory]="!!req.documentSlotId"
+                      [showApprove]="!!req.currentDocument && req.currentDocument.status !== 'APPROVED'"
+                      [showReject]="!!req.currentDocument && req.currentDocument.status !== 'APPROVED'"
+                      [disableApprove]="reviewBusyReqId === req.id"
+                      [disableReject]="reviewBusyReqId === req.id"
+                      (download)="downloadFile(req)"
+                      (history)="openHistory(req)"
+                      (approve)="approveRequirement(req)"
+                      (reject)="openRejectModal(req)"
+                    ></app-document-review-actions>
                   }
                 </td>
               </tr>
@@ -173,7 +174,36 @@
         </table>
       </div>
     </div>
-
   </div>
 }
+
+<app-document-history-modal
+  [isOpen]="historyModalOpen"
+  [title]="'Historial - ' + historyRequirementName"
+  [loading]="historyLoading"
+  [versions]="historyData?.versions || null"
+  (closeEvent)="closeHistoryModal()"
+></app-document-history-modal>
+
+<app-modal [isOpen]="rejectModalOpen" title="Rechazar documento" (closeEvent)="closeRejectModal()">
+  <form [formGroup]="rejectForm" class="space-y-3">
+    <label class="block text-sm font-medium text-slate-700">Observación</label>
+    <textarea
+      rows="4"
+      formControlName="rejectionReason"
+      class="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+      placeholder="Indica por qué el documento es rechazado"
+    ></textarea>
+    @if (rejectForm.get('rejectionReason')?.invalid && rejectForm.get('rejectionReason')?.touched) {
+      <p class="text-xs text-rose-600">La observación es obligatoria.</p>
+    }
+  </form>
+
+  <div footer>
+    <div class="flex items-center justify-end gap-2">
+      <app-button variant="secondary" (click)="closeRejectModal()">Cancelar</app-button>
+      <app-button variant="danger" [disabled]="rejectForm.invalid || !rejectingRequirement" (click)="submitRejection()">Rechazar</app-button>
+    </div>
+  </div>
+</app-modal>
 

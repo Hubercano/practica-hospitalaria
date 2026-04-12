@@ -301,7 +301,9 @@ export class CounterpartRequestsService {
     response: true,
   } satisfies Prisma.CounterpartRequestInclude;
 
-  private toResponse(request: Prisma.CounterpartRequestGetPayload<{ include: typeof this.defaultInclude }>) {
+  private toResponse(request: any) {
+    const response = request.response ?? null;
+
     return {
       id: request.id,
       name: request.name,
@@ -313,12 +315,12 @@ export class CounterpartRequestsService {
       originalFileName: request.originalFileName,
       createdAt: request.createdAt,
       respondedAt: request.respondedAt,
-      values: request.response
+      values: response
         ? {
-            valueWithoutDiscount: request.response.valueWithoutDiscount,
-            discountPercentage: request.response.discountPercentage,
-            valueWithDiscount: request.response.valueWithDiscount,
-            responseDate: request.response.responseDate,
+            valueWithoutDiscount: response.valueWithoutDiscount,
+            discountPercentage: response.discountPercentage,
+            valueWithDiscount: response.valueWithDiscount,
+            responseDate: response.responseDate,
           }
         : null,
     };

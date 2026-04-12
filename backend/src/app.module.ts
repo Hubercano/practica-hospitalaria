@@ -18,6 +18,7 @@ import { InductionsModule } from './inductions/inductions.module';
 import { SurveysModule } from './surveys/surveys.module';
 import { CounterpartRequestsModule } from './counterpart-requests/counterpart-requests.module';
 import { TeachingServiceCommitteesModule } from './teaching-service-committees/teaching-service-committees.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { TeachingServiceCommitteesModule } from './teaching-service-committees/t
     InductionsModule,
     SurveysModule,
     CounterpartRequestsModule,
-    TeachingServiceCommitteesModule
+    TeachingServiceCommitteesModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

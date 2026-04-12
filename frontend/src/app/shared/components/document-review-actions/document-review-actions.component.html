@@ -1,0 +1,57 @@
+<div class="flex items-center justify-end gap-2">
+  @if (showDownload) {
+    <button
+      (click)="download.emit()"
+      class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+      title="Descargar actual"
+    >
+      <span class="sr-only">Descargar</span>
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4"></path>
+      </svg>
+    </button>
+  }
+
+  @if (showHistory) {
+    <button
+      (click)="history.emit()"
+      class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
+      title="Ver historial"
+    >
+      <span class="sr-only">Historial</span>
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a7 7 0 111.538 4.423"></path>
+      </svg>
+    </button>
+  }
+
+  @if (showApprove) {
+    <button
+      (click)="approve.emit()"
+      [disabled]="disableApprove"
+      class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors disabled:opacity-50"
+      title="Aprobar"
+    >
+      <span class="sr-only">Aprobar</span>
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+    </button>
+  }
+
+  @if (showReject) {
+    <button
+      (click)="reject.emit()"
+      [disabled]="disableReject"
+      class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors disabled:opacity-50"
+      title="Rechazar"
+    >
+      <span class="sr-only">Rechazar</span>
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  }
+</div>

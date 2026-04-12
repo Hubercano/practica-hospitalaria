@@ -4,10 +4,14 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 import { CreateInstitutionDto, CreateInstitutionTypeDto, AddRequirementDto } from './dto';
 import { EntityState, UserRole, ValidationStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
+import { DocumentsService } from '../documents/documents.service';
 
 @Injectable()
 export class InstitutionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly documentsService: DocumentsService,
+  ) {}
 
   async getTypes() {
     return this.prisma.institutionType.findMany({
@@ -319,32 +323,77 @@ export class InstitutionsService {
        return this.findOne(id);
     }
 
-    return institution;
+    await this.documentsService.ensureInstitutionRequirementSlots(
+      institution.requirements.map((requirement) => ({
+        id: requirement.id,
+        institutionId: institution.id,
+        definition: {
+          id: requirement.definition.id,
+          name: requirement.definition.name,
+          description: requirement.definition.description,
+          type: requirement.definition.type,
+          isRequired: requirement.definition.isRequired,
+          requiresExpiryDate: requirement.definition.requiresExpiryDate,
+        },
+      })),
+    );
+
+    const slotMap = await this.documentsService.getInstitutionRequirementSlotMap(
+      institution.requirements.map((requirement) => requirement.id),
+    );
+
+    const requirementKeys = institution.requirements.map(
+      (requirement) => `institution-requirement:${requirement.definitionId}`,
+    );
+
+    const fallbackSlots = await this.prisma.documentSlot.findMany({
+      where: {
+        subjectType: 'INSTITUTION',
+        subjectId: institution.id,
+        key: { in: requirementKeys },
+      },
+      include: {
+        versions: {
+          where: { isCurrent: true },
+          orderBy: { versionNumber: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    const fallbackSlotMap = new Map(fallbackSlots.map((slot) => [slot.key, slot]));
+
+    return {
+      ...institution,
+      requirements: institution.requirements.map((requirement) => {
+        const slot =
+          slotMap.get(requirement.id) ??
+          fallbackSlotMap.get(`institution-requirement:${requirement.definitionId}`);
+        const currentVersion = slot?.versions?.[0] ?? null;
+
+        return {
+          ...requirement,
+          documentSlotId: slot?.id ?? null,
+          displayValue:
+            currentVersion?.originalFileName ??
+            currentVersion?.textValue ??
+            (currentVersion?.dateValue ? currentVersion.dateValue.toISOString().slice(0, 10) : requirement.value),
+          currentDocument: currentVersion ? this.documentsService.serializeVersion(currentVersion) : null,
+        };
+      }),
+    };
   }
 
   async submitRequirement(reqValueId: string, value: string, expiryDate?: string, user?: AuthenticatedUser) {
-    if (user?.role === UserRole.INSTITUCION) {
-      const requirement = await this.prisma.institutionRequirementValue.findFirst({
-        where: {
-          id: reqValueId,
-          institutionId: this.requireInstitutionId(user),
-        },
-        select: { id: true },
-      });
-
-      if (!requirement) {
-        throw new NotFoundException('Requisito no encontrado');
-      }
+    if (!user) {
+      throw new NotFoundException('Usuario no autenticado');
     }
 
-    return this.prisma.institutionRequirementValue.update({
-      where: { id: reqValueId },
-      data: {
-        value,
-        expiryDate: expiryDate ? new Date(expiryDate) : null,
-        status: ValidationStatus.PENDING, // Pasa a revisión
-      },
-    });
+    return this.documentsService.submitInstitutionRequirementValueByRequirementId(
+      reqValueId,
+      { value, expiryDate },
+      user,
+    );
   }
 
   async generateTemplate(): Promise<Buffer> {

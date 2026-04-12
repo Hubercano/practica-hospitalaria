@@ -61,6 +61,20 @@
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <app-card headerText="Hoja de Vida">
                 <p class="text-sm text-slate-600 mb-3">Documento: Hoja de vida</p>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" [ngClass]="getSlotStatusClass('cvFile')">
+                    {{ getSlotStatusLabel('cvFile') }}
+                  </span>
+                  <div class="flex items-center gap-2">
+                    @if (isEditMode) {
+                      <button type="button" (click)="openHistory('cvFile')" class="text-xs font-semibold text-slate-600 hover:text-slate-900">Historial</button>
+                    }
+                    @if (getSlot('cvFile')?.currentDocument) {
+                      <button type="button" (click)="approveVersion(getSlot('cvFile')?.currentDocument)" [disabled]="reviewBusyVersionId === getSlot('cvFile')?.currentDocument?.id" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 disabled:opacity-50">Aprobar</button>
+                      <button type="button" (click)="openRejectModal(getSlot('cvFile')?.currentDocument, 'Hoja de Vida')" [disabled]="reviewBusyVersionId === getSlot('cvFile')?.currentDocument?.id" class="text-xs font-semibold text-rose-700 hover:text-rose-900 disabled:opacity-50">Rechazar</button>
+                    }
+                  </div>
+                </div>
                 <app-file-upload
                   accept=".pdf"
                   (fileChanged)="onFileSelected($event[0], 'cvFile')">
@@ -77,6 +91,20 @@
 
               <app-card headerText="Autorización de Tratamiento de Datos">
                 <p class="text-sm text-slate-600 mb-3">Documento: Autorización de tratamiento de datos</p>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" [ngClass]="getSlotStatusClass('dataAuthorizationFile')">
+                    {{ getSlotStatusLabel('dataAuthorizationFile') }}
+                  </span>
+                  <div class="flex items-center gap-2">
+                    @if (isEditMode) {
+                      <button type="button" (click)="openHistory('dataAuthorizationFile')" class="text-xs font-semibold text-slate-600 hover:text-slate-900">Historial</button>
+                    }
+                    @if (getSlot('dataAuthorizationFile')?.currentDocument) {
+                      <button type="button" (click)="approveVersion(getSlot('dataAuthorizationFile')?.currentDocument)" [disabled]="reviewBusyVersionId === getSlot('dataAuthorizationFile')?.currentDocument?.id" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 disabled:opacity-50">Aprobar</button>
+                      <button type="button" (click)="openRejectModal(getSlot('dataAuthorizationFile')?.currentDocument, 'Autorización de Tratamiento de Datos')" [disabled]="reviewBusyVersionId === getSlot('dataAuthorizationFile')?.currentDocument?.id" class="text-xs font-semibold text-rose-700 hover:text-rose-900 disabled:opacity-50">Rechazar</button>
+                    }
+                  </div>
+                </div>
                 <app-file-upload
                   accept=".pdf"
                   (fileChanged)="onFileSelected($event[0], 'dataAuthorizationFile')">
@@ -93,6 +121,20 @@
 
               <app-card headerText="Conflicto de Intereses">
                 <p class="text-sm text-slate-600 mb-3">Documento: Conflicto de intereses</p>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" [ngClass]="getSlotStatusClass('conflictOfInterestFile')">
+                    {{ getSlotStatusLabel('conflictOfInterestFile') }}
+                  </span>
+                  <div class="flex items-center gap-2">
+                    @if (isEditMode) {
+                      <button type="button" (click)="openHistory('conflictOfInterestFile')" class="text-xs font-semibold text-slate-600 hover:text-slate-900">Historial</button>
+                    }
+                    @if (getSlot('conflictOfInterestFile')?.currentDocument) {
+                      <button type="button" (click)="approveVersion(getSlot('conflictOfInterestFile')?.currentDocument)" [disabled]="reviewBusyVersionId === getSlot('conflictOfInterestFile')?.currentDocument?.id" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 disabled:opacity-50">Aprobar</button>
+                      <button type="button" (click)="openRejectModal(getSlot('conflictOfInterestFile')?.currentDocument, 'Conflicto de Intereses')" [disabled]="reviewBusyVersionId === getSlot('conflictOfInterestFile')?.currentDocument?.id" class="text-xs font-semibold text-rose-700 hover:text-rose-900 disabled:opacity-50">Rechazar</button>
+                    }
+                  </div>
+                </div>
                 <app-file-upload
                   accept=".pdf"
                   (fileChanged)="onFileSelected($event[0], 'conflictOfInterestFile')">
@@ -109,6 +151,14 @@
 
               <app-card headerText="Formación del Docente">
                 <p class="text-sm text-slate-600 mb-3">Documento: Certificados de formación (carga múltiple)</p>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                    {{ getSlot('teacherTrainingFiles')?.currentDocuments?.length || 0 }} actual(es)
+                  </span>
+                  @if (isEditMode) {
+                    <button type="button" (click)="openHistory('teacherTrainingFiles')" class="text-xs font-semibold text-slate-600 hover:text-slate-900">Historial</button>
+                  }
+                </div>
                 <app-file-upload
                   accept=".pdf"
                   [multiple]="true"
@@ -116,18 +166,23 @@
                 </app-file-upload>
                 @if (isEditMode && teacherData?.teacherTrainingFiles?.length) {
                   <div class="mt-4 p-3 bg-indigo-50 rounded border border-indigo-100 space-y-2">
-                    @for (file of teacherData?.teacherTrainingFiles; track file) {
+                    @for (file of teacherData?.teacherTrainingFiles; track file; let index = $index) {
                       <div class="flex items-center justify-between gap-3">
-                        <a [href]="'http://localhost:3000' + file" target="_blank" class="block text-sm font-medium text-indigo-700 hover:underline truncate">
-                          Ver certificado
-                        </a>
-                        <button
-                          type="button"
-                          (click)="deleteMultipleFile('teacherTrainingFiles', file)"
-                          class="text-xs font-semibold text-rose-600 hover:text-rose-800"
-                        >
-                          Eliminar
-                        </button>
+                        <div class="min-w-0 flex-1">
+                          <a [href]="'http://localhost:3000' + file" target="_blank" class="block text-sm font-medium text-indigo-700 hover:underline truncate">
+                            Ver certificado
+                          </a>
+                          @if (getCurrentDocuments('teacherTrainingFiles')[index]) {
+                            <div class="mt-1 flex items-center gap-2 text-xs">
+                              <span class="inline-flex items-center px-2 py-0.5 rounded font-medium" [ngClass]="getVersionStatusClass(getCurrentDocuments('teacherTrainingFiles')[index])">
+                                {{ getCurrentDocuments('teacherTrainingFiles')[index].status }}
+                              </span>
+                              <button type="button" (click)="approveVersion(getCurrentDocuments('teacherTrainingFiles')[index])" [disabled]="reviewBusyVersionId === getCurrentDocuments('teacherTrainingFiles')[index].id" class="font-semibold text-emerald-700 hover:text-emerald-900 disabled:opacity-50">Aprobar</button>
+                              <button type="button" (click)="openRejectModal(getCurrentDocuments('teacherTrainingFiles')[index], 'Formación del Docente')" [disabled]="reviewBusyVersionId === getCurrentDocuments('teacherTrainingFiles')[index].id" class="font-semibold text-rose-700 hover:text-rose-900 disabled:opacity-50">Rechazar</button>
+                            </div>
+                          }
+                        </div>
+                        <button type="button" (click)="deleteMultipleFile('teacherTrainingFiles', file)" class="text-xs font-semibold text-rose-600 hover:text-rose-800">Eliminar</button>
                       </div>
                     }
                   </div>
@@ -136,6 +191,14 @@
 
               <app-card headerText="Reconocimiento Docente">
                 <p class="text-sm text-slate-600 mb-3">Documento: Soportes de reconocimiento docente (carga múltiple)</p>
+                <div class="mb-3 flex items-center justify-between gap-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                    {{ getSlot('teacherRecognitionFiles')?.currentDocuments?.length || 0 }} actual(es)
+                  </span>
+                  @if (isEditMode) {
+                    <button type="button" (click)="openHistory('teacherRecognitionFiles')" class="text-xs font-semibold text-slate-600 hover:text-slate-900">Historial</button>
+                  }
+                </div>
                 <app-file-upload
                   accept=".pdf"
                   [multiple]="true"
@@ -143,18 +206,23 @@
                 </app-file-upload>
                 @if (isEditMode && teacherData?.teacherRecognitionFiles?.length) {
                   <div class="mt-4 p-3 bg-indigo-50 rounded border border-indigo-100 space-y-2">
-                    @for (file of teacherData?.teacherRecognitionFiles; track file) {
+                    @for (file of teacherData?.teacherRecognitionFiles; track file; let index = $index) {
                       <div class="flex items-center justify-between gap-3">
-                        <a [href]="'http://localhost:3000' + file" target="_blank" class="block text-sm font-medium text-indigo-700 hover:underline truncate">
-                          Ver reconocimiento
-                        </a>
-                        <button
-                          type="button"
-                          (click)="deleteMultipleFile('teacherRecognitionFiles', file)"
-                          class="text-xs font-semibold text-rose-600 hover:text-rose-800"
-                        >
-                          Eliminar
-                        </button>
+                        <div class="min-w-0 flex-1">
+                          <a [href]="'http://localhost:3000' + file" target="_blank" class="block text-sm font-medium text-indigo-700 hover:underline truncate">
+                            Ver reconocimiento
+                          </a>
+                          @if (getCurrentDocuments('teacherRecognitionFiles')[index]) {
+                            <div class="mt-1 flex items-center gap-2 text-xs">
+                              <span class="inline-flex items-center px-2 py-0.5 rounded font-medium" [ngClass]="getVersionStatusClass(getCurrentDocuments('teacherRecognitionFiles')[index])">
+                                {{ getCurrentDocuments('teacherRecognitionFiles')[index].status }}
+                              </span>
+                              <button type="button" (click)="approveVersion(getCurrentDocuments('teacherRecognitionFiles')[index])" [disabled]="reviewBusyVersionId === getCurrentDocuments('teacherRecognitionFiles')[index].id" class="font-semibold text-emerald-700 hover:text-emerald-900 disabled:opacity-50">Aprobar</button>
+                              <button type="button" (click)="openRejectModal(getCurrentDocuments('teacherRecognitionFiles')[index], 'Reconocimiento Docente')" [disabled]="reviewBusyVersionId === getCurrentDocuments('teacherRecognitionFiles')[index].id" class="font-semibold text-rose-700 hover:text-rose-900 disabled:opacity-50">Rechazar</button>
+                            </div>
+                          }
+                        </div>
+                        <button type="button" (click)="deleteMultipleFile('teacherRecognitionFiles', file)" class="text-xs font-semibold text-rose-600 hover:text-rose-800">Eliminar</button>
                       </div>
                     }
                   </div>
@@ -178,4 +246,34 @@
 
   </div>
 </div>
+
+<app-document-history-modal
+  [isOpen]="historyModalOpen"
+  [title]="'Historial - ' + historyTitle"
+  [loading]="historyLoading"
+  [versions]="historyData?.versions || null"
+  (closeEvent)="closeHistoryModal()"
+></app-document-history-modal>
+
+<app-modal [isOpen]="rejectModalOpen" [title]="'Rechazar - ' + rejectingVersionLabel" (closeEvent)="closeRejectModal()">
+  <form [formGroup]="rejectForm" class="space-y-3">
+    <label class="block text-sm font-medium text-slate-700">Observación</label>
+    <textarea
+      rows="4"
+      formControlName="rejectionReason"
+      class="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+      placeholder="Indica por qué el documento es rechazado"
+    ></textarea>
+    @if (rejectForm.get('rejectionReason')?.invalid && rejectForm.get('rejectionReason')?.touched) {
+      <p class="text-xs text-rose-600">La observación es obligatoria.</p>
+    }
+  </form>
+
+  <div footer>
+    <div class="flex items-center justify-end gap-2">
+      <app-button variant="secondary" (click)="closeRejectModal()">Cancelar</app-button>
+      <app-button variant="danger" [disabled]="rejectForm.invalid || !rejectingVersion" (click)="submitRejection()">Rechazar</app-button>
+    </div>
+  </div>
+</app-modal>
 

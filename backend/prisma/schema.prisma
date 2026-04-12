@@ -28,6 +28,18 @@ enum ValidationStatus {
   EXPIRED // Vencido por fecha
 }
 
+enum DocumentSubjectType {
+  INSTITUTION
+  STUDENT
+  TEACHER
+}
+
+enum DocumentWorkflowStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum EntityState {
   ACTIVE
   INACTIVE
@@ -330,8 +342,72 @@ model InstitutionRequirementValue {
   reviewedBy String? // ID del usuario que aprobó/rechazó (futuro User)
   reviewedAt DateTime?
 
+  documentSlot DocumentSlot?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model DocumentSlot {
+  id String @id @default(uuid())
+
+  subjectType DocumentSubjectType
+  subjectId   String
+
+  key         String
+  label       String
+  description String?
+
+  documentType        RequirementType
+  isRequired          Boolean @default(true)
+  requiresExpiryDate  Boolean @default(false)
+  allowsMultipleFiles Boolean @default(false)
+
+  institutionRequirementValueId String?                    @unique
+  institutionRequirementValue   InstitutionRequirementValue? @relation(fields: [institutionRequirementValueId], references: [id])
+
+  versions DocumentVersion[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([subjectType, subjectId, key])
+  @@index([subjectType, subjectId])
+}
+
+model DocumentVersion {
+  id String @id @default(uuid())
+
+  slotId String
+  slot   DocumentSlot @relation(fields: [slotId], references: [id])
+
+  versionNumber Int
+  isCurrent     Boolean                @default(true)
+  status        DocumentWorkflowStatus @default(PENDING)
+
+  fileUrl          String?
+  originalFileName String?
+  mimeType         String?
+  sizeBytes        Int?
+
+  textValue String?
+  dateValue DateTime?
+  issueDate DateTime?
+  expiryDate DateTime?
+
+  rejectionReason String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  uploadedBy      String?
+  uploadedAt      DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slotId, versionNumber])
+  @@index([slotId, isCurrent])
+  @@index([status])
 }
 
 // -----------------------------------------------------------------------------

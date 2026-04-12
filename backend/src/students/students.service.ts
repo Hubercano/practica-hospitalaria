@@ -3,10 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { EntityState, Prisma, UserRole, ValidationStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
+import { DocumentsService } from '../documents/documents.service';
 
 @Injectable()
 export class StudentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly documentsService: DocumentsService,
+  ) {}
 
   private getRequirementStatus(student: any): string {
     let status = 'COMPLETADO';
@@ -190,7 +194,46 @@ export class StudentsService {
       throw new NotFoundException('Estudiante no encontrado');
     }
 
-    return student;
+    await this.documentsService.ensureStudentRequirementSlots(
+      student.requirements.map((requirement) => ({
+        id: requirement.id,
+        studentId: student.id,
+        definition: {
+          id: requirement.definition.id,
+          name: requirement.definition.name,
+          description: requirement.definition.description,
+          type: requirement.definition.type,
+          isRequired: requirement.definition.isRequired,
+          requiresExpiryDate: requirement.definition.requiresExpiryDate,
+        },
+      })),
+    );
+
+    const slotMap = await this.documentsService.getStudentRequirementSlotMap(
+      student.requirements.map((requirement) => ({
+        id: requirement.id,
+        studentId: student.id,
+        definitionId: requirement.definitionId,
+      })),
+    );
+
+    return {
+      ...student,
+      requirements: student.requirements.map((requirement) => {
+        const slot = slotMap.get(requirement.id);
+        const currentVersion = slot?.versions?.[0] ?? null;
+
+        return {
+          ...requirement,
+          documentSlotId: slot?.id ?? null,
+          displayValue:
+            currentVersion?.originalFileName ??
+            currentVersion?.textValue ??
+            (currentVersion?.dateValue ? currentVersion.dateValue.toISOString().slice(0, 10) : requirement.value),
+          currentDocument: currentVersion ? this.documentsService.serializeVersion(currentVersion) : null,
+        };
+      }),
+    };
   }
 
   async getInductionHistory(studentId: string, user?: AuthenticatedUser) {
@@ -228,30 +271,15 @@ export class StudentsService {
   }
 
   async submitRequirement(reqValueId: string, value: string, expiryDate?: string, user?: AuthenticatedUser) {
-    if (user?.role === UserRole.INSTITUCION) {
-      const requirement = await this.prisma.studentRequirementValue.findFirst({
-        where: {
-          id: reqValueId,
-          student: {
-            institutionId: this.requireInstitutionId(user),
-          },
-        },
-        select: { id: true },
-      });
-
-      if (!requirement) {
-        throw new NotFoundException('Requisito no encontrado');
-      }
+    if (!user) {
+      throw new NotFoundException('Usuario no autenticado');
     }
 
-    return this.prisma.studentRequirementValue.update({
-      where: { id: reqValueId },
-      data: {
-        value,
-        expiryDate: expiryDate ? new Date(expiryDate) : null,
-        status: value ? ValidationStatus.APPROVED : ValidationStatus.PENDING, // Auto approve or add review logic
-      }
-    });
+    return this.documentsService.submitStudentRequirementValueByRequirementId(
+      reqValueId,
+      { value, expiryDate },
+      user,
+    );
   }
 
   async generateTemplate(): Promise<Buffer> {

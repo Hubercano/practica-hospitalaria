@@ -8,6 +8,8 @@ import * as fs from 'fs';
 import type { Response } from 'express';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '@prisma/client';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 
 @Roles(UserRole.HOSPITAL)
 @Controller('teachers')
@@ -65,7 +67,7 @@ export class TeachersController {
     if (!['cvFile', 'dataAuthorizationFile', 'conflictOfInterestFile'].includes(field)) {
       throw new BadRequestException('Campo inválido');
     }
-    return this.teachersService.uploadDocument(id, field as any, null as any);
+    return this.teachersService.deleteDocument(id, field as any);
   }
 
   @Delete(':id/document-multiple/:field')
@@ -99,6 +101,7 @@ export class TeachersController {
     })
   }))
   uploadDocument(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Param('field') field: string,
     @UploadedFile() file: Express.Multer.File
@@ -107,8 +110,7 @@ export class TeachersController {
     if (!['cvFile', 'dataAuthorizationFile', 'conflictOfInterestFile'].includes(field)) {
       throw new BadRequestException('Campo inválido');
     }
-    const realPath = `/uploads/teachers/${file.filename}`;
-    return this.teachersService.uploadDocument(id, field as any, realPath);
+    return this.teachersService.uploadDocument(id, field as any, file, user);
   }
 
   @Post(':id/upload-multiple/:field')
@@ -122,6 +124,7 @@ export class TeachersController {
     })
   }))
   uploadMultipleDocuments(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Param('field') field: string,
     @UploadedFiles() files: Express.Multer.File[]
@@ -131,7 +134,6 @@ export class TeachersController {
       throw new BadRequestException('Campo inválido para carga múltiple');
     }
 
-    const filePaths = files.map((file) => `/uploads/teachers/${file.filename}`);
-    return this.teachersService.uploadMultipleDocuments(id, field as any, filePaths);
+    return this.teachersService.uploadMultipleDocuments(id, field as any, files, user);
   }
 }
