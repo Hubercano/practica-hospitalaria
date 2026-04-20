@@ -60,8 +60,16 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
       {
         title: 'Gestión Administrativa',
         items: [
+          {
+            label: 'Autoevaluación Docencia-Servicio',
+            route: '/autoevaluations',
+            roles: ['HOSPITAL', 'INSTITUCION'],
+            iconPath: 'M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.414a2 2 0 00-.586-1.414l-3.414-3.414A2 2 0 0013.586 2H6a2 2 0 00-2 2v15a2 2 0 002 2z',
+          },
           { label: 'Inducciones', route: '/inductions', roles: ['HOSPITAL'], iconPath: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9m-6-4h6m0 0v6m0-6L10 14' },
           { label: 'Encuestas', route: '/surveys', roles: ['HOSPITAL'], iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+          { label: 'Indicadores (KPI)', route: '/dashboard-analytics', roles: ['HOSPITAL'], iconPath: 'M3 3h8v8H3V3zm10 0h8v5h-8V3zM3 13h5v8H3v-8zm7 0h11v8H10v-8z' },
+          { label: 'Análisis de Capacidad Instalada', route: '/capacity-analysis', roles: ['HOSPITAL'], iconPath: 'M4 5h16M4 10h16M4 15h10m-10 4h7m8-8a2 2 0 100-4 2 2 0 000 4zm0 0v8' },
           {
             label: 'Contraprestaciones',
             route: '/counterpart-requests',

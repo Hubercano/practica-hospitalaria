@@ -113,6 +113,21 @@ enum CounterpartStatus {
   REJECTED
 }
 
+enum AutoevaluationProcessStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  CLOSED
+}
+
+enum AutoevaluationActionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
 // -----------------------------------------------------------------------------
 // 🏗️ MÓDULO DE PARAMETRIZACIÓN (Configuracion del sistema)
 // -----------------------------------------------------------------------------
@@ -184,9 +199,10 @@ model Institution {
   // Relación: Estudiantes asociados
   students Student[]
 
-  users User[]
-  counterpartRequests CounterpartRequest[]
+  users                     User[]
+  counterpartRequests       CounterpartRequest[]
   teachingServiceCommittees TeachingServiceCommittee[]
+  autoevaluationProcesses   AutoevaluationProcess[]
 
   // Auditoría básica
   createdAt DateTime  @default(now())
@@ -224,9 +240,9 @@ model UserSession {
   id String @id @default(uuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
-  refreshTokenHash String   @unique
+  refreshTokenHash String    @unique
   expiresAt        DateTime
   revokedAt        DateTime?
   lastUsedAt       DateTime?
@@ -255,7 +271,7 @@ model CounterpartRequest {
   fileUrl          String
   originalFileName String
 
-  createdByUserId String?
+  createdByUserId   String?
   respondedByUserId String?
 
   createdAt   DateTime  @default(now())
@@ -277,7 +293,7 @@ model CounterpartRequest {
 model CounterpartResponse {
   id String @id @default(uuid())
 
-  counterpartRequestId String            @unique
+  counterpartRequestId String             @unique
   counterpartRequest   CounterpartRequest @relation(fields: [counterpartRequestId], references: [id])
 
   status CounterpartStatus
@@ -309,12 +325,178 @@ model TeachingServiceCommittee {
   originalFileName String?
   extraField       String?
 
+  autoevaluationProcesses AutoevaluationProcess[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@unique([institutionId, year, committeeNumber])
   @@index([year, institutionId])
+}
+
+model AutoevaluationFactor {
+  id String @id @default(uuid())
+
+  name        String
+  description String?
+  orderIndex  Int     @default(0)
+  isActive    Boolean @default(true)
+
+  criteria AutoevaluationCriterion[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([isActive, orderIndex])
+}
+
+model AutoevaluationCriterion {
+  id String @id @default(uuid())
+
+  factorId String
+  factor   AutoevaluationFactor @relation(fields: [factorId], references: [id])
+
+  name        String
+  description String?
+  weight      Float   @default(1)
+  orderIndex  Int     @default(0)
+  isActive    Boolean @default(true)
+
+  scores AutoevaluationCriterionScore[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([factorId, isActive, orderIndex])
+}
+
+model AutoevaluationProcess {
+  id String @id @default(uuid())
+
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  teachingServiceCommitteeId String?
+  teachingServiceCommittee   TeachingServiceCommittee? @relation(fields: [teachingServiceCommitteeId], references: [id])
+
+  year   Int
+  period Int
+
+  status AutoevaluationProcessStatus @default(DRAFT)
+
+  strengths            String?
+  opportunities        String?
+  conclusions          String?
+  globalScore          Float?
+  compliancePercentage Float?
+
+  openedAt    DateTime  @default(now())
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  reviewedBy  String?
+
+  scores  AutoevaluationCriterionScore[]
+  actions AutoevaluationImprovementAction[]
+  auditLogs AutoevaluationAuditLog[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([institutionId, year, period])
+  @@index([status, year, period])
+  @@index([institutionId, status])
+}
+
+model AutoevaluationCriterionScore {
+  id String @id @default(uuid())
+
+  processId String
+  process   AutoevaluationProcess @relation(fields: [processId], references: [id])
+
+  criterionId String
+  criterion   AutoevaluationCriterion @relation(fields: [criterionId], references: [id])
+
+  score            Float
+  evidence         String?
+  improvementNotes String?
+
+  evidenceFiles AutoevaluationEvidenceFile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([processId, criterionId])
+  @@index([criterionId])
+}
+
+model AutoevaluationImprovementAction {
+  id String @id @default(uuid())
+
+  processId String
+  process   AutoevaluationProcess @relation(fields: [processId], references: [id])
+
+  title       String
+  description String?
+  responsible String?
+  targetDate  DateTime?
+  progress    Int                        @default(0)
+  status      AutoevaluationActionStatus @default(PLANNED)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([processId, status])
+}
+
+// Evidencias de autoevaluación: archivos adjuntos por criterio
+model AutoevaluationEvidenceFile {
+  id String @id @default(uuid())
+
+  scoreId String
+  score   AutoevaluationCriterionScore @relation(fields: [scoreId], references: [id], onDelete: Cascade)
+
+  fileUrl          String // URL del archivo almacenado
+  originalFileName String
+  mimeType         String
+  sizeBytes        Int
+  uploadedBy       String // ID del usuario que subió
+
+  description String? // Descripción de la evidencia
+
+  uploadedAt DateTime @default(now())
+  deletedAt  DateTime?
+
+  @@index([scoreId, uploadedAt])
+}
+
+// Auditoría detallada de cambios en autoevaluaciones
+model AutoevaluationAuditLog {
+  id String @id @default(uuid())
+
+  processId String
+  process   AutoevaluationProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  action        String // openProcess, saveDraft, submitProcess, reviewProcess, uploadEvidence, etc.
+  entityType    String // process, score, action, evidence
+  entityId      String? // ID del entity afectado (scoreId, actionId, etc.)
+  changes       String? // JSON con cambios (campo_anterior -> campo_nuevo)
+  
+  performedBy   String // ID del usuario que realizó la acción
+  performedAt   DateTime @default(now())
+
+  ipAddress     String?
+  userAgent     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([processId, performedAt])
+  @@index([performedBy, performedAt])
+  @@index([action])
 }
 
 // Paso 4: El valor/documento entregado para cumplir un requisito
@@ -359,11 +541,11 @@ model DocumentSlot {
   description String?
 
   documentType        RequirementType
-  isRequired          Boolean @default(true)
-  requiresExpiryDate  Boolean @default(false)
-  allowsMultipleFiles Boolean @default(false)
+  isRequired          Boolean         @default(true)
+  requiresExpiryDate  Boolean         @default(false)
+  allowsMultipleFiles Boolean         @default(false)
 
-  institutionRequirementValueId String?                    @unique
+  institutionRequirementValueId String?                      @unique
   institutionRequirementValue   InstitutionRequirementValue? @relation(fields: [institutionRequirementValueId], references: [id])
 
   versions DocumentVersion[]
@@ -391,16 +573,16 @@ model DocumentVersion {
   mimeType         String?
   sizeBytes        Int?
 
-  textValue String?
-  dateValue DateTime?
-  issueDate DateTime?
+  textValue  String?
+  dateValue  DateTime?
+  issueDate  DateTime?
   expiryDate DateTime?
 
   rejectionReason String?
   reviewedBy      String?
   reviewedAt      DateTime?
   uploadedBy      String?
-  uploadedAt      DateTime @default(now())
+  uploadedAt      DateTime  @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -602,8 +784,8 @@ model Student {
   state EntityState @default(INACTIVE)
 
   // Gestión de carnet del estudiante
-  numeroCarnet           String? // Número del carnet asignado al estudiante
-  fechaDevolucionCarnet  DateTime? // Fecha cuando el estudiante devolvió el carnet
+  numeroCarnet          String? // Número del carnet asignado al estudiante
+  fechaDevolucionCarnet DateTime? // Fecha cuando el estudiante devolvió el carnet
 
   // Relación: Sus documentos/requisitos de práctica entregados
   requirements StudentRequirementValue[]
@@ -791,11 +973,11 @@ model InductionAuditEvent {
 model Survey {
   id String @id @default(uuid())
 
-  name        String
-  description String?
-  status      SurveyStatus @default(INACTIVE)
-  isPublished Boolean      @default(false)
-  isOpenAccess Boolean     @default(false)
+  name         String
+  description  String?
+  status       SurveyStatus @default(INACTIVE)
+  isPublished  Boolean      @default(false)
+  isOpenAccess Boolean      @default(false)
 
   questions SurveyQuestion[]
   rotations RotationSurvey[]
@@ -815,15 +997,15 @@ model SurveyQuestion {
   title       String
   description String?
   type        SurveyQuestionType
-  isRequired  Boolean @default(false)
-  orderIndex  Int     @default(0)
+  isRequired  Boolean            @default(false)
+  orderIndex  Int                @default(0)
 
   // Para tipo SCALE
   scaleMin  Int?
   scaleMax  Int?
   scaleStep Int?
 
-  options SurveyQuestionOption[]
+  options       SurveyQuestionOption[]
   answerDetails SurveyResponseDetail[]
 
   createdAt DateTime @default(now())
@@ -840,7 +1022,7 @@ model SurveyQuestionOption {
 
   label      String
   value      String
-  orderIndex Int @default(0)
+  orderIndex Int    @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -917,7 +1099,7 @@ model SurveyDispatchLog {
 model SurveyResponse {
   id String @id @default(uuid())
 
-  assignmentId String? @unique
+  assignmentId String?           @unique
   assignment   SurveyAssignment? @relation(fields: [assignmentId], references: [id])
 
   rotationSurveyId String?

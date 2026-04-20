@@ -19,6 +19,9 @@ import { SurveysModule } from './surveys/surveys.module';
 import { CounterpartRequestsModule } from './counterpart-requests/counterpart-requests.module';
 import { TeachingServiceCommitteesModule } from './teaching-service-committees/teaching-service-committees.module';
 import { DocumentsModule } from './documents/documents.module';
+import { DashboardAnalyticsModule } from './dashboard-analytics/dashboard-analytics.module';
+import { AutoevaluationsModule } from './autoevaluations/autoevaluations.module';
+import { CapacityAnalysisModule } from './capacity-analysis/capacity-analysis.module';
 
 @Module({
   imports: [
@@ -40,6 +43,9 @@ import { DocumentsModule } from './documents/documents.module';
     CounterpartRequestsModule,
     TeachingServiceCommitteesModule,
     DocumentsModule,
+    DashboardAnalyticsModule,
+    CapacityAnalysisModule,
+    AutoevaluationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,0 +1,509 @@
+<section class="min-h-screen bg-slate-100 p-4 md:p-6">
+  <div class="mx-auto max-w-[1500px] space-y-5">
+    <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-semibold text-slate-800">{{ pageTitle() }}</h1>
+          <p class="mt-1 text-sm text-slate-500">Autoevaluacion Docencia-Servicio con la misma estructura de trabajo de los demas modulos.</p>
+        </div>
+        <app-button variant="secondary" (click)="goBack()" customClass="!rounded-xl border-slate-200">Volver al listado</app-button>
+      </div>
+    </header>
+
+    @if (error()) {
+      <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">{{ error() }}</div>
+    }
+
+    @if (mode() === 'create') {
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Datos del proceso</h2>
+        <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+          @if (isHospital()) {
+            <label class="space-y-1 md:col-span-2">
+              <span class="text-sm text-slate-600">Institucion</span>
+              <ng-select
+                [items]="institutions()"
+                bindLabel="name"
+                bindValue="id"
+                [clearable]="true"
+                [searchable]="true"
+                [ngModel]="openInstitutionId()"
+                (ngModelChange)="openInstitutionId.set($event)"
+                placeholder="Seleccione una institucion"
+              ></ng-select>
+            </label>
+          }
+
+          <label class="space-y-1">
+            <span class="text-sm text-slate-600">Año</span>
+            <input
+              type="number"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              [ngModel]="openYear()"
+              (ngModelChange)="openYear.set(+$event)"
+            />
+          </label>
+
+          <label class="space-y-1">
+            <span class="text-sm text-slate-600">Periodo</span>
+            <select
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              [ngModel]="openPeriod()"
+              (ngModelChange)="openPeriod.set(+$event)"
+            >
+              @for (period of periodOptions; track period) {
+                <option [ngValue]="period">{{ period }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <app-button variant="primary" [disabled]="opening()" (click)="openProcess()" customClass="!rounded-xl">
+            {{ opening() ? 'Abriendo...' : 'Abrir proceso y continuar' }}
+          </app-button>
+        </div>
+      </article>
+    }
+
+    @if (selectedProcess(); as process) {
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-slate-800">{{ process.institution.name }} · {{ process.year }} P{{ process.period }}</h2>
+            <p class="text-sm text-slate-500">Estado actual: {{ process.status }}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-sm md:min-w-[240px]">
+            <div class="rounded-lg bg-emerald-50 p-2">
+              <p class="text-emerald-700">Cumplidos</p>
+              <p class="text-lg font-semibold text-emerald-700">{{ metCriteriaCount() }}</p>
+            </div>
+            <div class="rounded-lg bg-rose-50 p-2">
+              <p class="text-rose-700">No cumplidos</p>
+              <p class="text-lg font-semibold text-rose-700">{{ notMetCriteriaCount() }}</p>
+            </div>
+            <div class="rounded-lg bg-amber-50 p-2">
+              <p class="text-amber-700">Pendientes</p>
+              <p class="text-lg font-semibold text-amber-700">{{ pendingCriteriaCount() }}</p>
+            </div>
+            <div class="rounded-lg bg-blue-50 p-2">
+              <p class="text-blue-700">Cumplimiento</p>
+              <p class="text-lg font-semibold text-blue-700">{{ compliance() }}%</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Listado de condiciones de calidad</h3>
+        <p class="mt-1 text-xs text-slate-500">
+          Diligencie el cumplimiento por cada aspecto evaluado, registre observaciones y adjunte soportes.
+        </p>
+        <div class="mt-3 space-y-4">
+          @for (group of groupedScores(); track group.factorName) {
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <p class="text-sm font-semibold text-slate-700">{{ group.factorName }}</p>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{{ group.items.length }} criterios</span>
+              </div>
+
+              <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full min-w-[960px] text-left text-sm text-slate-600">
+                  <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    <tr>
+                      <th class="px-3 py-2">Aspecto y mecanismo</th>
+                      <th class="px-3 py-2">Cumple</th>
+                      <th class="px-3 py-2">Soporte / observaciones</th>
+                      <th class="px-3 py-2 text-right">Soportes</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 bg-white">
+                    @for (item of group.items; track item.criterionId) {
+                      <tr>
+                        <td class="px-3 py-2 align-top">
+                          <p class="font-medium text-slate-800">{{ item.criterionName }}</p>
+                          <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ item.criterionMechanism || 'No definido en el catalogo.' }}</p>
+                        </td>
+                        <td class="px-3 py-2 align-top">
+                          <select
+                            class="w-[150px] rounded border border-slate-300 px-2 py-1 text-sm"
+                            [disabled]="!canEditDraft()"
+                            [ngModel]="item.complianceSelection || ''"
+                            (ngModelChange)="updateComplianceSelection(item.flatIndex, $event)"
+                          >
+                            <option value="">Seleccione</option>
+                            <option value="CUMPLE">Cumple</option>
+                            <option value="NO_CUMPLE">No cumple</option>
+                          </select>
+                        </td>
+                        <td class="px-3 py-2 align-top">
+                          <textarea
+                            rows="2"
+                            class="w-full min-w-[280px] rounded border border-slate-300 px-2 py-1 text-sm"
+                            [disabled]="!canEditDraft()"
+                            [ngModel]="item.evidence"
+                            (ngModelChange)="updateEvidence(item.flatIndex, $event || '')"
+                            placeholder="Observaciones del criterio..."
+                          ></textarea>
+                        </td>
+                        <td class="px-3 py-2 align-top text-right">
+                          <button
+                            type="button"
+                            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:border-slate-400"
+                            (click)="toggleSupportPanel(item.criterionId)"
+                          >
+                            {{ isSupportPanelOpen(item.criterionId) ? 'Ocultar' : 'Gestionar soportes' }}
+                          </button>
+                        </td>
+                      </tr>
+
+                      @if (isSupportPanelOpen(item.criterionId)) {
+                        <tr>
+                          <td colspan="4" class="bg-slate-50 px-3 py-3">
+                            <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+                              <div class="space-y-2 lg:col-span-5">
+                                @if (canEditDraft()) {
+                                  <label class="space-y-1">
+                                    <span class="text-xs font-medium text-slate-600">Seleccionar archivo</span>
+                                    <div
+                                      class="rounded-xl border-2 border-dashed bg-white p-3 text-center transition-colors"
+                                      [ngClass]="hasSelectedEvidenceFile(item.criterionId) ? 'border-emerald-300 bg-emerald-50/40' : 'border-slate-300 hover:border-indigo-300'"
+                                    >
+                                      <input
+                                        type="file"
+                                        [id]="'evidence-file-' + item.criterionId"
+                                        class="hidden"
+                                        accept="*/*"
+                                        (change)="onEvidenceFileSelected($event, item.criterionId)"
+                                      />
+                                      <label [for]="'evidence-file-' + item.criterionId" class="cursor-pointer text-xs font-semibold text-indigo-600 hover:underline">
+                                        Haz clic para subir archivo
+                                      </label>
+                                      <p class="mt-1 text-[11px] text-slate-500">o selecciona desde tu equipo</p>
+                                      @if (getSelectedEvidenceFileName(item.criterionId); as fileName) {
+                                        <div class="mt-2 rounded-lg border border-emerald-200 bg-white px-2 py-1 text-left">
+                                          <p class="truncate text-[11px] font-medium text-emerald-700">Archivo seleccionado: {{ fileName }}</p>
+                                          <p class="text-[10px] text-emerald-600">Listo para cargar</p>
+                                        </div>
+                                      }
+                                    </div>
+                                  </label>
+
+                                  <label class="space-y-1">
+                                    <span class="text-xs font-medium text-slate-600">Descripcion (opcional)</span>
+                                    <textarea
+                                      rows="2"
+                                      placeholder="Describe la evidencia..."
+                                      class="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                                      [ngModel]="getEvidenceDescription(item.criterionId)"
+                                      (ngModelChange)="setEvidenceDescription(item.criterionId, $event || '')"
+                                      [ngModelOptions]="{ updateOn: 'blur' }"
+                                    ></textarea>
+                                  </label>
+
+                                  <button
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-300"
+                                    [disabled]="uploadingEvidence() || !hasSelectedEvidenceFile(item.criterionId)"
+                                    (click)="uploadEvidence(item.id, item.criterionId)"
+                                  >
+                                    {{ uploadingEvidence() ? 'Cargando...' : 'Cargar archivo' }}
+                                  </button>
+                                } @else {
+                                  <p class="text-xs text-slate-500">Vista de detalle: no se pueden agregar ni eliminar evidencias.</p>
+                                }
+                              </div>
+
+                              <div class="lg:col-span-7">
+                                @if (item.id) {
+                                  @let evidences = getScoreEvidences(item.id);
+                                  @if (evidences.length > 0) {
+                                    <div class="rounded-lg border border-slate-200 bg-white p-2">
+                                      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Archivos de evidencia ({{ evidences.length }})</p>
+                                      <div class="space-y-1">
+                                        @for (evidence of evidences; track evidence.id) {
+                                          <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+                                            <div class="min-w-0 flex-1">
+                                              <p class="truncate text-xs font-medium text-slate-700">{{ evidence.originalFileName }}</p>
+                                              <p class="text-xs text-slate-500">{{ (evidence.uploadedAt | date: 'short') }} • {{ (evidence.sizeBytes / 1024) | number: '1.0-0' }} KB</p>
+                                              @if (evidence.description) {
+                                                <p class="text-xs text-slate-600">{{ evidence.description }}</p>
+                                              }
+                                            </div>
+
+                                            <div class="ml-2 flex flex-shrink-0 gap-1">
+                                              <button
+                                                type="button"
+                                                class="rounded p-1 text-slate-600 hover:bg-slate-200 hover:text-slate-700"
+                                                title="Descargar"
+                                                (click)="downloadEvidence(evidence)"
+                                              >
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                                </svg>
+                                              </button>
+
+                                              @if (canEditDraft()) {
+                                                <button
+                                                  type="button"
+                                                  class="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                  title="Eliminar"
+                                                  (click)="deleteEvidenceFile(evidence)"
+                                                >
+                                                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                  </svg>
+                                                </button>
+                                              }
+                                            </div>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  } @else {
+                                    <p class="text-xs text-slate-500">Este criterio aun no tiene archivos de evidencia.</p>
+                                  }
+                                }
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Analisis cualitativo</h3>
+        <p class="mt-1 text-xs text-slate-500">Construya el analisis con base en los resultados de cumplimiento obtenidos.</p>
+        <div class="mt-3 grid grid-cols-1 gap-3">
+          <label class="space-y-1">
+            <span class="text-sm text-slate-600">Fortalezas</span>
+            <textarea
+              rows="3"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              [disabled]="!canEditDraft()"
+              [ngModel]="strengths()"
+              (ngModelChange)="strengths.set($event || '')"
+            ></textarea>
+          </label>
+
+          <label class="space-y-1">
+            <span class="text-sm text-slate-600">Oportunidades de mejora</span>
+            <textarea
+              rows="3"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              [disabled]="!canEditDraft()"
+              [ngModel]="opportunities()"
+              (ngModelChange)="opportunities.set($event || '')"
+            ></textarea>
+          </label>
+
+          <label class="space-y-1">
+            <span class="text-sm text-slate-600">Conclusiones</span>
+            <textarea
+              rows="3"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              [disabled]="!canEditDraft()"
+              [ngModel]="conclusions()"
+              (ngModelChange)="conclusions.set($event || '')"
+            ></textarea>
+          </label>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="mb-3 flex items-center justify-between">
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Plan de mejoramiento</h3>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:border-slate-400"
+            [disabled]="!canEditDraft()"
+            (click)="addAction()"
+          >
+            Agregar accion
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          @for (action of editableActions(); track trackByAction($index, action)) {
+            <div class="rounded-xl border border-slate-200 p-3">
+              <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+                <label class="space-y-1 lg:col-span-3">
+                  <span class="text-xs text-slate-500">Titulo</span>
+                  <input type="text" class="w-full rounded border border-slate-300 px-2 py-1 text-sm" [disabled]="!canEditDraft()" [(ngModel)]="action.title" />
+                </label>
+
+                <label class="space-y-1 lg:col-span-3">
+                  <span class="text-xs text-slate-500">Responsable</span>
+                  <input type="text" class="w-full rounded border border-slate-300 px-2 py-1 text-sm" [disabled]="!canEditDraft()" [(ngModel)]="action.responsible" />
+                </label>
+
+                <label class="space-y-1 lg:col-span-2">
+                  <span class="text-xs text-slate-500">Fecha objetivo</span>
+                  <input type="date" class="w-full rounded border border-slate-300 px-2 py-1 text-sm" [disabled]="!canEditDraft()" [(ngModel)]="action.targetDate" />
+                </label>
+
+                <label class="space-y-1 lg:col-span-2">
+                  <span class="text-xs text-slate-500">Progreso</span>
+                  <input type="number" min="0" max="100" class="w-full rounded border border-slate-300 px-2 py-1 text-sm" [disabled]="!canEditDraft()" [(ngModel)]="action.progress" />
+                </label>
+
+                <label class="space-y-1 lg:col-span-2">
+                  <span class="text-xs text-slate-500">Estado</span>
+                  <select class="w-full rounded border border-slate-300 px-2 py-1 text-sm" [disabled]="!canEditDraft()" [(ngModel)]="action.status">
+                    <option value="PLANNED">Planeada</option>
+                    <option value="IN_PROGRESS">En progreso</option>
+                    <option value="COMPLETED">Completada</option>
+                    <option value="BLOCKED">Bloqueada</option>
+                  </select>
+                </label>
+
+                <label class="space-y-1 lg:col-span-10">
+                  <span class="text-xs text-slate-500">Descripcion</span>
+                  <textarea rows="2" class="w-full rounded border border-slate-300 px-2 py-1 text-sm" [disabled]="!canEditDraft()" [(ngModel)]="action.description"></textarea>
+                </label>
+
+                <div class="flex items-end justify-end lg:col-span-2">
+                  <button
+                    type="button"
+                    class="rounded-lg border border-rose-300 px-3 py-1.5 text-sm text-rose-700 hover:border-rose-400"
+                    [disabled]="!canEditDraft()"
+                    (click)="removeAction($index)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (!editableActions().length) {
+            <p class="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">No hay acciones registradas.</p>
+          }
+        </div>
+      </article>
+
+      @if (isHospital() && !isReadOnly()) {
+        <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-amber-700">Revision hospitalaria</h3>
+          <label class="mt-3 block space-y-1">
+            <span class="text-sm text-amber-700">Observaciones de revision</span>
+            <textarea
+              rows="3"
+              class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm"
+              [ngModel]="reviewNotes()"
+              (ngModelChange)="reviewNotes.set($event || '')"
+            ></textarea>
+          </label>
+
+          <div class="mt-3 flex flex-wrap gap-2">
+            @for (option of reviewStatusOptions; track option.value) {
+              <button
+                type="button"
+                class="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm text-amber-700 transition hover:bg-amber-100"
+                [disabled]="reviewing()"
+                (click)="reviewProcess(option.value)"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        </article>
+      }
+
+      <article class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <button
+          type="button"
+          class="w-full px-4 py-3 text-left transition hover:bg-slate-50"
+          (click)="toggleAuditLog()"
+        >
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Registro de cambios</h3>
+            <svg
+              class="h-5 w-5 transition-transform"
+              [class.rotate-180]="showAuditLog()"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+          </div>
+        </button>
+
+        @if (showAuditLog() && auditLog().length > 0) {
+          <div class="border-t border-slate-200 p-4">
+            <div class="space-y-2">
+              @for (entry of auditLog(); track entry.performedAt + entry.action + entry.entityId) {
+                <div class="flex gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-xs">
+                  <div class="flex-shrink-0 pt-0.5">
+                    <div class="h-2 w-2 rounded-full bg-slate-400"></div>
+                  </div>
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p class="font-medium text-slate-700">{{ entry.action }}</p>
+                        <p class="text-slate-600">
+                          {{ entry.entityType }}
+                          @if (entry.entityId) {
+                            : {{ entry.entityId }}
+                          }
+                        </p>
+                      </div>
+                      <p class="flex-shrink-0 text-slate-500">{{ entry.performedAt | date: 'short' }}</p>
+                    </div>
+
+                    @if (entry.changes && entry.changes !== '{}') {
+                      <p class="mt-1 text-slate-600">Cambios: {{ entry.changes }}</p>
+                    }
+
+                    <p class="mt-0.5 text-slate-500">Por: {{ entry.performedBy }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        } @else if (showAuditLog() && auditLog().length === 0 && !loadingAuditLog()) {
+          <div class="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">Aun no hay cambios registrados.</div>
+        }
+      </article>
+
+      @if (!isReadOnly()) {
+        <div class="flex flex-wrap gap-2">
+          <app-button
+            variant="primary"
+            [disabled]="saving() || !canEditDraft()"
+            (click)="saveDraft()"
+            customClass="!rounded-xl"
+          >
+            {{ saving() ? 'Guardando...' : 'Guardar borrador' }}
+          </app-button>
+
+          <button
+            type="button"
+            class="rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+            [disabled]="saving() || !canSubmit()"
+            (click)="submitProcess()"
+          >
+            Enviar a revision
+          </button>
+        </div>
+      }
+    } @else if (mode() !== 'create' && !loading()) {
+      <article class="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 shadow-sm">
+        No fue posible encontrar el proceso solicitado.
+      </article>
+    }
+
+    @if (loading()) {
+      <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">Cargando autoevaluacion...</div>
+    }
+  </div>
+</section>

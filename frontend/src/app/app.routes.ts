@@ -74,6 +74,39 @@ export const routes: Routes = [
       { path: 'rotation-schedules', component: RotationScheduleListComponent },
       { path: 'rotation-schedules/new', component: RotationScheduleFormComponent },
       { path: 'rotation-schedules/:id/edit', component: RotationScheduleFormComponent },
+      {
+        path: 'dashboard-analytics',
+        loadComponent: () => import('./dashboard-analytics/pages/dashboard-analytics.component').then((m) => m.DashboardAnalyticsComponent),
+        data: { roles: ['HOSPITAL'] },
+      },
+      {
+        path: 'capacity-analysis',
+        loadComponent: () => import('./capacity-analysis/pages/capacity-analysis.component').then((m) => m.CapacityAnalysisComponent),
+        data: { roles: ['HOSPITAL'] },
+      },
+      {
+        path: 'autoevaluations',
+        loadComponent: () => import('./autoevaluations/pages/autoevaluations-page.component').then((m) => m.AutoevaluationsPageComponent),
+        data: { roles: ['HOSPITAL', 'INSTITUCION'] },
+      },
+      {
+        path: 'autoevaluations/new',
+        loadComponent: () =>
+          import('./autoevaluations/pages/autoevaluation-process-page.component').then((m) => m.AutoevaluationProcessPageComponent),
+        data: { roles: ['HOSPITAL', 'INSTITUCION'], mode: 'create' },
+      },
+      {
+        path: 'autoevaluations/:id/edit',
+        loadComponent: () =>
+          import('./autoevaluations/pages/autoevaluation-process-page.component').then((m) => m.AutoevaluationProcessPageComponent),
+        data: { roles: ['HOSPITAL', 'INSTITUCION'], mode: 'edit' },
+      },
+      {
+        path: 'autoevaluations/:id',
+        loadComponent: () =>
+          import('./autoevaluations/pages/autoevaluation-process-page.component').then((m) => m.AutoevaluationProcessPageComponent),
+        data: { roles: ['HOSPITAL', 'INSTITUCION'], mode: 'detail' },
+      },
       { path: 'inductions', component: InductionListComponent },
       { path: 'inductions/new', component: InductionFormComponent },
       { path: 'inductions/:id/edit', component: InductionFormComponent },

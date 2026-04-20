@@ -1,0 +1,286 @@
+<section class="min-h-screen bg-slate-100 p-4 md:p-6">
+  <div class="mx-auto max-w-[1500px] space-y-5">
+    <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">Gestión Administrativa</p>
+          <h1 class="mt-2 text-2xl font-semibold text-slate-900">Análisis de Capacidad Instalada</h1>
+          <p class="mt-2 max-w-4xl text-sm text-slate-600">
+            Análisis de ocupación construido con la normativa CITHS 2025, usando la capacidad instalada registrada,
+            los servicios clínicos vinculados a las áreas de rotación y los estudiantes programados en prácticas simultáneas.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400"
+          (click)="clearFilters()"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </header>
+
+    @if (error()) {
+      <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ error() }}</div>
+    }
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Filtros del análisis</h2>
+      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">Año</span>
+          <ng-select
+            [items]="filterOptions().years"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedYears()"
+            (ngModelChange)="onYearsChange($event)"
+            placeholder="Todos"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">Mes</span>
+          <ng-select
+            [items]="monthOptions()"
+            bindLabel="label"
+            bindValue="id"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedMonths()"
+            (ngModelChange)="onMonthsChange($event)"
+            placeholder="Todos"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">Institución educativa</span>
+          <ng-select
+            [items]="filterOptions().institutions"
+            bindLabel="name"
+            bindValue="id"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedInstitutionIds()"
+            (ngModelChange)="onInstitutionsChange($event)"
+            placeholder="Todas"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">Programa académico</span>
+          <ng-select
+            [items]="filterOptions().programs"
+            bindLabel="name"
+            bindValue="id"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedProgramIds()"
+            (ngModelChange)="onProgramsChange($event)"
+            placeholder="Todos"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-600">Grupo de capacidad</span>
+          <ng-select
+            [items]="filterOptions().capacityGroups"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedCapacityGroups()"
+            (ngModelChange)="onGroupsChange($event)"
+            placeholder="Todos"
+          ></ng-select>
+        </label>
+      </div>
+    </article>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Programas analizados</p>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ summary().analyzedPrograms }}</p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Grupos analizados</p>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ summary().analyzedGroups }}</p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Capacidad instalada</p>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ summary().totalInstalledCapacity }}</p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Estudiantes simultáneos</p>
+        <p class="mt-2 text-3xl font-semibold text-slate-900">{{ summary().totalAssignedStudents }}</p>
+      </article>
+
+      <article class="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-sky-700">Ocupación global</p>
+        <p class="mt-2 text-3xl font-semibold text-sky-700">{{ summary().overallOccupancyRate }}%</p>
+      </article>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Criterios normativos aplicados</h2>
+        <ul class="mt-3 space-y-2 text-sm text-slate-700">
+          @for (item of methodology().normativeCriteria; track item) {
+            <li class="rounded-lg bg-slate-50 px-3 py-2">{{ item }}</li>
+          }
+        </ul>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Cómo se calcula</h2>
+        <ul class="mt-3 space-y-2 text-sm text-slate-700">
+          @for (item of methodology().calculationNotes; track item) {
+            <li class="rounded-lg bg-slate-50 px-3 py-2">{{ item }}</li>
+          }
+        </ul>
+      </article>
+
+      <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-amber-700">Brechas de datos actuales</h2>
+        <ul class="mt-3 space-y-2 text-sm text-amber-800">
+          @for (item of methodology().currentDataLimitations; track item) {
+            <li class="rounded-lg bg-white/80 px-3 py-2">{{ item }}</li>
+          }
+        </ul>
+      </article>
+    </div>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Ocupación por grupo de capacidad</h2>
+      <div class="mt-3 overflow-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-3 py-2">Grupo</th>
+              <th class="px-3 py-2">Capacidad</th>
+              <th class="px-3 py-2">Estudiantes</th>
+              <th class="px-3 py-2">Ocupación</th>
+              <th class="px-3 py-2">Servicios</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (row of groupOccupancy(); track trackByGroup($index, row)) {
+              <tr>
+                <td class="px-3 py-2 font-medium text-slate-800">{{ row.groupName }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.installedCapacity }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.assignedStudents }}</td>
+                <td class="px-3 py-2">
+                  <span class="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700">{{ row.occupancyRate }}%</span>
+                </td>
+                <td class="px-3 py-2 text-slate-600">{{ row.servicesCount }}</td>
+              </tr>
+            }
+            @if (!groupOccupancy().length && !loading()) {
+              <tr>
+                <td colspan="5" class="px-3 py-4 text-center text-slate-500">No hay resultados para los filtros seleccionados.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Ocupación por programa académico</h2>
+      <div class="mt-3 overflow-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-3 py-2">Programa</th>
+              <th class="px-3 py-2">Nivel</th>
+              <th class="px-3 py-2">Institución</th>
+              <th class="px-3 py-2">Capacidad</th>
+              <th class="px-3 py-2">Estudiantes</th>
+              <th class="px-3 py-2">Ocupación</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (row of programOccupancy(); track trackByProgram($index, row)) {
+              <tr>
+                <td class="px-3 py-2 font-medium text-slate-800">{{ row.programName }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.level }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.institutionName }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.installedCapacity }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.assignedStudents }}</td>
+                <td class="px-3 py-2">
+                  <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">{{ row.occupancyRate }}%</span>
+                </td>
+              </tr>
+            }
+            @if (!programOccupancy().length && !loading()) {
+              <tr>
+                <td colspan="6" class="px-3 py-4 text-center text-slate-500">No hay programas con capacidad o estudiantes en el período consultado.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Matriz programa × grupo de capacidad</h2>
+      <div class="mt-3 overflow-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-3 py-2">Programa</th>
+              <th class="px-3 py-2">Grupo</th>
+              <th class="px-3 py-2">Nivel</th>
+              <th class="px-3 py-2">Institución</th>
+              <th class="px-3 py-2">Capacidad</th>
+              <th class="px-3 py-2">Estudiantes</th>
+              <th class="px-3 py-2">Servicios asociados</th>
+              <th class="px-3 py-2">Ocupación</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (row of matrix(); track trackByMatrix($index, row)) {
+              <tr>
+                <td class="px-3 py-2 font-medium text-slate-800">{{ row.programName }}</td>
+                <td class="px-3 py-2 text-slate-700">{{ row.groupName }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.level }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.institutionName }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.installedCapacity }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.assignedStudents }}</td>
+                <td class="px-3 py-2 text-slate-600">{{ row.servicesCount }}</td>
+                <td class="px-3 py-2">
+                  <span class="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">{{ row.occupancyRate }}%</span>
+                </td>
+              </tr>
+            }
+            @if (!matrix().length && !loading()) {
+              <tr>
+                <td colspan="8" class="px-3 py-4 text-center text-slate-500">No hay combinaciones programa-grupo para mostrar.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    @if (loading()) {
+      <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">Cargando análisis de capacidad instalada...</div>
+    }
+  </div>
+</section>

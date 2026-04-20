@@ -13,6 +13,7 @@
     "start:debug": "nodemon --watch src --ext ts --exec \"node --inspect=0.0.0.0:9229 -r ts-node/register -r tsconfig-paths/register src/main.ts\"",
     "start:prod": "node dist/main",
     "seed:auth-users": "ts-node scripts/seed-auth-users.ts",
+    "import:autoevaluation-catalog": "ts-node scripts/import-autoevaluation-catalog.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

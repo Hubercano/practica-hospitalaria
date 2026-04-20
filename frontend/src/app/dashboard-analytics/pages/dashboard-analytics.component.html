@@ -1,0 +1,185 @@
+<section class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100 p-4 md:p-6">
+  <div class="max-w-[1500px] mx-auto space-y-5">
+    <header class="rounded-2xl border border-cyan-500/30 bg-slate-900/70 backdrop-blur p-4 md:p-5">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-semibold tracking-wide text-cyan-200">Indicadores (KPI)</h1>
+          <p class="text-sm text-slate-300 mt-1">Tablero de indicadores estratégicos sobre rotaciones, ocupación y comportamiento operativo.</p>
+        </div>
+        <button
+          class="px-4 py-2 rounded-lg border border-slate-600 hover:border-cyan-300 hover:text-cyan-200 transition-colors text-sm"
+          (click)="clearFilters()"
+        >
+          Quitar filtros
+        </button>
+      </div>
+    </header>
+
+    @if (error()) {
+      <div class="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-rose-200">{{ error() }}</div>
+    }
+
+    <div class="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+      <h2 class="text-sm uppercase tracking-widest text-cyan-300 mb-3">Filtros globales</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-300">Año</span>
+          <ng-select
+            [items]="filterOptions().years"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedYears()"
+            (ngModelChange)="onYearsChange($event)"
+            placeholder="Todos"
+            class="w-full filter-ng-select"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-300">Mes</span>
+          <ng-select
+            [items]="monthOptions()"
+            bindLabel="label"
+            bindValue="id"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedMonths()"
+            (ngModelChange)="onMonthsChange($event)"
+            placeholder="Todos"
+            class="w-full filter-ng-select"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-300">Universidad</span>
+          <ng-select
+            [items]="filterOptions().institutions"
+            bindLabel="name"
+            bindValue="id"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedInstitutionIds()"
+            (ngModelChange)="onInstitutionsChange($event)"
+            placeholder="Todas"
+            class="w-full filter-ng-select"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-300">Programa</span>
+          <ng-select
+            [items]="filterOptions().programs"
+            bindLabel="name"
+            bindValue="id"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedProgramIds()"
+            (ngModelChange)="onProgramsChange($event)"
+            placeholder="Todos"
+            class="w-full filter-ng-select"
+          ></ng-select>
+        </label>
+
+        <label class="space-y-1 text-sm">
+          <span class="text-slate-300">Docente</span>
+          <ng-select
+            [items]="filterOptions().teachers"
+            bindLabel="name"
+            bindValue="id"
+            [multiple]="true"
+            [closeOnSelect]="false"
+            [searchable]="true"
+            [clearable]="true"
+            [hideSelected]="true"
+            [ngModel]="selectedTeacherIds()"
+            (ngModelChange)="onTeachersChange($event)"
+            placeholder="Todos"
+            class="w-full filter-ng-select"
+          ></ng-select>
+        </label>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <article class="rounded-2xl border border-cyan-400/30 bg-slate-900/70 p-4">
+        <p class="text-xs uppercase text-cyan-300 tracking-wider">Rotaciones Totales</p>
+        <p class="text-4xl font-semibold mt-2">{{ kpis().totalRotations }}</p>
+      </article>
+
+      <article class="rounded-2xl border border-cyan-400/30 bg-slate-900/70 p-4">
+        <p class="text-xs uppercase text-cyan-300 tracking-wider">Ocupación de Cupos</p>
+        <p class="text-4xl font-semibold mt-2">{{ kpis().occupancyRate }}%</p>
+        <p class="text-xs text-slate-400 mt-2">{{ kpis().assignedStudents }} estudiantes / {{ kpis().totalCapacity }} cupos</p>
+      </article>
+
+      <article class="rounded-2xl border border-cyan-400/30 bg-slate-900/70 p-4">
+        <p class="text-xs uppercase text-cyan-300 tracking-wider">Años Activos</p>
+        <p class="text-4xl font-semibold mt-2">{{ temporalSeries().series.length }}</p>
+      </article>
+
+      <article class="rounded-2xl border border-cyan-400/30 bg-slate-900/70 p-4">
+        <p class="text-xs uppercase text-cyan-300 tracking-wider">Docente Líder</p>
+        <p class="text-xl font-semibold mt-2 truncate">{{ leadingTeacherName() }}</p>
+        <p class="text-sm text-slate-400 mt-1">{{ leadingTeacherValue() }} rotaciones</p>
+      </article>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <article class="xl:col-span-2 rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+        <h3 class="text-sm uppercase tracking-wider text-cyan-300 mb-3">Evolución temporal (multiserie por año)</h3>
+        <div class="h-80">
+          <canvas #temporalChart></canvas>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+        <h3 class="text-sm uppercase tracking-wider text-cyan-300 mb-3">Distribución de Programas</h3>
+        <div class="grid grid-cols-6 gap-2 auto-rows-[52px]">
+          @for (item of programDistribution(); track trackById($index, item)) {
+            <div
+              class="rounded-lg p-2 border border-indigo-300/20 bg-indigo-500/20 overflow-hidden"
+              [style.grid-column]="'span ' + (item.percent > 20 ? 3 : item.percent > 12 ? 2 : 1)"
+              [style.grid-row]="'span ' + (item.percent > 18 ? 2 : 1)"
+              [title]="item.name + ': ' + item.value"
+            >
+              <p class="text-xs font-semibold truncate">{{ item.name }}</p>
+              <p class="text-[11px] text-slate-300 mt-1">{{ item.value }} · {{ item.percent }}%</p>
+            </div>
+          }
+        </div>
+      </article>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <article class="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+        <h3 class="text-sm uppercase tracking-wider text-cyan-300 mb-3">Principales Universidades</h3>
+        <div class="h-72">
+          <canvas #universitiesChart></canvas>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+        <h3 class="text-sm uppercase tracking-wider text-cyan-300 mb-3">Docentes Líderes</h3>
+        <div class="h-72">
+          <canvas #teachersChart></canvas>
+        </div>
+      </article>
+    </div>
+
+    @if (loading()) {
+      <div class="rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-slate-300">Cargando analítica...</div>
+    }
+  </div>
+</section>
