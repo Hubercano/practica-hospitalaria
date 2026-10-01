@@ -20,6 +20,7 @@ import { ProgramFormComponent } from './academic-programs/pages/program-form/pro
 import { ProgramDetailComponent } from './academic-programs/pages/program-detail/program-detail.component';
 import { RotationScheduleListComponent } from './rotation-schedules/pages/rotation-schedule-list/rotation-schedule-list.component';
 import { RotationScheduleFormComponent } from './rotation-schedules/pages/rotation-schedule-form/rotation-schedule-form.component';
+import { RotationScheduleMatrixComponent } from './rotation-schedules/pages/rotation-schedule-matrix/rotation-schedule-matrix.component';
 import { InductionListComponent } from './inductions/pages/induction-list/induction-list.component';
 import { InductionFormComponent } from './inductions/pages/induction-form/induction-form.component';
 import { InductionDetailComponent } from './inductions/pages/induction-detail/induction-detail.component';
@@ -74,6 +75,7 @@ export const routes: Routes = [
       { path: 'rotation-schedules', component: RotationScheduleListComponent },
       { path: 'rotation-schedules/new', component: RotationScheduleFormComponent },
       { path: 'rotation-schedules/:id/edit', component: RotationScheduleFormComponent },
+      { path: 'rotation-schedules/:id/matrix', component: RotationScheduleMatrixComponent },
       {
         path: 'dashboard-analytics',
         loadComponent: () => import('./dashboard-analytics/pages/dashboard-analytics.component').then((m) => m.DashboardAnalyticsComponent),

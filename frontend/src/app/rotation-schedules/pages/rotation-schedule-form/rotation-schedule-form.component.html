@@ -1,78 +1,44 @@
 <div class="max-w-6xl mx-auto p-4">
-  <div class="mb-6 flex items-center justify-between gap-4">
+  <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
       <h2 class="text-2xl font-bold text-slate-900">
-        {{ isEditMode ? 'Detalle / Edición de Rotación' : 'Programar Rotación' }}
+        {{ isEditMode ? 'Detalle / Edicion de Rotacion' : 'Programar Rotacion' }}
       </h2>
-      <p class="mt-1 text-sm text-slate-500">
-        Completa la información de la programación de rotación.
-      </p>
+      <p class="mt-1 text-sm text-slate-500">Completa la informacion de la programacion de rotacion.</p>
     </div>
-    <app-button variant="secondary" routerLink="/rotation-schedules">Volver</app-button>
+    <div class="flex items-center gap-3">
+      <app-button variant="secondary" routerLink="/rotation-schedules">Volver</app-button>
+      @if (canViewMatrix) {
+        <app-button variant="primary" [routerLink]="['/rotation-schedules', scheduleId, 'matrix']">Ver cuadro de turnos</app-button>
+      }
+    </div>
   </div>
 
   <app-card>
     <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <app-form-field label="Institución" [required]="true">
-          <ng-select
-            class="rotation-select"
-            [items]="institutions"
-            bindLabel="name"
-            bindValue="id"
-            formControlName="institutionId"
-            placeholder="Seleccione institución">
-          </ng-select>
+        <app-form-field label="Institucion" [required]="true">
+          <ng-select class="rotation-select" [items]="institutions" bindLabel="name" bindValue="id" formControlName="institutionId" placeholder="Seleccione institucion"></ng-select>
         </app-form-field>
 
         <app-form-field label="Programa" [required]="true">
-          <ng-select
-            class="rotation-select"
-            [items]="programs"
-            bindLabel="name"
-            bindValue="id"
-            formControlName="programId"
-            placeholder="Seleccione programa"
-            [disabled]="!form.get('institutionId')?.value">
-          </ng-select>
+          <ng-select class="rotation-select" [items]="programs" bindLabel="name" bindValue="id" formControlName="programId" placeholder="Seleccione programa" [disabled]="!form.get('institutionId')?.value"></ng-select>
         </app-form-field>
 
-        <app-form-field label="Área" [required]="true">
-          <ng-select
-            class="rotation-select"
-            [items]="areas"
-            bindLabel="name"
-            bindValue="id"
-            formControlName="areaId"
-            placeholder="Seleccione área"
-            [disabled]="!form.get('programId')?.value">
-          </ng-select>
+        <app-form-field label="Area" [required]="true">
+          <ng-select class="rotation-select" [items]="areas" bindLabel="name" bindValue="id" formControlName="areaId" placeholder="Seleccione area" [disabled]="!form.get('programId')?.value"></ng-select>
+        </app-form-field>
+
+        <app-form-field label="Tipo de programacion" [required]="true">
+          <ng-select class="rotation-select" [items]="scheduleModeOptions" bindLabel="label" bindValue="value" formControlName="scheduleMode" [clearable]="false"></ng-select>
         </app-form-field>
 
         <app-form-field label="Docentes">
-          <ng-select
-            class="rotation-select"
-            [items]="teachers"
-            bindLabel="fullName"
-            bindValue="id"
-            [multiple]="true"
-            formControlName="teacherIds"
-            placeholder="Seleccione docentes"
-            [disabled]="!form.get('areaId')?.value">
-          </ng-select>
+          <ng-select class="rotation-select" [items]="teachers" bindLabel="fullName" bindValue="id" [multiple]="true" formControlName="teacherIds" placeholder="Seleccione docentes" [disabled]="!form.get('areaId')?.value"></ng-select>
         </app-form-field>
 
         <app-form-field label="Estudiantes">
-          <ng-select
-            class="rotation-select"
-            [items]="students"
-            bindLabel="fullName"
-            bindValue="id"
-            [multiple]="true"
-            formControlName="studentIds"
-            placeholder="Seleccione estudiantes"
-            [disabled]="!form.get('areaId')?.value">
-          </ng-select>
+          <ng-select class="rotation-select" [items]="students" bindLabel="fullName" bindValue="id" [multiple]="true" formControlName="studentIds" placeholder="Seleccione estudiantes" [disabled]="!form.get('areaId')?.value"></ng-select>
         </app-form-field>
       </div>
 
@@ -86,23 +52,108 @@
         </app-form-field>
       </div>
 
+      @if (isShiftBoardMode) {
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-form-field label="Publicar cuadro de turnos (dias antes)">
+              <input type="number" min="0" max="60" formControlName="shiftBoardPublishDaysBefore" class="w-full" />
+            </app-form-field>
+          </div>
+        </div>
+      }
+
+      @if (isFixedMode) {
+        <div class="rounded-2xl border border-slate-200 bg-white p-4">
+          <div class="mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Horario fijo semanal</h3>
+            <app-button type="button" variant="secondary" (click)="addFixedBlock()">Agregar bloque</app-button>
+          </div>
+
+          <div formArrayName="fixedBlocks" class="space-y-3">
+            @for (block of fixedBlocksArray.controls; track $index) {
+              <div [formGroupName]="$index" class="grid grid-cols-1 md:grid-cols-12 gap-3 rounded-xl border border-slate-200 p-3">
+                <div class="md:col-span-2">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Dia</label>
+                  <ng-select [items]="dayOptions" bindLabel="label" bindValue="value" formControlName="dayOfWeek" [clearable]="false"></ng-select>
+                </div>
+                <div class="md:col-span-2">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Hora inicio</label>
+                  <input type="time" class="w-full" formControlName="startTime" />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Hora fin</label>
+                  <input type="time" class="w-full" formControlName="endTime" />
+                </div>
+                <div class="md:col-span-3">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Servicio</label>
+                  <ng-select [items]="services" bindLabel="name" bindValue="id" formControlName="serviceId" placeholder="Opcional"></ng-select>
+                </div>
+                <div class="md:col-span-2">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Tipo turno</label>
+                  <ng-select [items]="shiftTypeOptions" bindLabel="label" bindValue="value" formControlName="shiftType" [clearable]="false"></ng-select>
+                </div>
+                <div class="md:col-span-1 flex items-end justify-end">
+                  <button type="button" class="rounded-lg border border-rose-300 px-2 py-1 text-xs text-rose-700" (click)="removeFixedBlock($index)">Quitar</button>
+                </div>
+                <div class="md:col-span-12">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Notas</label>
+                  <input type="text" class="w-full" formControlName="notes" placeholder="Opcional" />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (isShiftBoardMode) {
+        <div class="rounded-2xl border border-slate-200 bg-white p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Configuracion de turnos</h3>
+              <p class="mt-1 text-xs text-slate-500">Define aqui los turnos base. Luego los asignas por estudiante y por dia en el cuadro.</p>
+            </div>
+            <app-button type="button" variant="secondary" (click)="addShiftDefinition()">Agregar turno</app-button>
+          </div>
+
+          <div formArrayName="shiftDefinitions" class="space-y-3">
+            @for (definition of shiftDefinitionsArray.controls; track $index) {
+              <div [formGroupName]="$index" class="grid grid-cols-1 md:grid-cols-12 gap-3 rounded-xl border border-slate-200 p-3">
+                <div class="md:col-span-5">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Nombre del turno</label>
+                  <input type="text" class="w-full" formControlName="name" placeholder="Ej. Manana, Tarde, Noche" />
+                </div>
+                <div class="md:col-span-3">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Hora inicio</label>
+                  <input type="time" class="w-full" formControlName="startTime" />
+                </div>
+                <div class="md:col-span-3">
+                  <label class="mb-1 block text-xs font-semibold text-slate-600 uppercase tracking-wide">Hora fin</label>
+                  <input type="time" class="w-full" formControlName="endTime" />
+                </div>
+                <div class="md:col-span-1 flex items-end justify-end">
+                  <button type="button" class="rounded-lg border border-rose-300 px-2 py-1 text-xs text-rose-700" (click)="removeShiftDefinition($index)">Quitar</button>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (canViewMatrix) {
+            <div class="mt-4 flex justify-end border-t border-slate-200 pt-4">
+              <app-button variant="primary" [routerLink]="['/rotation-schedules', scheduleId, 'matrix']">Ir al cuadro de turnos</app-button>
+            </div>
+          }
+        </div>
+      }
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <app-form-field label="Encuesta de satisfacción asociada">
-          <ng-select
-            class="rotation-select"
-            [items]="surveys"
-            bindLabel="name"
-            bindValue="id"
-            formControlName="surveyId"
-            placeholder="Sin encuesta asociada"
-            [clearable]="true">
-          </ng-select>
+        <app-form-field label="Encuesta de satisfaccion asociada">
+          <ng-select class="rotation-select" [items]="surveys" bindLabel="name" bindValue="id" formControlName="surveyId" placeholder="Sin encuesta asociada" [clearable]="true"></ng-select>
         </app-form-field>
 
-        <app-form-field label="Envío automático al finalizar">
+        <app-form-field label="Envio automatico al finalizar">
           <label class="inline-flex items-center gap-2 mt-2 text-sm text-slate-700">
             <input type="checkbox" formControlName="sendAfterRotationEnd" class="rounded border-slate-300" />
-            Enviar encuesta automáticamente cuando termine la rotación
+            Enviar encuesta automaticamente cuando termine la rotacion
           </label>
         </app-form-field>
       </div>

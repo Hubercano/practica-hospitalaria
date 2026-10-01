@@ -36,6 +36,7 @@ export class RotationScheduleListComponent implements OnInit {
     { key: 'studentsList', label: 'Estudiantes' },
     { key: 'startDate', label: 'Inicio', type: 'date' },
     { key: 'endDate', label: 'Fin', type: 'date' },
+    { key: 'scheduleModeLabel', label: 'Modo' },
     { key: 'actions', label: 'Acciones', type: 'actions' }
   ];
 
@@ -186,7 +187,10 @@ export class RotationScheduleListComponent implements OnInit {
       const startDate = toDateOnly(s.startDate) || null;
       const endDate = toDateOnly(s.endDate) || null;
 
-      return { ...s, institutionName, programName, areaName, servicesList, teachersList, studentsList, startDate, endDate };
+      return { ...s, institutionName, programName, areaName, servicesList, teachersList, studentsList, startDate, endDate,
+        scheduleModeLabel: s.scheduleMode === 'SHIFT_BOARD' ? 'Cuadro de turnos' : (s.scheduleMode === 'FIXED' ? 'Horario fijo' : '-'),
+        showMatrixAction: s.scheduleMode === 'SHIFT_BOARD',
+      };
     });
 
     this.allMappedSchedules = mapped;
@@ -220,6 +224,11 @@ export class RotationScheduleListComponent implements OnInit {
   onViewDetail(schedule: any) {
     if (!schedule?.id) return;
     this.router.navigate(['/rotation-schedules', schedule.id, 'edit']);
+  }
+
+  onViewMatrix(schedule: any) {
+    if (!schedule?.id) return;
+    this.router.navigate(['/rotation-schedules', schedule.id, 'matrix']);
   }
 
   onDelete(schedule: any) {

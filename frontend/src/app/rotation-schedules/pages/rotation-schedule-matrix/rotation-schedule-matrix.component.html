@@ -1,0 +1,93 @@
+<div class="mx-auto p-4">
+  <div class="mb-6 flex flex-col md:flex-row md:items-start justify-between gap-4">
+    <div>
+      <button (click)="goToList()" class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-2 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Volver a la lista
+      </button>
+      <h2 class="text-2xl font-bold text-slate-900">Cuadro de Turnos</h2>
+      @if (schedule()) {
+        <p class="mt-1 text-sm text-slate-500">
+          {{ schedule().area?.name || schedule().areaId }} -
+          {{ schedule().startDate | date:'dd/MM/yyyy' }} al {{ schedule().endDate | date:'dd/MM/yyyy' }}
+        </p>
+      }
+    </div>
+    <div class="flex gap-3 shrink-0">
+      <app-button variant="secondary" (click)="goToEdit()">Editar configuracion</app-button>
+      <app-button variant="primary" (click)="save()">{{ saving() ? 'Guardando...' : 'Guardar cuadro' }}</app-button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-20 text-slate-400">
+      Cargando cuadro de turnos...
+    </div>
+  } @else if (!shiftDefinitions().length) {
+    <div class="rounded-xl bg-amber-50 border border-amber-200 p-6 text-center text-amber-700">
+      <p class="font-medium">Todavia no hay turnos configurados para esta rotacion.</p>
+      <p class="text-sm mt-1">Primero crea los turnos base en el detalle de la programacion y luego vuelve aqui.</p>
+      <div class="mt-4">
+        <app-button variant="primary" (click)="goToEdit()">Ir a configurar turnos</app-button>
+      </div>
+    </div>
+  } @else {
+    <div class="mb-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="flex flex-wrap gap-3 text-xs text-slate-600">
+        @for (definition of shiftDefinitions(); track definition.id) {
+          <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 font-medium">
+            {{ definition.name }} ({{ definition.startTime }} - {{ definition.endTime }})
+          </span>
+        }
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-x-auto">
+      <table class="min-w-max w-full border-collapse text-xs">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200">
+            <th class="sticky left-0 z-20 bg-slate-50 text-left px-4 py-2 font-semibold text-slate-600 border-r border-slate-200 min-w-[220px]">
+              Estudiante
+            </th>
+            @for (group of monthGroups; track group.label) {
+              <th [attr.colspan]="group.span" class="text-center px-2 py-2 font-semibold text-slate-600 border-r border-slate-200 capitalize">
+                {{ group.label }}
+              </th>
+            }
+            <th class="text-center px-3 py-2 font-semibold text-slate-600 min-w-[72px]">Horas</th>
+          </tr>
+          <tr class="bg-slate-50 border-b border-slate-200">
+            <th class="sticky left-0 z-20 bg-slate-50 border-r border-slate-200"></th>
+            @for (date of dates(); track date) {
+              <th class="text-center px-1 py-1.5 font-semibold border-r border-slate-100 min-w-[116px]" [class.text-rose-500]="isWeekend(date)" [class.text-slate-500]="!isWeekend(date)">
+                <div class="text-[10px] font-normal">{{ formatDayName(date) }}</div>
+                <div>{{ formatDay(date) }}</div>
+              </th>
+            }
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <td class="sticky left-0 z-10 bg-white px-4 py-2 font-medium text-slate-800 border-r border-slate-200 whitespace-nowrap">
+                {{ row.name }}
+              </td>
+              @for (date of dates(); track date) {
+                <td class="px-2 py-2 border-r border-slate-100" [class.bg-slate-50]="isWeekend(date)">
+                  <select class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700" [ngModel]="getCellValue(row.id, date)" (ngModelChange)="setCellValue(row.id, date, $event)">
+                    <option value="">Sin turno</option>
+                    @for (definition of shiftDefinitions(); track definition.id) {
+                      <option [value]="definition.id">{{ definition.name }}</option>
+                    }
+                  </select>
+                </td>
+              }
+              <td class="text-center px-3 py-2 font-semibold text-slate-700">{{ row.totalHours }}h</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

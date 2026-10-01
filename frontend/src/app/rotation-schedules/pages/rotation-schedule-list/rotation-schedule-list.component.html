@@ -67,6 +67,6 @@
   }
 
   <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-    <app-table [data]="schedules()" [columns]="columns" (edit)="onViewDetail($event)" (delete)="onDelete($event)"></app-table>
+    <app-table [data]="schedules()" [columns]="columns" (edit)="onViewDetail($event)" (matrix)="onViewMatrix($event)" (delete)="onDelete($event)"></app-table>
   </div>
 </div>

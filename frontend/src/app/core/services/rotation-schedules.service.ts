@@ -23,6 +23,19 @@ export interface RotationMonthGroup {
   students: RotationGroupStudent[];
 }
 
+export interface RotationShiftDefinition {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface RotationShiftBoardAssignment {
+  assignmentDate: string;
+  studentId: string;
+  shiftDefinitionId: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RotationSchedulesService {
   private apiUrl = 'http://localhost:3000/rotation-schedules';
@@ -57,6 +70,10 @@ export class RotationSchedulesService {
 
   update(id: string, payload: any) {
     return this.http.patch(`${this.apiUrl}/${id}`, payload);
+  }
+
+  updateShiftBoard(id: string, payload: { assignments: RotationShiftBoardAssignment[] }) {
+    return this.http.patch(`${this.apiUrl}/${id}/shift-board`, payload);
   }
 
   remove(id: string) {

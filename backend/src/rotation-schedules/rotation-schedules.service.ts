@@ -1,61 +1,95 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { RotationScheduleMode, RotationShiftType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateRotationScheduleDto } from './dto/create-rotation-schedule.dto';
+import { CreateRotationScheduleDto, RotationFixedBlockDto, RotationShiftDefinitionDto } from './dto/create-rotation-schedule.dto';
 import { UpdateRotationScheduleDto } from './dto/update-rotation-schedule.dto';
+import { RotationShiftBoardAssignmentDto, UpdateRotationShiftBoardDto } from './dto/update-rotation-shift-board.dto';
 
 @Injectable()
 export class RotationSchedulesService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly scheduleInclude = {
+    fixedBlocks: {
+      orderBy: [{ dayOfWeek: 'asc' as const }, { startTime: 'asc' as const }],
+      include: {
+        service: { select: { id: true, name: true, code: true } },
+      },
+    },
+    shiftDefinitions: {
+      orderBy: [{ startTime: 'asc' as const }, { endTime: 'asc' as const }, { name: 'asc' as const }],
+    },
+    shiftAssignments: {
+      orderBy: [{ assignmentDate: 'asc' as const }, { studentId: 'asc' as const }],
+      include: {
+        shiftDefinition: true,
+      },
+    },
+  };
+
   async create(dto: CreateRotationScheduleDto) {
-    // Basic business validations
     if (new Date(dto.endDate) <= new Date(dto.startDate)) {
       throw new BadRequestException('endDate must be greater than startDate');
     }
 
-    // Validate area capacity (maxStudents)
+    const scheduleMode = dto.scheduleMode ?? RotationScheduleMode.FIXED;
+    this.validateScheduleDetails(scheduleMode, dto.fixedBlocks ?? [], dto.shiftDefinitions ?? []);
+
     if (dto.areaId) {
       const area = await this.prisma.rotationArea.findUnique({ where: { id: dto.areaId } });
       if (area && dto.studentIds && dto.studentIds.length > (area.maxStudents || 0)) {
-        throw new BadRequestException(`El número de estudiantes (${dto.studentIds.length}) excede el máximo permitido (${area.maxStudents}).`);
+        throw new BadRequestException(`El numero de estudiantes (${dto.studentIds.length}) excede el maximo permitido (${area.maxStudents}).`);
       }
     }
 
-    // Check overlapping schedules for same area
     if (dto.areaId) {
       const overlap = await this.prisma.rotationSchedule.findFirst({
         where: {
           areaId: dto.areaId,
-          AND: [
-            { startDate: { lte: new Date(dto.endDate) } },
-            { endDate: { gte: new Date(dto.startDate) } }
-          ]
-        }
+          AND: [{ startDate: { lte: new Date(dto.endDate) } }, { endDate: { gte: new Date(dto.startDate) } }],
+        },
       });
       if (overlap) {
-        throw new BadRequestException('Existe otra programación en el mismo rango de fechas para el área seleccionada.');
+        throw new BadRequestException('Existe otra programacion en el mismo rango de fechas para el area seleccionada.');
       }
     }
 
-    const schedule = await this.prisma.rotationSchedule.create({ data: {
-      institutionId: dto.institutionId,
-      programId: dto.programId,
-      areaId: dto.areaId,
-      teacherIds: dto.teacherIds || [],
-      studentIds: dto.studentIds || [],
-      startDate: new Date(dto.startDate),
-      endDate: new Date(dto.endDate)
-    }});
-
-    return schedule;
+    return this.prisma.rotationSchedule.create({
+      data: {
+        institutionId: dto.institutionId,
+        programId: dto.programId,
+        areaId: dto.areaId,
+        teacherIds: dto.teacherIds || [],
+        studentIds: dto.studentIds || [],
+        startDate: new Date(dto.startDate),
+        endDate: new Date(dto.endDate),
+        scheduleMode,
+        shiftBoardPublishDaysBefore: scheduleMode === RotationScheduleMode.SHIFT_BOARD ? dto.shiftBoardPublishDaysBefore ?? 8 : null,
+        fixedBlocks:
+          scheduleMode === RotationScheduleMode.FIXED && (dto.fixedBlocks?.length ?? 0) > 0
+            ? { create: this.buildFixedBlockCreates(dto.fixedBlocks ?? []) }
+            : undefined,
+        shiftDefinitions:
+          scheduleMode === RotationScheduleMode.SHIFT_BOARD && (dto.shiftDefinitions?.length ?? 0) > 0
+            ? { create: this.buildShiftDefinitionCreates(dto.shiftDefinitions ?? []) }
+            : undefined,
+      },
+      include: this.scheduleInclude,
+    });
   }
 
   findAll() {
-    return this.prisma.rotationSchedule.findMany({ orderBy: { startDate: 'desc' } });
+    return this.prisma.rotationSchedule.findMany({
+      orderBy: { startDate: 'desc' },
+      include: this.scheduleInclude,
+    });
   }
 
   findOne(id: string) {
-    return this.prisma.rotationSchedule.findUnique({ where: { id } });
+    return this.prisma.rotationSchedule.findUnique({
+      where: { id },
+      include: this.scheduleInclude,
+    });
   }
 
   async findStudentsByStartMonth(month: number, year: number) {
@@ -167,9 +201,7 @@ export class RotationSchedulesService {
     const programMap = new Map(programs.map((row) => [row.id, row.name]));
     const institutionMap = new Map(institutions.map((row) => [row.id, row.name]));
 
-    const allStudentIds = Array.from(
-      new Set(schedules.flatMap((schedule) => schedule.studentIds || []).filter(Boolean)),
-    );
+    const allStudentIds = Array.from(new Set(schedules.flatMap((schedule) => schedule.studentIds || []).filter(Boolean)));
 
     if (!allStudentIds.length) {
       return schedules.map((schedule) => ({
@@ -178,7 +210,7 @@ export class RotationSchedulesService {
           areaMap.get(schedule.areaId || '') ||
           programMap.get(schedule.programId || '') ||
           institutionMap.get(schedule.institutionId || '') ||
-          `Rotación ${schedule.id.slice(0, 8)}`,
+          `Rotacion ${schedule.id.slice(0, 8)}`,
         startDate: schedule.startDate.toISOString(),
         studentCount: 0,
         students: [],
@@ -215,17 +247,13 @@ export class RotationSchedulesService {
         .filter((student): student is { id: string; name: string; document: string } => !!student)
         .sort((a, b) => a.name.localeCompare(b.name));
 
-      const groupName = [
-        areaMap.get(schedule.areaId || ''),
-        programMap.get(schedule.programId || ''),
-        institutionMap.get(schedule.institutionId || ''),
-      ]
+      const groupName = [areaMap.get(schedule.areaId || ''), programMap.get(schedule.programId || ''), institutionMap.get(schedule.institutionId || '')]
         .filter(Boolean)
-        .join(' · ');
+        .join(' - ');
 
       return {
         id: schedule.id,
-        name: groupName || `Rotación ${schedule.id.slice(0, 8)}`,
+        name: groupName || `Rotacion ${schedule.id.slice(0, 8)}`,
         startDate: schedule.startDate.toISOString(),
         studentCount: groupStudents.length,
         students: groupStudents,
@@ -234,49 +262,204 @@ export class RotationSchedulesService {
   }
 
   async update(id: string, dto: UpdateRotationScheduleDto) {
-    if (dto.startDate && dto.endDate && new Date(dto.endDate) <= new Date(dto.startDate)) {
+    const current = await this.prisma.rotationSchedule.findUnique({
+      where: { id },
+      include: { fixedBlocks: true, shiftDefinitions: true },
+    });
+    if (!current) {
+      throw new BadRequestException('La programacion no existe.');
+    }
+
+    const nextStartDate = dto.startDate ? new Date(dto.startDate) : current.startDate;
+    const nextEndDate = dto.endDate ? new Date(dto.endDate) : current.endDate;
+
+    if (nextEndDate <= nextStartDate) {
       throw new BadRequestException('endDate must be greater than startDate');
     }
 
-    // Validate area capacity if studentIds provided
-    if (dto.areaId && dto.studentIds) {
-      const area = await this.prisma.rotationArea.findUnique({ where: { id: dto.areaId } });
-      if (area && dto.studentIds.length > (area.maxStudents || 0)) {
-        throw new BadRequestException(`El número de estudiantes (${dto.studentIds.length}) excede el máximo permitido (${area.maxStudents}).`);
+    const nextMode = dto.scheduleMode ?? current.scheduleMode;
+    const nextFixedBlocks = (dto.fixedBlocks ?? current.fixedBlocks) as RotationFixedBlockDto[] | undefined;
+    const nextShiftDefinitions = (dto.shiftDefinitions ?? current.shiftDefinitions) as RotationShiftDefinitionDto[] | undefined;
+    this.validateScheduleDetails(nextMode, nextFixedBlocks, nextShiftDefinitions);
+
+    const nextAreaId = dto.areaId ?? current.areaId;
+    const nextStudentIds = dto.studentIds ?? current.studentIds;
+
+    if (nextAreaId) {
+      const area = await this.prisma.rotationArea.findUnique({ where: { id: nextAreaId } });
+      if (area && nextStudentIds && nextStudentIds.length > (area.maxStudents || 0)) {
+        throw new BadRequestException(`El numero de estudiantes (${nextStudentIds.length}) excede el maximo permitido (${area.maxStudents}).`);
       }
     }
 
-    // Check overlapping schedules for same area excluding current id
-    if (dto.areaId && (dto.startDate || dto.endDate)) {
-      const start = dto.startDate ? new Date(dto.startDate) : undefined;
-      const end = dto.endDate ? new Date(dto.endDate) : undefined;
+    if (nextAreaId && (dto.startDate || dto.endDate || dto.areaId)) {
       const overlap = await this.prisma.rotationSchedule.findFirst({
         where: {
-          areaId: dto.areaId,
+          areaId: nextAreaId,
           id: { not: id },
-          AND: [
-            start ? { startDate: { lte: end || new Date(dto.endDate || '') } } : {},
-            end ? { endDate: { gte: start || new Date(dto.startDate || '') } } : {}
-          ]
-        }
+          AND: [{ startDate: { lte: nextEndDate } }, { endDate: { gte: nextStartDate } }],
+        },
       });
       if (overlap) {
-        throw new BadRequestException('Existe otra programación en el mismo rango de fechas para el área seleccionada.');
+        throw new BadRequestException('Existe otra programacion en el mismo rango de fechas para el area seleccionada.');
       }
     }
 
-    return this.prisma.rotationSchedule.update({ where: { id }, data: {
-      institutionId: dto.institutionId,
-      programId: dto.programId,
-      areaId: dto.areaId,
-      teacherIds: dto.teacherIds as any,
-      studentIds: dto.studentIds as any,
-      startDate: dto.startDate ? new Date(dto.startDate) : undefined,
-      endDate: dto.endDate ? new Date(dto.endDate) : undefined
-    }});
+    return this.prisma.rotationSchedule.update({
+      where: { id },
+      data: {
+        institutionId: dto.institutionId,
+        programId: dto.programId,
+        areaId: dto.areaId,
+        teacherIds: dto.teacherIds as any,
+        studentIds: dto.studentIds as any,
+        startDate: dto.startDate ? new Date(dto.startDate) : undefined,
+        endDate: dto.endDate ? new Date(dto.endDate) : undefined,
+        scheduleMode: dto.scheduleMode,
+        shiftBoardPublishDaysBefore:
+          nextMode === RotationScheduleMode.SHIFT_BOARD
+            ? dto.shiftBoardPublishDaysBefore ?? current.shiftBoardPublishDaysBefore ?? 8
+            : null,
+        fixedBlocks:
+          dto.fixedBlocks !== undefined || dto.scheduleMode !== undefined
+            ? {
+                deleteMany: {},
+                create: nextMode === RotationScheduleMode.FIXED ? this.buildFixedBlockCreates(dto.fixedBlocks ?? []) : [],
+              }
+            : undefined,
+        shiftDefinitions:
+          dto.shiftDefinitions !== undefined || dto.scheduleMode !== undefined
+            ? {
+                deleteMany: {},
+                create: nextMode === RotationScheduleMode.SHIFT_BOARD ? this.buildShiftDefinitionCreates(dto.shiftDefinitions ?? []) : [],
+              }
+            : undefined,
+        shiftAssignments:
+          dto.shiftDefinitions !== undefined || dto.scheduleMode !== undefined || dto.studentIds !== undefined || dto.startDate !== undefined || dto.endDate !== undefined
+            ? {
+                deleteMany: {},
+              }
+            : undefined,
+      },
+      include: this.scheduleInclude,
+    });
+  }
+
+  async updateShiftBoard(id: string, dto: UpdateRotationShiftBoardDto) {
+    const schedule = await this.prisma.rotationSchedule.findUnique({
+      where: { id },
+      include: { shiftDefinitions: true },
+    });
+
+    if (!schedule) {
+      throw new BadRequestException('La programacion no existe.');
+    }
+
+    if (schedule.scheduleMode !== RotationScheduleMode.SHIFT_BOARD) {
+      throw new BadRequestException('La programacion seleccionada no usa cuadro de turnos.');
+    }
+
+    const assignments = dto.assignments ?? [];
+    this.validateShiftBoardAssignments(schedule, assignments);
+
+    return this.prisma.rotationSchedule.update({
+      where: { id },
+      data: {
+        shiftAssignments: {
+          deleteMany: {},
+          create: this.buildShiftBoardAssignmentCreates(assignments),
+        },
+      },
+      include: this.scheduleInclude,
+    });
   }
 
   remove(id: string) {
     return this.prisma.rotationSchedule.delete({ where: { id } });
+  }
+
+  private validateScheduleDetails(mode: RotationScheduleMode, fixedBlocks: RotationFixedBlockDto[] | undefined, shiftDefinitions: RotationShiftDefinitionDto[] | undefined) {
+    if (mode === RotationScheduleMode.FIXED) {
+      if (!fixedBlocks?.length) {
+        throw new BadRequestException('Debe configurar al menos un bloque de horario fijo.');
+      }
+
+      fixedBlocks.forEach((block, index) => {
+        if (block.endTime <= block.startTime) {
+          throw new BadRequestException(`El bloque fijo #${index + 1} tiene un rango de hora invalido.`);
+        }
+      });
+    }
+
+    if (mode === RotationScheduleMode.SHIFT_BOARD) {
+      if (!shiftDefinitions?.length) {
+        throw new BadRequestException('Debe configurar al menos un turno para cuadro de turnos.');
+      }
+
+      shiftDefinitions.forEach((shift, index) => {
+        if (shift.endTime <= shift.startTime) {
+          throw new BadRequestException(`El turno #${index + 1} tiene un rango de hora invalido.`);
+        }
+      });
+    }
+  }
+
+  private validateShiftBoardAssignments(
+    schedule: { startDate: Date; endDate: Date; studentIds: string[]; shiftDefinitions: { id: string }[] },
+    assignments: RotationShiftBoardAssignmentDto[],
+  ) {
+    const validStudentIds = new Set(schedule.studentIds || []);
+    const validShiftDefinitionIds = new Set(schedule.shiftDefinitions.map((item) => item.id));
+    const seen = new Set<string>();
+
+    assignments.forEach((assignment, index) => {
+      if (!validStudentIds.has(assignment.studentId)) {
+        throw new BadRequestException(`La asignacion #${index + 1} contiene un estudiante que no pertenece a la rotacion.`);
+      }
+
+      if (!validShiftDefinitionIds.has(assignment.shiftDefinitionId)) {
+        throw new BadRequestException(`La asignacion #${index + 1} contiene un turno no valido.`);
+      }
+
+      const dateOnly = assignment.assignmentDate.slice(0, 10);
+      const startOnly = schedule.startDate.toISOString().slice(0, 10);
+      const endOnly = schedule.endDate.toISOString().slice(0, 10);
+      if (dateOnly < startOnly || dateOnly > endOnly) {
+        throw new BadRequestException(`La asignacion #${index + 1} esta fuera del rango de fechas de la rotacion.`);
+      }
+
+      const key = `${assignment.studentId}::${dateOnly}`;
+      if (seen.has(key)) {
+        throw new BadRequestException(`Hay mas de un turno asignado para el mismo estudiante y fecha en la fila #${index + 1}.`);
+      }
+      seen.add(key);
+    });
+  }
+
+  private buildFixedBlockCreates(blocks: RotationFixedBlockDto[]) {
+    return blocks.map((block) => ({
+      dayOfWeek: block.dayOfWeek,
+      startTime: block.startTime,
+      endTime: block.endTime,
+      serviceId: block.serviceId || null,
+      shiftType: block.shiftType || RotationShiftType.CUSTOM,
+      notes: block.notes || null,
+    }));
+  }
+
+  private buildShiftDefinitionCreates(definitions: RotationShiftDefinitionDto[]) {
+    return definitions.map((definition) => ({
+      name: definition.name.trim(),
+      startTime: definition.startTime,
+      endTime: definition.endTime,
+    }));
+  }
+
+  private buildShiftBoardAssignmentCreates(assignments: RotationShiftBoardAssignmentDto[]) {
+    return assignments.map((assignment) => ({
+      assignmentDate: new Date(assignment.assignmentDate),
+      studentId: assignment.studentId,
+      shiftDefinitionId: assignment.shiftDefinitionId,
+    }));
   }
 }

@@ -17,6 +17,7 @@ export class TableComponent {
   columns = input<Column[]>([]);
 
   edit = output<any>();
+  matrix = output<any>();
   delete = output<any>();
 
   isPending(value: string): boolean {

@@ -54,13 +54,13 @@ export class AutoevaluationsService {
         description: factor.description,
         orderIndex: factor.orderIndex,
         criteria: factor.criteria.map((criterion) => ({
-          id: criterion.id,
-          name: criterion.name,
-          description: criterion.description,
-          verificationMechanism: criterion.description,
-          weight: criterion.weight,
-          orderIndex: criterion.orderIndex,
-        })),
+            id: criterion.id,
+            name: criterion.name,
+            description: criterion.description,
+            verificationMechanism: criterion.description,
+            weight: criterion.weight,
+            orderIndex: criterion.orderIndex,
+          })),
       })),
     };
   }

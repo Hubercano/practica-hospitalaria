@@ -128,6 +128,18 @@ enum AutoevaluationActionStatus {
   BLOCKED
 }
 
+enum RotationScheduleMode {
+  FIXED
+  SHIFT_BOARD
+}
+
+enum RotationShiftType {
+  ROUND_5H
+  DAY
+  NIGHT
+  CUSTOM
+}
+
 // -----------------------------------------------------------------------------
 // 🏗️ MÓDULO DE PARAMETRIZACIÓN (Configuracion del sistema)
 // -----------------------------------------------------------------------------
@@ -649,6 +661,8 @@ model ClinicalService {
 
   // Relaciones
   capacities ServiceCapacity[]
+  fixedScheduleBlocks RotationScheduleFixedBlock[]
+  shiftAssignments    RotationScheduleShiftAssignment[]
 
   // Relación implicita M:N con Áreas de Rotación (servicios asociados a áreas)
   rotationAreas RotationArea[]
@@ -695,11 +709,88 @@ model RotationSchedule {
   startDate DateTime
   endDate   DateTime
 
+  scheduleMode               RotationScheduleMode @default(FIXED)
+  shiftBoardPublishDaysBefore Int?
+
+  fixedBlocks      RotationScheduleFixedBlock[]
+  shiftDefinitions RotationScheduleShiftDefinition[]
+  shiftAssignments RotationScheduleShiftAssignment[]
+
   surveyLinks RotationSurvey[]
   responses   SurveyResponse[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RotationScheduleFixedBlock {
+  id String @id @default(uuid())
+
+  rotationScheduleId String
+  rotationSchedule   RotationSchedule @relation(fields: [rotationScheduleId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int
+  startTime String
+  endTime   String
+
+  serviceId String?
+  service   ClinicalService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  shiftType RotationShiftType?
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([rotationScheduleId, dayOfWeek])
+}
+
+model RotationScheduleShiftAssignment {
+  id String @id @default(uuid())
+
+  rotationScheduleId String
+  rotationSchedule   RotationSchedule @relation(fields: [rotationScheduleId], references: [id], onDelete: Cascade)
+
+  assignmentDate DateTime
+  studentId      String?
+
+  startTime String?
+  endTime   String?
+
+  serviceId String?
+  service   ClinicalService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  shiftType RotationShiftType?
+  studentIds String[] @default([])
+  notes     String?
+
+  shiftDefinitionId String?
+  shiftDefinition   RotationScheduleShiftDefinition? @relation(fields: [shiftDefinitionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([rotationScheduleId, assignmentDate, studentId])
+  @@index([rotationScheduleId, assignmentDate])
+  @@index([shiftDefinitionId])
+}
+
+model RotationScheduleShiftDefinition {
+  id String @id @default(uuid())
+
+  rotationScheduleId String
+  rotationSchedule   RotationSchedule @relation(fields: [rotationScheduleId], references: [id], onDelete: Cascade)
+
+  name      String
+  startTime String
+  endTime   String
+
+  assignments RotationScheduleShiftAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([rotationScheduleId, startTime])
 }
 
 // Capacidad Instalada (Definición de recursos por sede y servicios)

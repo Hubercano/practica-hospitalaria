@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, BadRequestExc
 import { RotationSchedulesService } from './rotation-schedules.service';
 import { CreateRotationScheduleDto } from './dto/create-rotation-schedule.dto';
 import { UpdateRotationScheduleDto } from './dto/update-rotation-schedule.dto';
+import { UpdateRotationShiftBoardDto } from './dto/update-rotation-shift-board.dto';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '@prisma/client';
 
@@ -50,6 +51,11 @@ export class RotationSchedulesController {
     }
 
     return this.service.findGroupsByStartMonth(month, year);
+  }
+
+  @Patch(':id/shift-board')
+  updateShiftBoard(@Param('id') id: string, @Body() dto: UpdateRotationShiftBoardDto) {
+    return this.service.updateShiftBoard(id, dto);
   }
 
   @Get(':id')
